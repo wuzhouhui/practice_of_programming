@@ -1,70 +1,72 @@
-% vim: ts=4 sts=4 sw=4 et tw=80
-% preface here.
+% vim: ts=4 sts=4 sw=4 et tw=75 preface here.
 
 \chapter{Preface}
 The presentation is organized into nine chapters, ecah focusing on one
 major aspect of programming practice.
 
-Chapter 1 discusses programming style. Good style is so important to good
-programming that we have chosen to cover it first. Well-written programs
-are better than badly-written ones, they have fewer errors and are easier
-to debug and to modify, so it is import to think about style from the
-beginning. This chapter also introduces an important theme in good
-programming, the use of idioms(惯用语法) appropriate to the language being
-used.
+Chapter \ref{chap:style} discusses programming style. Good style is so
+important to good programming that we have chosen to cover it first.
+Well-written programs are better than badly-written ones, they have fewer
+errors and are easier to debug and to modify, so it is import to think
+about style from the beginning. This chapter also introduces an important
+theme in good programming, the use of idioms(惯用语法) appropriate to the
+language being used.
 
-Algorithms and data structures, the topics of Chapter 2, are the core of
-the computer science curriculum(课程) and a major part of programming
-courses. Since most readers will already be familiar with this material,
-our treatment is intended as a brief review of the handful of algorithms
-and data structures that show up in almost every program. More complex
-algorithms and data structures usually evolve from these building blocks,
-so one should master the basics.
+Algorithms and data structures, the topics of Chapter \ref{chap:alds}, are
+the core of the computer science curriculum(课程) and a major part of
+programming courses. Since most readers will already be familiar with this
+material, our treatment is intended as a brief review of the handful of
+algorithms and data structures that show up in almost every program. More
+complex algorithms and data structures usually evolve from these building
+blocks, so one should master the basics.
 
-Chapter 3 describes the design and implementation of a small program that
-illustrates algorithm and data structure issues in a realistic setting. The
-program is implemented in five language; comparing the versions shows how
-the same data structures are handled in each, and how
-expressiveness(表现力) and performance vary across a spectrum(系列)
+Chapter \ref{chap:desipl} describes the design and implementation of a
+small program that illustrates algorithm and data structure issues in a
+realistic setting. The program is implemented in five language; comparing
+the versions shows how the same data structures are handled in each, and
+how expressiveness(表现力) and performance vary across a spectrum(系列)
 languages.
 
 Interfaces between users, programs, and parts of programs are fundamental
 in programming and much of the success of software is determined by how
-well interfaces are designed and implemented. Chapter 4 show the evolution
-of a small library for parsing a widely used data format. Even though the
-example is small, it illustrates many of the concerns of interfaces degisn:
-abstraction, information hiding, resource management and error handling.
+well interfaces are designed and implemented. Chapter \ref{chap:interface}
+show the evolution of a small library for parsing a widely used data
+format. Even though the example is small, it illustrates many of the
+concerns of interfaces degisn: abstraction, information hiding, resource
+management and error handling.
 
 Much as we try to write a programs correctly the first time, bugs, and
-therefore debugging are inevitable. Chapter 5 gives strategies and
-tactics(策略) for systematic and effective debugging. Among the topics are
-the signatures of common bugs and the importance of "numerology"(命理学), 
-where patterns in debugging often indicates where a problem lies.
+therefore debugging are inevitable. Chapter \ref{chap:debug} gives
+strategies and tactics(策略) for systematic and effective debugging. Among
+the topics are the signatures of common bugs and the importance of
+"numerology"(命理学), where patterns in debugging often indicates where a
+problem lies.
 
 Testing is an attempt to develop a reasonable assurance that a program is
 wording correctly and that it stays correct as it evolves. The emphasis in
-Chapter 6 is on systematic testing by hand and machine. Boundary condition
-tests probe at potential weak spots. Mechanization(机械化) and test
-scaffolds(脚手架) make it easy to do extensive testing with modest effort.
-Stress tests provide a different kind of testing than typical users do and
-ferret out(揪出) a different class of bugs.
+Chapter \ref{chap:testing} is on systematic testing by hand and machine.
+Boundary condition tests probe at potential weak spots.
+Mechanization(机械化) and test scaffolds(脚手架) make it easy to do
+extensive testing with modest effort.  Stress tests provide a different
+kind of testing than typical users do and ferret out(揪出) a different
+class of bugs.
 
 Computers are so fast and compilers are so good that many programs are fast
 enough the day they are written. But others are too slow, or they use too
-much memory, or both. Chapter 7 presents an orderly way to approach the
-task of making a program use resources efficiently, so that the program
-remains correct and sound as it is made more efficient.
+much memory, or both. Chapter \ref{chap:performance} presents an orderly
+way to approach the task of making a program use resources efficiently, so
+that the program remains correct and sound as it is made more efficient.
 
-Chapter 8 covers portability. Successful programs live long enough that
-their environment changes, or they must be moved to new system or new
-hardware or new countries. The goal of portability is to reduce the
-maintenance of a program by minimizing the amount of change neccessary to
-adapt it to a new environment.
+Chapter \ref{chap:portability} covers portability. Successful programs live
+long enough that their environment changes, or they must be moved to new
+system or new hardware or new countries. The goal of portability is to
+reduce the maintenance of a program by minimizing the amount of change
+neccessary to adapt it to a new environment.
 
 Computing is righ in languages, not just the general-purpose ones that we
 use for the bulk of programming, but also many specialized languages that
-focus on narrow domains. Chapter 9 presents serveral examples of the
-importance of notation in computing, and shows how we can use it to
-simplify programs, to guide implementations, and even to help us write
-programs that write programs.
+focus on narrow domains. Chapter \ref{chap:notation} presents serveral
+examples of the importance of notation in computing, and shows how we can
+use it to simplify programs, to guide implementations, and even to help us
+write programs that write programs.
 

@@ -1,0 +1,272 @@
+% vim: ts=4 sts=4 sw=4 et tw=75
+\chapter{Style}
+\label{chap:style}
+\begin{quote}
+    It is an old observation that the best writers sometimes disregard the
+    rules of rhetoric(修辞学). When they do so, however, the reader will
+    usually find in the sentence some compensating(补偿) merit(优点),
+    attained at the cost of the violation(违反). Unless he is centain of
+    doing as well, he will probaly do best to follow the rules.
+\end{quote}
+
+\begin{quotesrc}
+    William Strunk and E. B. White, \bookname{The Elements of Style}
+\end{quotesrc}
+
+This fragment of code comes from a large program written many years ago:
+\begin{wellcode}
+    if ((country == SING) || (country == BRNI) ||
+        (country == POL) || (country == ITALY))
+    {
+        /*
+         * If the country is Singapore, Brunei or Poland
+         * then the current time is the answer time 
+         * rather than the off hook time.
+         * Reset answer time and set day of week.
+         */
+         ...
+    }
+\end{wellcode}
+
+It's carefully written, formatted, and commented, and the program it comes
+from works extremly well; the programmers who create these system are
+rightly proud of what they built. But this except is puzzling to the casual
+reader. What relationship links Singapore, Brunei, Poland and Italy? Why
+isn't Italy mentioned in the comment? Since the comment and the code
+differ, one of them must be wrong. Maybe both are. The code is what gets
+executed and tested, so it's more likely to be right; probably the comment
+didn't get updated when the code did. The comment doesn't say enough about
+the relationship among the three countries it does mention; if you had to
+maintain this code, you would need to know more.
+
+The few lines above are typical of much real code: mostly well done, but
+with some things could be improved.
+
+This book is about te practice of programming -- how to write programs for
+real. Our purpose is to help you to write software that works at least as
+well as the program this example was take from, while avoiding trouble
+spots and weakness. We will talk about writing better code from the
+beginning and improving it as it evolves.
+
+We are going to start in an unusual place, however, by discussing
+programming style. The purpose of style is to make the code easy to read
+for yourself and others, and good style is curcial to good programming. We
+want to talk about it first so you will be sensitive to it as you read the
+code in the rest of the book.
+
+These is more to writing a program than getting the syntax right, fixing
+the bugs, and making it run fast enough. Programs are read not only by
+computers but also by programmers. A well-written program is easier to
+understand and to modify than a poorly-written one. The discipline of
+writing well leads to code that is more like to be correct. Fortunately,
+this discipline is not hard.
+
+The principles of programming style are based on common sense guided
+experience, not on arbitrary rules and prescriptions(命令). Code should be
+clear and simle -- straightforward login, natural expression, conventional
+language use, meaningful names, neet formatting, helpful comments -- and it
+should be avoid clever tricks and unusual constructions. Consitency is
+important because others will find it easier to read your code, and you
+theirs, if you all stick to the same style. Detail many be imposed by local
+conventions, management edict(法令), or a program, but even if not, but if
+even not, it is best to obey a set of widely shared conventions. We follow
+the style used in the book \bookname{The C Programming Language}, with
+minor adjustments for C++ and Java.
+
+We will often illustrate rules of style by small example of bad and good
+programming, since the contrast between two ways of saying the same thing
+is instructive. These example are not artifical. The "bad" ones are all
+adapted from real code, written by ordinary programmers(occasionally
+yourselves) working under the common pressures of too much work and too
+little time. Some will be distilled(提取) for brevity(简短), but they will
+not be misrepresented(错误的叙述). Then we will rewrite the bad
+excerpts(摘录) to show how they could be improved. Since they are real
+code, however, they may exhibit(展现) multiple problems. Addressing every
+shortcoming would take us too far off topics, so some of the good examples
+will still harbor(隐藏) other, unremarked flaws(缺点).
+
+To distiguish bad examples from good, throughout the book we will place
+question marks in the questionable code, as in this real excerpt(摘录):
+\begin{badcode}
+    #define ONE 1
+    #define TEN 10 
+    #define TWENTY  20
+\end{badcode}
+Why are these \verb"#define"s questionable? Consider the modification that
+will be necessary if an array of \verb"TWENTY" elements must be made
+larger. At the very least(至少), each name should be replaced by one that
+indicates the role of the specific value in the program:
+\begin{wellcode}
+    #define INPUT_MODE  1
+    #define INPUT_BUFSIZE   10
+    #define OUTPUT_BUFSIZE  20 
+\end{wellcode}
+
+\section{Names}
+\label{sec:names}
+What's in a name? A variable or function name labels an object and conveys
+information about its purpose. A name should be informative, concise,
+memorable, and pronounceable if possible. Much information coomes from
+context and scope; the broader the scope of a variable, the more
+information should be conveyed by it's name.
+
+\emph{Use descriptive names for globals, short names for locals.} Global
+variables, by definition, can crop up(突然出现) anywhere in a program, so
+they need names long enough and descriptive enough to remind the reader of
+their meaning. It's also helpful to include a brief comment with the
+declaration of each global:
+\begin{wellcode}
+    int npending = 0;   // current length of input queue
+\end{wellcode}
+Global functions, classes and structures should also have descriptive names
+that suggest their role in a program.
+
+By contrast, shorter names suffice(足够) for local variables; within a
+function, \verb"n" may be sufficient, \verb"npoints" is fine, and
+\verb"numberOfPoints" is overkill.
+
+Local variables used in conventional way can have very short names. The use
+of \verb"i" and \verb"j" for loop indices, \verb"p" and \verb"q" for
+pointers, and \verb"s" and \verb"t" for strings is so frequent that there
+is little profit and perhaps some loss in longer names. Compare
+\begin{badcode}
+    for (theElementIndex = 0; theElementIndex < numberOfElements;
+            theElementIndex++)
+        elementArray[theElementIndex] = theElementIndex;
+\end{badcode}
+to 
+\begin{wellcode}
+    for (i = 0; i < nelems; i++)
+        elem[i] = i;
+\end{wellcode}
+Programmers are often encouraged to use long variable names regardless of
+context. That is s mistack: clarity is often achieved through brevity.
+
+There are many naming convensions and local customs. Common ones include
+using names that begin or end with \verb"p", such as \verb"nodep", for
+pointer; initial capital letters for \verb"Global"s; and all capital for
+\verb"CONSTANT"s. Some programming shop use more sweeping(彻底的) rules,
+such as notation to encode type and usage information in the variable,
+perhaps \verb"pch" to mean a pointer to a character and \verb"strTo" and
+\verb"strFrom" to mean strings that will be written to and read from. As
+for the spelling of the names themselves, whether to use \verb"npending" or
+\verb"numPending" or \verb"num_pending" is a matter of taste; specific
+rules are much less important than consistent adherence(坚持) to a sensible
+convention.
+
+Naming conventions make it easier to understand your own code, as well as
+code written by others. They also make it easier to invent new names as the
+code is being written. The longer the program, the more important is the
+choice of good, descriptive, systematic names.
+
+Namespaces in C++ and packages in Java provide ways to manage the scope of
+names and help to keep meanings clear without unduly(过度的) long names.
+
+\emph{Be consistent.} Give related things related names that show their
+relationshipt and highlight their difference.
+
+Besides beging much too long, the member names in this Java class are
+wildly(鲁莽地) inconsistent:
+\begin{badcode}
+    class UserQueue {
+        int noOfItemsInQ, frontOfTheQueue, queueCapacity;
+        public int noOfUserInQueue() { ... }
+    }
+\end{badcode}
+The word "queue" appears as Q, Queue and queue. But since queues can only
+be accessed from a variable of type \verb"UserQueue", member names do not
+need to mention "queue" at all; context suffices, so 
+\begin{badcode}
+    queue.queueCapacity
+\end{badcode}
+is redundant. This version is better:
+\begin{wellcode}
+    class UserQueue {
+        int nitems, front, capacity;
+        public int nusers() { ... }
+    }
+\end{wellcode}
+since it leads to statements like 
+\begin{wellcode}
+    queue.capacity++;
+    n = queue.nusers();
+\end{wellcode}
+No clarity is lost. This example still needs work, however, "items" and
+"users" are the same thing, so only one term should be used for a single
+concept.
+
+\emph{Use active names for functions.} Function names should be based on
+active verbs, perhaps followed by nouns:
+\begin{wellcode}
+    now = data.getTime();
+    putchar('\n');
+\end{wellcode}
+Functions that return boolean(true or false) value should be named so that
+return value is unambiguous. Thus
+\begin{badcode}
+    if (checkoctal(c)) ...
+\end{badcode}
+does not indicate which value is true and which is false, while 
+\begin{wellcode}
+    if (isoctal(c)) ...
+\end{wellcode}
+makes it clear that the function return true if argument is octal and false
+if not.
+
+\emph{Be accurate.} A name not only labels, it conveys information to the
+reader. A misleading names can result in mystifying(模糊的) bugs.
+
+One of us wrote and distributed for years a macro called \verb"isoctal"
+with this incorrect implementation:
+\begin{badcode}
+    #define isoctal(c) ((c) >= '0' && (c) <= '8')
+\end{badcode}
+instead of the proper
+\begin{wellcode}
+    #define isoctal(c) ((c) >= '0' && (c) <= '7')
+\end{wellcode}
+In this case, the name conveyed the correct intent but the implementation
+was wrong; it's easy for a sensible name to disguise a broken
+implementation.
+
+Here is an example in which the name and the code are in complete
+contradiction(矛盾):
+\begin{badcode}
+    public boolean inTable(Object obj) {
+        int j = this.getIndex(obj);
+        return(j == nTable);
+    }
+\end{badcode}
+
+The function \verb"getIndex" returns a value between zero and
+\verb"nTable-1" if it finds the object, and returns \verb"nTable" if not.
+The boolean value returned by \verb"inTable" is thus the oppsite of what
+the name implies. At the time code is written, this might not cause
+trouble, but it the program is modified later, perhaps by a different
+programmer, the name is sure to confuse.
+
+\exercise Comment on the choice of names and values in the following code.
+\begin{badcode}
+    #define TRUE    0
+    #define FALSE   1
+
+    if ((ch = getchar()) == EOF)
+        not_eof = FALSE;
+\end{badcode}
+
+\exercise Improve this function:
+\begin{badcode}
+    int smaller(char *s, char *t) {
+        if (strcmp(s, t) < 1)
+            return 1;
+        else 
+            return 0;
+    }
+\end{badcode}
+
+\exercise Read this code aloud:
+\begin{badcode}
+    if ((falloc(SMRHSHSCRTCH, S_IFEXT|0644, MAXRODDHSH)) < 0)
+        ...
+\end{badcode}
+

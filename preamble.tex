@@ -1,4 +1,4 @@
-% vim: ts=4 sts=4 sw=4 et tw=80
+% vim: ts=4 sts=4 sw=4 et tw=75
 % preamble here.
 
 \documentclass[nofonts, a4paper, oneside, 10pt]{book}
@@ -11,15 +11,41 @@
 \usepackage{xeCJK}
 \usepackage{setspace}
 \usepackage{verbatim}
+\usepackage{lineno}
 
 \geometry{ left = 3cm, right = 3cm, bottom = 2cm }
 
-\setCJKmainfont[Scale=0.9, BoldFont=WenQuanYi Zen Hei]{AR PLBaosong2GBK Light}
+\setCJKmainfont[Scale=0.9, BoldFont=WenQuanYi Zen Hei]
+{AR PLBaosong2GBK Light}
 \setCJKsansfont[Scale=0.9]{WenQuanYi Zen Hei}
 \setCJKmonofont[Scale=0.9]{AR PL UMing CN}
 \setmainfont{FreeSerif}
 \setsansfont{FreeSans}
 \setmonofont{FreeMono}
+
+\renewenvironment{quote}
+{\itshape\bfseries}
+{}
+
+\newcommand\bookname[1]{{\itshape\bfseries{#1}}}
+
+\newenvironment{quotesrc}%
+{\begin{flushright}}%
+    {\end{flushright}}
+
+\newenvironment{badcode}%
+{\linespread{0.90}\verbatim}%
+{\endverbatim}
+
+\newenvironment{wellcode}%
+{\linespread{0.90}\verbatim}%
+{\endverbatim}
+
+\newcounter{exercnt}[chapter]
+\renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
+\newenvironment{exercise}
+{\stepcounter{exercnt}\textbf{Exercise\theexercnt}\hspace{1 em}}
+{}
 
 \title{The Practice of Programming}
 \author{Brian W.Kernighan \and Rob Pike}
