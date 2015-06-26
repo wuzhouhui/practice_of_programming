@@ -12,6 +12,7 @@
 \usepackage{setspace}
 \usepackage{verbatim}
 \usepackage{lineno}
+\usepackage{fancyvrb}
 
 \geometry{ left = 3cm, right = 3cm, bottom = 2cm }
 
@@ -33,9 +34,11 @@
 {\begin{flushright}}%
     {\end{flushright}}
 
-\newenvironment{badcode}%
-{\linespread{0.90}\verbatim}%
-{\endverbatim}
+\renewcommand{\FancyVerbFormatLine}[1]{%
+    \makebox[0cm][l]{?}#1}
+\newenvironment{badcode}
+{ \linespread{0.90}\Verbatim }
+{ \endVerbatim }
 
 \newenvironment{wellcode}%
 {\linespread{0.90}\verbatim}%
