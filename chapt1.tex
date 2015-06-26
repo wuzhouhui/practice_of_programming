@@ -245,7 +245,8 @@ the name implies. At the time code is written, this might not cause
 trouble, but it the program is modified later, perhaps by a different
 programmer, the name is sure to confuse.
 
-\exercise Comment on the choice of names and values in the following code.
+\begin{exercise}
+Comment on the choice of names and values in the following code.
 \begin{badcode}
     #define TRUE    0
     #define FALSE   1
@@ -253,8 +254,10 @@ programmer, the name is sure to confuse.
     if ((ch = getchar()) == EOF)
         not_eof = FALSE;
 \end{badcode}
+\end{exercise}
 
-\exercise Improve this function:
+\begin{exercise}
+Improve this function:
 \begin{badcode}
     int smaller(char *s, char *t) {
         if (strcmp(s, t) < 1)
@@ -263,12 +266,15 @@ programmer, the name is sure to confuse.
             return 0;
     }
 \end{badcode}
+\end{exercise}
 
-\exercise Read this code aloud:
+\begin{exercise}
+Read this code aloud:
 \begin{badcode}
     if ((falloc(SMRHSHSCRTCH, S_IFEXT|0644, MAXRODDHSH)) < 0)
         ...
 \end{badcode}
+\end{exercise}
 
 \section{Expression and Statements}
 \label{sec:exprstat}
@@ -475,7 +481,8 @@ language. The fix is, as usual, to break up the expression:
 \end{wellcode}
 Exercises cantion in any expression with side effects.
 
-\exercise Improves each of these fragments:
+\begin{exercise}
+Improves each of these fragments:
 \begin{badcode}
     if (!(c == 'y' || c == 'Y'))
         return;
@@ -487,8 +494,10 @@ Exercises cantion in any expression with side effects.
     else
         bit = 0;
 \end{badcode}
+\end{exercise}
 
-\exercise What is wrong with this excerpt(摘录)?
+\begin{exercise}
+What is wrong with this excerpt(摘录)?
 \begin{badcode}
     int read(int *ip) {
         scanf("%d", ip);
@@ -497,12 +506,15 @@ Exercises cantion in any expression with side effects.
         ...
     insert(&graph[vert], read(&val), read(&ch));
 \end{badcode}
+\end{exercise}
 
-\exercise List all the different output this could produce with various
+\begin{exercise}
+List all the different output this could produce with various
 orders of evaluation:
 \begin{badcode}
     n = 1;
     printf("%d %d\n", n++, n++);
 \end{badcode}
 Try it on as many compilers as you can, to see what happens in practice.
+\end{exercise}
 

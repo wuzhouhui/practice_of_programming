@@ -4,14 +4,13 @@
 \documentclass[nofonts, a4paper, oneside, 10pt]{book}
 
 \usepackage{geometry}
-\usepackage{amsmath}
+\usepackage{amsthm}
 \usepackage{fontspec}
 \usepackage{upquote}
 \usepackage{hyperref}
 \usepackage{xeCJK}
 \usepackage{setspace}
 \usepackage{verbatim}
-\usepackage{lineno}
 \usepackage{fancyvrb}
 
 \geometry{ left = 3cm, right = 3cm, bottom = 2cm }
@@ -46,9 +45,15 @@
 
 \newcounter{exercnt}[chapter]
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
+\renewcommand\proofname{%
+    \stepcounter{exercnt}%
+    \textup{\textbf{Exercise\theexercnt}}
+}
 \newenvironment{exercise}
-{\stepcounter{exercnt}\textbf{Exercise\theexercnt}\hspace{1 em}}
-{}
+{
+    \begin{proof}
+}
+{\end{proof}}
 
 \title{The Practice of Programming}
 \author{Brian W.Kernighan \and Rob Pike}
