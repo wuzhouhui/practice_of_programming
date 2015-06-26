@@ -140,7 +140,7 @@ to
         elem[i] = i;
 \end{wellcode}
 Programmers are often encouraged to use long variable names regardless of
-context. That is s mistack: clarity is often achieved through brevity.
+context. That is s mistake: clarity is often achieved through brevity.
 
 There are many naming convensions and local customs. Common ones include
 using names that begin or end with \verb"p", such as \verb"nodep", for
@@ -245,6 +245,7 @@ the name implies. At the time code is written, this might not cause
 trouble, but it the program is modified later, perhaps by a different
 programmer, the name is sure to confuse.
 
+\par
 \exercise Comment on the choice of names and values in the following code.
 \begin{badcode}
     #define TRUE    0
@@ -269,4 +270,241 @@ programmer, the name is sure to confuse.
     if ((falloc(SMRHSHSCRTCH, S_IFEXT|0644, MAXRODDHSH)) < 0)
         ...
 \end{badcode}
+
+\section{Expression and Statements}
+\label{sec:exprstat}
+By analogy(类比) with choosing names to aid the reader's understanding,
+write expressions and statements in a way that makes their meaning as
+transport as possible. Write the clearest code that does the job. Use
+spaces around operators to suggest grouping; more generally, format to help
+readability. This is trivial(琐细的) but valuable, like keeping a neat dest
+so you can find things. Unlike your dest, your programs are likely bo be
+examined by others.
+
+\emph{Indent to show structure.} A consistent indentation style is the
+lowest-energy way to make a program's structure self-evident(不言自明的).
+This example is badly formatted:
+\begin{badcode}
+    for(n++;n<100;field[n++]='\0');
+    *i = '\0'; return('\n');
+\end{badcode}
+Reformatting improves it somewhat:
+\begin{badcode}
+    for (n++; n < 100; field[n++] = '\0')
+        ;
+    *i = '\0';
+    return('\n');
+\end{badcode}
+Even better is to put the assignment in the body and separate the
+increment, so the loop takes a more conventional form and is thus easier to
+grasp(抓取):
+\begin{wellcode}
+    for (n++; n < 100; n++)
+        field[n] = '\0';
+    *i = '\0';
+    return '\n';
+\end{wellcode}
+\emph{Use the natural form for expressions.} Write expressions as you might
+speak them aloud. Conditional expressions that include negations are always
+hard to understand:
+\begin{badcode}
+    if (!(block-id < actblks) || !(block-id >= unblocks))
+        ...
+\end{badcode}
+Each test is stated negatively, though there is no need for either to be.
+Turing the relations around lets us state the tests positively:
+\begin{wellcode}
+    if ((block-id >= actblks) || (block - id < unblocks))
+        ...
+\end{wellcode}
+Node the code reads naturally.
+\emph{Parenthesize to resolves ambiguity.} Parentheses specify grouping and
+can be used to make the intent clear event when they are not required. The
+inner parentheses in the previous example are not necessary, but they don't
+hurt, either. Seasoned(经验丰富的) programmers might omit them, because the
+relational operators(\verb"< <= == != >= >") have higher precedence than
+the locgical operators(\verb"&&" and \verb"||").
+
+When mixing unrelated oprators, though, it's a good idea to parenthesize. C
+and it's friends present pernicious(恶劣的) precedence problems, and it's
+easy to make a mistake. Because the logical operators bind tighter than
+assignment, parentheses are mandatory for most expressions that combine them:
+\begin{wellcode}
+    while ((c = getchar()) != EOF)
+        ...
+\end{wellcode}
+The bitwise operators \verb"&" and \verb"|" have lower precedence than
+relational operators like \verb"==", so despite it's appearance,
+\begin{badcode}
+    if (x&MASK == BITS)
+        ...
+\end{badcode}
+actually means
+\begin{badcode}
+    if (x & (MASK==BITS))
+        ...
+\end{badcode}
+which is centainly not the programmer's intent. Because it combines bitwise
+and relational operators, the expression need parentheses:
+\begin{wellcode}
+    if ((x&MASK) == BITS)
+        ...
+\end{wellcode}
+Even if parentheses aren't necessary, they can help if the grouping is hard
+to grasp at first glance. This code doesn't need parentheses:
+\begin{badcode}
+    leap_year = y % 4 == 0 && y % 100 != 0 || y % 400 == 0;
+\end{badcode}
+but they make it easier to understand:
+\begin{wellcode}
+    leap_year = ((y%4 == 0) && (y%100 != 0)) || (y%400 == 0);
+\end{wellcode}
+We also removed some of the blanks: grouping the operands of
+higher-precendence operators helps the readers to see the structure more
+quickly.
+
+\emph{Break up complex expressions.} C, C++ and Java have rich expression
+syntax and operators, and it's easy to get carried away by cramming(塞满)
+everything into one construction. An expression like the following is
+compact(紧凑的) but it packs too many oprations into a single statement:
+\begin{badcode}
+    *x += (*xp=(2*k < (n-m) ? c[k+1] : d[k--]));
+\end{badcode}
+It's easier to grasp when broken into several pieces:
+\begin{wellcode}
+    if (2*k < n-m)
+        *xp = c[k+1];
+    else 
+        *xp = d[k--];
+    *x += *xp;
+\end{wellcode}
+\emph{Be clear.} Programmers' endless creative energy is sometimes used to
+write the most concise code possible, or to find clever ways to achieve a
+result. Sometimes these skills are misapplied, though, since the goal is to
+write clear code, not clever code.
+
+What does this intricate(复杂的) calculation do?
+\begin{badcode}
+    subkey = subkey >> (bitoff - ((bitoff >> 3) << 3));
+\end{badcode}
+The innermost expression shifts \verb"bitoff" three bits to the right. The
+result is shifted left again, thus replacing the three shifted bits by
+zeros. This result in turn is subtracted from the original value, yielding
+the bottom three bits of \verb"bitoff". These three bits are used to shift
+\verb'subkey' to the right.
+
+Thus the original expression is equivalent to 
+\begin{wellcode}
+    subkey = subkey >> (bitoff & 0x7);
+\end{wellcode}
+It takes a while to puzzle out what the first version is doing; the second
+is shorter and clearer. Experienced programmers make it ever shorter by
+using assignment operator:
+\begin{wellcode}
+    subkey >>= bitoff & 0x7;
+\end{wellcode}
+Some constructs seem to invite abuse. The \verb"?:" operator can lead to
+mysterious code:
+\begin{badcode}
+    child=(!LC&&!RC)?0:(!LC?RC:LC);
+\end{badcode}
+It's almost impossible to figure out what this code without following all
+the possible paths through the expression. This form is longer, but much
+easier to follow because it makes the paths explicit:
+\begin{wellcode}
+    if (LC == 0 && RC == 0)
+        child = 0;
+    else if (LC == 0)
+        child = RC;
+    else
+        child = LC;
+\end{wellcode}
+The \verb'?:' operator is fine for short expressions where it can replace
+four lines of if-else with one, as in
+\begin{wellcode}
+    max = (a > b) ? a : b;
+\end{wellcode}
+or perhaps
+\begin{wellcode}
+    printf("The list has %d item%s\n", n, n==1 ? "" : "s");
+\end{wellcode}
+but it is not a general replacement for conditional statements.
+
+\emph{Be careful with side effect.} Operators like \verb'++' have side
+effects: besides returning a value, they also modify an underlying
+variable. Side effects can be extremely convenient, but they can also cause
+trouble because the actions of retrieving the value and updating the
+variable might not happen at the same time. In C and C++, the order of
+execution of side effects is undefined, so this multiple assignment is
+likely to produce the wrong answer:
+\begin{badcode}
+    str[i++] = str[i++] = ' ';
+\end{badcode}
+The intent is to store blanks at the next two position in \verb'str'. But
+depending on when \verb'i' is updated, a position in \verb'str' could be
+skipped and \verb'i' might end up increased only by 1. Break it into two
+statements:
+\begin{wellcode}
+    str[i++] = ' ';
+    str[i++] = ' ';
+\end{wellcode}
+
+Even though it cantains only one increment, this assignment can also give
+varying results:
+\begin{badcode}
+    array[i++] = i;
+\end{badcode}
+If \verb'i' is initially 3, the array element might be set to 3 or 4.
+
+It's not just increment and decrement that have side effects; I/O is
+another source of behind-the-scenes(幕后的) action. This example is an
+attempt to read two related numbers from standard input:
+\begin{badcode}
+    scanf("%d %d", &yr, &profit[yr]);
+\end{badcode}
+It is broken because part of the expression modifies \verb'yr' and another
+part uses it. The value of \verb'profit[yr]' can never be right unless the
+new value of \verb'yr' is the same as the old one. You might think that the
+answer depends on the order in which the arguments are evaluated, but the
+real issue is that all the arguments to \verb'scanf' are evaluated before
+the routine is called, so \verb'&profit[yr]' will always be evaluated using
+the old value of \verb'yr'. This sort of problem can occur in almost any
+language. The fix is, as usual, to break up the expression:
+\begin{wellcode}
+    scanf("%d", &yr);
+    scanf("%d", &profit[yr]);
+\end{wellcode}
+Exercises cantion in any expression with side effects.
+
+\par
+\exercise Improves each of these fragments:
+\begin{badcode}
+    if (!(c == 'y' || c == 'Y'))
+        return;
+    length = (length < BUFSIZE) ? length : BUFSIZE;
+    flag = flag ? 0 : 1;
+    quote = (*line == '"') ? 1 : 0;
+    if (val & 1)
+        bit = 1;
+    else
+        bit = 0;
+\end{badcode}
+
+\exercise What is wrong with this excerpt(摘录)?
+\begin{badcode}
+    int read(int *ip) {
+        scanf("%d", ip);
+        return *ip;
+    }
+        ...
+    insert(&graph[vert], read(&val), read(&ch));
+\end{badcode}
+
+\exercise List all the different output this could produce with various
+orders of evaluation:
+\begin{badcode}
+    n = 1;
+    printf("%d %d\n", n++, n++);
+\end{badcode}
+Try it on as many compilers as you can, to see what happens in practice.
 
