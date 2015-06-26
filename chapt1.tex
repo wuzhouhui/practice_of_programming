@@ -518,3 +518,402 @@ orders of evaluation:
 Try it on as many compilers as you can, to see what happens in practice.
 \end{exercise}
 
+\section{Consistency and Idioms(习惯用法)}
+\label{sec:consist_idom}
+Consitency leads to better programs. If formatting varies unpredictably, or
+loop over an array runs upill this time and downhill the next, or strings
+are copied with \verb'strcpy' and a \verb'for' loop there, the variations
+make it harder to see what's really going on. But if the same computation
+is done the same way every time it appears, any variation suggests a
+genuine(真正的) difference, one worth nothing.
+
+\emph{Use a consistent indentation and brace style.} Indentation show
+structure, but which indentation style is best? Should the opening brace go
+one the same line as the \verb'if' for on the next? Programmers have always
+argued about the layout of program, but the specific style is much less
+important than its consistent application. Pick one style,
+preferably(更合意地) ours, use it consistently, and don't waste time
+arguing.
+
+Should you include braces even when they are not needed? Like parentheses,
+braces can resolve ambiguity and occasionally make the code clearer. For
+consistency, many experienced programmers always put braces around loop
+or \verb'if' bodies. But if the body is a single statement they are
+unnecessary, so we tend to omit them. If you also choose to leave them out,
+make sure you don't drop them when they are needed to resolve the
+"dangling(悬挂的) else" ambiguity exemplified(示例) by this excerpt(摘录):
+\begin{badcode}
+    if (month == FEB) {
+        if (year%4 == 0)
+            if (day > 29)
+                legal = FALSE;
+        else 
+            if (day > 28)
+                legal = FALSE;
+    }
+\end{badcode}
+The indentation is misleading, since the \verb'else' is actually attached
+to the line 
+\begin{badcode}
+    if (day > 29)
+\end{badcode}
+and the code is wrong. When one \verb'if' immediately follows another,
+always use braces:
+\begin{badcode}
+    if (month == FEB) {
+        if (year%4 == 0) {
+            if (day > 29)
+                legal = FALSE;
+        } else {
+            if (day > 28)
+                legal = FALSE;
+        }
+    }
+\end{badcode}
+Syntax-driven tools make this sort of mistake less likely.
+
+Even with the bug fixed, though, the code is hard to follow. The
+computation is easier to grasp if we use a variable to hold the number of
+days in February:
+\begin{badcode}
+    if (month == FEB) {
+        int nday;
+
+        nday = 28;
+        if (year%4 == 0)
+            nday == 29;
+        if (day > nday)
+            legal = FALSE;
+    }
+\end{badcode}
+The code still wrong -- 2000 is a leap year, while 1900 and 2100 are not --
+but this structure is much easier to adapt to make it absolutely right.
+
+By the way, if you work on a program you didn't write, preserve the style
+you find there. When you make a change, don't use your own style even
+though you prefer it. The program's consistency is more important than your
+own, because it makes life easier for those who follow.
+
+\emph{Use idioms for consistency.} Like natural language, programming
+languages have idioms, conventional ways that exprerienced programmers
+write common pieces of code. A central part of learning any language is
+developing a familiarity with its idioms.
+
+One of the most common idioms is the form of a loop. Consider the C, C++,
+or Java code for stepping through the \verb'n' elements of an array, for
+example to initialize them. Someone might write the loop like this:
+\begin{badcode}
+    i = 0;
+    while (i <= n-1)
+        array[i++] = 1.0;
+\end{badcode}
+or perhaps like this:
+\begin{badcode}
+    for (i = 0; i < n; )
+        array[i++] = 1.0;
+\end{badcode}
+or even:
+\begin{badcode}
+    for (i = 0; --i >= 0; )
+        array[i] = 1.0;
+\end{badcode}
+All of these are correct, but the idiomatic form is like this:
+\begin{wellcode}
+    for (i = 0; i < n; i++)
+        array[i] = 1.0;
+\end{wellcode}
+This is not an arbitrary choice. It visits ecah member of an n-element
+array indexed from \verb'0' to \verb'n-1'. It places all the loop control
+in the \verb'for' itself, runs in increasing order, and uses the very
+idiomatic \verb'++' operator to undate the loop variable. It leaves the
+index variable at a known value just beyond the last array element. Native
+speakers recognize it which study and write it correctly without a moment's
+thought.
+
+In C++ or Java, a common variant includes the declaration of the loop
+variable:
+\begin{wellcode}
+    for (int i = 0; i < n; i++)
+        array[i] = 1.0;
+\end{wellcode}
+Here is the standard loop for walking along a list in C:
+\begin{wellcode}
+    for (p = list; p != NULL; p = p->next)
+        ...
+\end{wellcode}
+Again, all the loop control is in the \verb'for'.
+
+For an infinite loop, we prefer 
+\begin{wellcode}
+    for (;;)
+        ...
+\end{wellcode}
+but 
+\begin{wellcode}
+    while (1)
+        ...
+\end{wellcode}
+is also popular. Don't use anything other than these forms.
+
+Indentation should be idiomatic, too. This unusual vertical layout
+detracts(贬低) from readability; it looks like three statements, not a loop:
+\begin{badcode}
+    for (
+        ap = arr;
+        ap < arr + 128;
+        *ap++ = 0
+        )
+    {
+        ;
+    }
+\end{badcode}
+A standard loop is much easier to read:
+\begin{wellcode}
+    for (ap = arr; ap < arr+128; ap++)
+        *ap = 0;
+\end{wellcode}
+Sprawling(蔓延的) layout also force code onto multiple screens or pages,
+and thus detract from readability.
+
+Another common idiom is to nest an assignment inside a loop condition, as
+in 
+\begin{wellcode}
+    while ((c = getchar()) != EOF)
+        putchar(c);
+\end{wellcode}
+The \verb'do-while' statement is used much less often than \verb'for' and
+\verb'while', because it always executes at least once, testing at the
+bottom of the loop instead of the top. In many cases, that behavior is a
+bug waiting to bite, as in this rewrite of the \verb'getchar' loop:
+\begin{badcode}
+    do {
+        c = getchar();
+        putchar(c);
+    } while (c != EOF);
+\end{badcode}
+It write a spurious(假的) output character because the test occurs after
+the call to \verb'putchar'. The \verb'do-while' loop is the right one only
+when the body of the loop must always be executed at least once; we'll see
+some examples later.
+
+One advantage of the consistent use of idioms is that it draws attentions
+to non-standard loops, a frequent sign of trouble:
+\begin{wellcode}
+    int i, *iArray, nmemb;
+
+    iArray = malloc(nmemb * sizeof(int));
+    for (i = 0; i <= nmemb; i++)
+        iArray[i] = i;
+\end{wellcode}
+Space is allocated for \verb'nmemb' items, \verb'iArray[0]' through
+\verb'iArray[nmemb-1]', but since the loop test is \verb'<=' the loop walks
+off the end of array and overwrites whatever is stored next in memory.
+Unfortunately, error like this are often not detected until long after the
+damage has been done.
+
+C and C++ also have idioms for allocating space for strings and then
+manipulating it, and code that doesn't use them often harbors(隐藏) a bug:
+\begin{badcode}
+    char *p, buf[256];
+
+    gets(buf);
+    p = malloc(strlen(buf));
+    strcpy(p, buf);
+\end{badcode}
+One should never use \verb'gets', since there is no way to limit the amount
+of input it will read. This leads to security problems that we'll return to
+in Chapter \ref{chap:testing}, where we will show that \verb'fgets' is
+always a better choice. But there is another problem as well:
+\verb'strlen' does not count the \verb"'\0'" that terminates a string,
+while \verb'strcpy' copies it. So not enough space is allocated, and
+\verb'strcpy' writes past the end of allocated space. The idiom is 
+\begin{wellcode}
+    p = malloc(strlen(buf) + 1);
+    strcpy(p, buf);
+\end{wellcode}
+or 
+\begin{wellcode}
+    p = new char[strlen(buf) + 1];
+    strcpy(p, buf);
+\end{wellcode}
+in C++. If you don't see the \verb'+1', bewary.
+
+Java doesn't suffer from this specific problem, since string are not
+prepresented as null-terminated arrays. Array substripts are checked as
+well, so it is not possible to access outside the bounds of an array in Java.
+
+Most C and C++ environments provide a library function, \verb'strdup', that
+creates a copy of a string using \verb'malloc' and \verb'strcpy', making it
+easy to avoid this bug. Unfortunately, \verb'strdup' is not part of the
+ANSI C standard.
+
+By the way, neither the original code nor the corrected version check the
+value returned by \verb'malloc'. We omitted this improvement to focus on
+the main point, but in a real program the return value from \verb'malloc',
+\verb'realloc', \verb'strdup', or any other allocation routine should
+always be checked.
+
+\emph{Use else-ifs for multi-way decisions.} Multi-way decisions are
+idiomatically expressed as a chain of \verb'if .. else if .. else', like this:
+\begin{wellcode}
+    if (condition1)
+        statement1
+    else if (condition2)
+        statement2
+    ...
+    else if (conditioni)
+        statementi
+    else 
+        default-statement
+\end{wellcode}
+The \textit{conditions} read from top to bottom; at the first
+\textit{condition} that is satisfied, the \textit{statement} that follows
+is executed, and then rest of the construct is skipped. The
+\textit{statement} part may be a single statement or group of statements
+enclosed in braces. The last \verb'else' handles the "default" situation,
+where none of the other alternatives was chosen. This trailing(拖尾的)
+\verb'else' part may be ommited if there is no action for the default,
+although leaving it with an error message may help to catch conditions that
+"can't happen".
+
+Align all of the \verb'else' clauses(子句) vertically rather than lining
+up(排列) each \verb'else' with the corresponding \verb'if'. Vertial
+alignment emphasizes that test are done in sequence and keep them from
+marching off(步进, 越来越近) the right side of the page.
+
+A sequence of nested \verb'if' statement is often a warning of
+awkward(笨拙的) code, if not outright(显示) errors:
+\begin{badcode}
+    if (argc == 3)
+        if ((find == fopen(argv[1], "r")) != NULL)
+            if ((fout = fopen(argv[2], "w")) != NULL) {
+                while ((c = getc(find)) != EOF)
+                    putc(c, fout);
+                fclose(fin); fclose(fout);
+            } else 
+                printf("Can't open output file %s\n", argv[1]);
+        else 
+            printf("Can't open input file %s\n", argv[1]);
+    else 
+        printf("Usage: cp inputfile outputfile\n");
+\end{badcode}
+The sequence of \verb'if's requires us to maintain a mental(心理的)
+pushdown(推进) stack of what tests were make, so that at the appropriate
+point we can pop them until we determine the corresponding action (if we
+can still remember). Since at most one action will be performed, we really
+want an \verb'else if'. Changing the order in which the decisions are made
+leads to a clearer version, in which we have also corrected the resource
+leak(泄漏) in the original:
+\begin{wellcode}
+    if (argc != 3)
+        printf("Usage: cp inputfile outputfile\n");
+    else if ((fin = fopen(argv[1], "r")) == NULL)
+        printf("Can't open input file %s\n", argv[1]);
+    else if ((fout = fopen(argv[2], "w")) == NULL) {
+        printf("Can't open output file %s\n", argv[2]);
+        fclose(fin);
+    } else {
+        while ((c = getc(fin)) != EOF)
+            putc(c, fout);
+        fclose(fin);
+        fclose(fout);
+    }
+\end{wellcode}
+We read down the tests until the first one that is true, do the
+corresponding action, and continue after the last \verb'else'. The rule is
+to follow each decision as closely as possible by it's associated action.
+Or, to put it another way, each time you make a test, do something.
+
+Attempts to re-use pieces of code often lead to tightly knotted(纠缠的) programs.
+\begin{badcode}
+    switch (c) {
+    case '-': sign = -1;
+    case '+': c = getchar();
+    case '.': break;
+    default: if (!isdigit(c))
+                return 0;
+    }
+\end{badcode}
+This uses a tricky sequence of fall-throughs in the \verb'switch' statement
+to avoid duplicating one line of code. It's also not idiomatic; cases
+should almost always end with a \verb'break', with the rare exceptions
+commented. A more traditional layout and structure is easier to read,
+though longer:
+\begin{badcode}
+    switch (c) {
+    case '-':
+        sign = -1;
+        /* fall through */
+    case '+':
+        c = getchar();
+        break;
+    case '.':
+        break;
+    default:
+        if (!isdigit(c))
+            return 0;
+        break;
+    }
+\end{badcode}
+The increase in size is more than offset by the increase in clarity.
+However, for such an unusual structure, a sequence of \verb'else-if' is
+even clearer:
+\begin{wellcode}
+    if (c == '-') {
+        sign = -1;
+        c = getchar();
+    } else if (c == '+') {
+        c = getchar();
+    } else if (c != '.' && !isdigit(c)) {
+        return 0;
+    }
+\end{wellcode}
+The braces around the one-line blocks highlight the parallel structure.
+
+An acceptable use of a fall-through occurs when several cases have
+identical code; the conventional layout is like this:
+\begin{wellcode}
+    case '0':
+    case '1':
+    case '2':
+        ...
+        break;
+\end{wellcode}
+and no comment is required.
+
+\begin{exercise}
+    Rewrite these C/C++ excerpts more clearly:
+
+    \begin{badcode}
+        if (istty(stdin)) ;
+        else if (istty(stdout)) ;
+            else if (istty(stderr)) ;
+                else return(0);
+    \end{badcode}
+
+    \begin{badcode}
+        if (retval != SUCCESS)
+            return(retval);
+        /* All went well */
+        return SUCCESS;
+    \end{badcode}
+
+    \begin{badcode}
+        for (k = 0; k++ < 5; x += dx)
+            scanf("%lf", %dx);
+    \end{badcode}
+\end{exercise}
+
+\begin{exercise}
+    Identify the errors in this Java fragment and repair it by rewriting
+    with an idiomatic loop:
+    \begin{badcode}
+        int count = 0;
+        while (count < total) {
+            count++;
+            if (this.getName(count) == nametable.userName()) {
+                return (true);
+            }
+        }
+    \end{badcode}
+\end{exercise}
