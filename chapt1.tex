@@ -1196,9 +1196,12 @@ appropriate use for a macro because it does something that a function
 cannot: compute the size of an array from its declaration.
 
 \begin{exercise}
-    #define FTZMETER    0.3048
-    #define METERZFT    328084
-    #define MIZFT       5280.0
-    #define MIZKM       1.609344
-    #define SQMIZSQKM   2.589988
+    How would you rewrite these definitions to minimize potential errors?
+    \begin{badcode}
+        #define FTZMETER    0.3048
+        #define METERZFT    328084
+        #define MIZFT       5280.0
+        #define MIZKM       1.609344
+        #define SQMIZSQKM   2.589988
+    \begin{badcode}
 \end{exercise}
