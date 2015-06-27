@@ -917,3 +917,96 @@ and no comment is required.
         }
     \end{badcode}
 \end{exercise}
+
+\section{Function Macros}
+\label{sec:func_mac}
+There is a tendency among older C programmers to write macros instead of
+function for very short computations that will be executed frequently; I/O
+operations such as \verb'getchar' and character test like \verb'isdigit'
+are officially sanctioned(认可的) examples. The reason is performance: a
+macro avoids the overhead of a function call. This argument was weak even
+when C was first defined, a time of slow machines and expensive function
+calls; today it is irrelevant. With modern machines and compilers, the
+drawbacks of function macros outweight(超过) their benefits.
+
+\emph{Avoid function macros.} In C++, \verb'inline' functions render(补偿)
+function macros unnecessary; in Java, there are no macros. In C, they cause
+more problems than they solve.
+
+One of the most serious problem with function macros is that a
+\textit{parameter} that appears more than once in the definition might be
+evaluated more than once; if the argument in the call includes an
+expression with side effect, the result is a subtle(微妙的) bug. This code
+attempts to implement one of the character tests from \verb'<ctype.h>':
+\begin{badcode}
+    #define isupper(c) ((c) >= 'A' && (c) <= 'Z')
+\end{badcode}
+Note that the parameter \verb'c' occurs twice in the body of the macro. If
+\verb'isupper' is called in a context like this,
+\begin{badcode}
+    while (isupper(c = getchar()))
+        ...
+\end{badcode}
+then each time an input character is greater than or equal to \verb'A', it
+will be discarded and another character read to be tested against \verb'Z'.
+The C standard is carefully written to permit \verb'isupper' and analogous
+functions to be macros, but only if they gurantee to evaluate the argument
+only once, so this implementation is broken.
+
+It's always better to use the ctype function than to implement them
+yourself, and it's safer not to nest routine like \verb'getchar' that have
+side effects. Rewriting the test to use two expressions rather one makes it
+clearer and also gives an opportunity to catch end-of-file explicitly:
+\begin{wellcode}
+    while ((c = getchar()) != EOF && isupper(c))
+        ...
+\end{wellcode}
+
+Sometimes multiple evaluation causes a performance problem rather than an
+outright error. Consider this example:
+\begin{badcode}
+    #define ROUND_TO_INT(x) ((int) ((x)+(((x)>0)?0.5:-0.5)))
+        ...
+    size = ROUND_TO_INT(sqrt(dx*dx + dy*dy));
+\end{badcode}
+This will perform the square root computation twice as often as necessary.
+Even given simple arguments, a complex expression like the body of
+\verb'ROUND_TO_INT' translates into many instructions, which should be
+housed(收藏) in a single function to be called when needed. Instantiating a
+macro at every occurence makes the compiled program larger. (C++
+\verb'inline' functions have this drawback, too.)
+
+\emph{Parenthesize the macro body and arguments.} If you insist on using
+function macros, be careful. Macros work by textual substitution: the
+parameters in the definition are replaced by the arguments of the call and
+the result replaces the original call, as text. This is a troublesome
+difference from function. This expression
+\begin{wellcode}
+    1 / square(x)
+\end{wellcode}
+works fine if square is a function, but if it's a macro like this,
+\begin{badcode}
+    #define square(x) (x) * (x)
+\end{badcode}
+the expression will be expanded to the erroneous
+\begin{badcode}
+    1 / (x) * (x)
+\end{badcode}
+The macro should be rewritten as 
+\begin{wellcode}
+    #define square(x) ((x) * (x))
+\end{wellcode}
+All those parentheses are necessary. Even parenthesizing the macro properly
+does not addres the multiple evaluation problem. If an operation is
+expensive or common enough to be wrapped up, use a function.
+
+In C++, \verb'inline' functions avoid the syntatic trouble while offering
+whatever performance advantage macros might provide. They are appropriate
+for short functions that set or retrieve a single value.
+
+\begin{exercise}
+    Identify the problems with this macro definition:
+    \begin{badcode}
+        #define ISDIGIT(c) ((c >= '0') && (c <= '9')) 1 : 0
+    \end{badcode}
+\end{exercise}
