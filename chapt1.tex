@@ -3,9 +3,9 @@
 \label{chap:style}
 \begin{quote}
     It is an old observation that the best writers sometimes disregard the
-    rules of rhetoric(修辞学). When they do so, however, the reader will
-    usually find in the sentence some compensating(补偿) merit(优点),
-    attained at the cost of the violation(违反). Unless he is centain of
+    rules of rhetoric (修辞学). When they do so, however, the reader will
+    usually find in the sentence some compensating (补偿) merit (优点),
+    attained at the cost of the violation (违反). Unless he is centain of
     doing as well, he will probaly do best to follow the rules.
 \end{quote}
 
@@ -62,13 +62,13 @@ writing well leads to code that is more like to be correct. Fortunately,
 this discipline is not hard.
 
 The principles of programming style are based on common sense guided
-experience, not on arbitrary rules and prescriptions(命令). Code should be
+experience, not on arbitrary rules and prescriptions (命令). Code should be
 clear and simle -- straightforward login, natural expression, conventional
 language use, meaningful names, neet formatting, helpful comments -- and it
 should be avoid clever tricks and unusual constructions. Consitency is
 important because others will find it easier to read your code, and you
 theirs, if you all stick to the same style. Detail many be imposed by local
-conventions, management edict(法令), or a program, but even if not, but if
+conventions, management edict (法令), or a program, but even if not, but if
 even not, it is best to obey a set of widely shared conventions. We follow
 the style used in the book \bookname{The C Programming Language}, with
 minor adjustments for C++ and Java.
@@ -76,17 +76,17 @@ minor adjustments for C++ and Java.
 We will often illustrate rules of style by small example of bad and good
 programming, since the contrast between two ways of saying the same thing
 is instructive. These example are not artifical. The "bad" ones are all
-adapted from real code, written by ordinary programmers(occasionally
+adapted from real code, written by ordinary programmers (occasionally
 yourselves) working under the common pressures of too much work and too
-little time. Some will be distilled(提取) for brevity(简短), but they will
-not be misrepresented(错误的叙述). Then we will rewrite the bad
-excerpts(摘录) to show how they could be improved. Since they are real
-code, however, they may exhibit(展现) multiple problems. Addressing every
+little time. Some will be distilled (提取) for brevity (简短), but they will
+not be misrepresented (错误的叙述). Then we will rewrite the bad
+excerpts (摘录) to show how they could be improved. Since they are real
+code, however, they may exhibit (展现) multiple problems. Addressing every
 shortcoming would take us too far off topics, so some of the good examples
-will still harbor(隐藏) other, unremarked flaws(缺点).
+will still harbor (隐藏) other, unremarked flaws (缺点).
 
 To distiguish bad examples from good, throughout the book we will place
-question marks in the questionable code, as in this real excerpt(摘录):
+question marks in the questionable code, as in this real excerpt (摘录):
 \begin{badcode}
     #define ONE 1
     #define TEN 10 
@@ -94,7 +94,7 @@ question marks in the questionable code, as in this real excerpt(摘录):
 \end{badcode}
 Why are these \verb"#define"s questionable? Consider the modification that
 will be necessary if an array of \verb"TWENTY" elements must be made
-larger. At the very least(至少), each name should be replaced by one that
+larger. At the very least (至少), each name should be replaced by one that
 indicates the role of the specific value in the program:
 \begin{wellcode}
     #define INPUT_MODE  1
@@ -111,7 +111,7 @@ context and scope; the broader the scope of a variable, the more
 information should be conveyed by it's name.
 
 \emph{Use descriptive names for globals, short names for locals.} Global
-variables, by definition, can crop up(突然出现) anywhere in a program, so
+variables, by definition, can crop up (突然出现) anywhere in a program, so
 they need names long enough and descriptive enough to remind the reader of
 their meaning. It's also helpful to include a brief comment with the
 declaration of each global:
@@ -121,7 +121,7 @@ declaration of each global:
 Global functions, classes and structures should also have descriptive names
 that suggest their role in a program.
 
-By contrast, shorter names suffice(足够) for local variables; within a
+By contrast, shorter names suffice (足够) for local variables; within a
 function, \verb"n" may be sufficient, \verb"npoints" is fine, and
 \verb"numberOfPoints" is overkill.
 
@@ -145,13 +145,13 @@ context. That is s mistake: clarity is often achieved through brevity.
 There are many naming convensions and local customs. Common ones include
 using names that begin or end with \verb"p", such as \verb"nodep", for
 pointer; initial capital letters for \verb"Global"s; and all capital for
-\verb"CONSTANT"s. Some programming shop use more sweeping(彻底的) rules,
+\verb"CONSTANT"s. Some programming shop use more sweeping (彻底的) rules,
 such as notation to encode type and usage information in the variable,
 perhaps \verb"pch" to mean a pointer to a character and \verb"strTo" and
 \verb"strFrom" to mean strings that will be written to and read from. As
 for the spelling of the names themselves, whether to use \verb"npending" or
 \verb"numPending" or \verb"num_pending" is a matter of taste; specific
-rules are much less important than consistent adherence(坚持) to a sensible
+rules are much less important than consistent adherence (坚持) to a sensible
 convention.
 
 Naming conventions make it easier to understand your own code, as well as
@@ -160,13 +160,13 @@ code is being written. The longer the program, the more important is the
 choice of good, descriptive, systematic names.
 
 Namespaces in C++ and packages in Java provide ways to manage the scope of
-names and help to keep meanings clear without unduly(过度的) long names.
+names and help to keep meanings clear without unduly (过度的) long names.
 
 \emph{Be consistent.} Give related things related names that show their
 relationshipt and highlight their difference.
 
 Besides beging much too long, the member names in this Java class are
-wildly(鲁莽地) inconsistent:
+wildly (鲁莽地) inconsistent:
 \begin{badcode}
     class UserQueue {
         int noOfItemsInQ, frontOfTheQueue, queueCapacity;
@@ -214,7 +214,7 @@ makes it clear that the function return true if argument is octal and false
 if not.
 
 \emph{Be accurate.} A name not only labels, it conveys information to the
-reader. A misleading names can result in mystifying(模糊的) bugs.
+reader. A misleading names can result in mystifying (模糊的) bugs.
 
 One of us wrote and distributed for years a macro called \verb"isoctal"
 with this incorrect implementation:
@@ -230,7 +230,7 @@ was wrong; it's easy for a sensible name to disguise a broken
 implementation.
 
 Here is an example in which the name and the code are in complete
-contradiction(矛盾):
+contradiction (矛盾):
 \begin{badcode}
     public boolean inTable(Object obj) {
         int j = this.getIndex(obj);
@@ -278,16 +278,16 @@ Read this code aloud:
 
 \section{Expression and Statements}
 \label{sec:exprstat}
-By analogy(类比) with choosing names to aid the reader's understanding,
+By analogy (类比) with choosing names to aid the reader's understanding,
 write expressions and statements in a way that makes their meaning as
 transport as possible. Write the clearest code that does the job. Use
 spaces around operators to suggest grouping; more generally, format to help
-readability. This is trivial(琐细的) but valuable, like keeping a neat dest
+readability. This is trivial (琐细的) but valuable, like keeping a neat dest
 so you can find things. Unlike your dest, your programs are likely bo be
 examined by others.
 
 \emph{Indent to show structure.} A consistent indentation style is the
-lowest-energy way to make a program's structure self-evident(不言自明的).
+lowest-energy way to make a program's structure self-evident (不言自明的).
 This example is badly formatted:
 \begin{badcode}
     for(n++;n<100;field[n++]='\0');
@@ -302,7 +302,7 @@ Reformatting improves it somewhat:
 \end{badcode}
 Even better is to put the assignment in the body and separate the
 increment, so the loop takes a more conventional form and is thus easier to
-grasp(抓取):
+grasp (抓取):
 \begin{wellcode}
     for (n++; n < 100; n++)
         field[n] = '\0';
@@ -326,12 +326,12 @@ Node the code reads naturally.
 \emph{Parenthesize to resolves ambiguity.} Parentheses specify grouping and
 can be used to make the intent clear event when they are not required. The
 inner parentheses in the previous example are not necessary, but they don't
-hurt, either. Seasoned(经验丰富的) programmers might omit them, because the
+hurt, either. Seasoned (经验丰富的) programmers might omit them, because the
 relational operators(\verb"< <= == != >= >") have higher precedence than
 the locgical operators(\verb"&&" and \verb"||").
 
 When mixing unrelated oprators, though, it's a good idea to parenthesize. C
-and it's friends present pernicious(恶劣的) precedence problems, and it's
+and it's friends present pernicious (恶劣的) precedence problems, and it's
 easy to make a mistake. Because the logical operators bind tighter than
 assignment, parentheses are mandatory for most expressions that combine them:
 \begin{wellcode}
@@ -369,9 +369,9 @@ higher-precendence operators helps the readers to see the structure more
 quickly.
 
 \emph{Break up complex expressions.} C, C++ and Java have rich expression
-syntax and operators, and it's easy to get carried away by cramming(塞满)
+syntax and operators, and it's easy to get carried away by cramming (塞满)
 everything into one construction. An expression like the following is
-compact(紧凑的) but it packs too many oprations into a single statement:
+compact (紧凑的) but it packs too many oprations into a single statement:
 \begin{badcode}
     *x += (*xp=(2*k < (n-m) ? c[k+1] : d[k--]));
 \end{badcode}
@@ -388,7 +388,7 @@ write the most concise code possible, or to find clever ways to achieve a
 result. Sometimes these skills are misapplied, though, since the goal is to
 write clear code, not clever code.
 
-What does this intricate(复杂的) calculation do?
+What does this intricate (复杂的) calculation do?
 \begin{badcode}
     subkey = subkey >> (bitoff - ((bitoff >> 3) << 3));
 \end{badcode}
@@ -462,7 +462,7 @@ varying results:
 If \verb'i' is initially 3, the array element might be set to 3 or 4.
 
 It's not just increment and decrement that have side effects; I/O is
-another source of behind-the-scenes(幕后的) action. This example is an
+another source of behind-the-scenes (幕后的) action. This example is an
 attempt to read two related numbers from standard input:
 \begin{badcode}
     scanf("%d %d", &yr, &profit[yr]);
@@ -497,7 +497,7 @@ Improves each of these fragments:
 \end{exercise}
 
 \begin{exercise}
-What is wrong with this excerpt(摘录)?
+What is wrong with this excerpt (摘录)?
 \begin{badcode}
     int read(int *ip) {
         scanf("%d", ip);
@@ -518,21 +518,21 @@ orders of evaluation:
 Try it on as many compilers as you can, to see what happens in practice.
 \end{exercise}
 
-\section{Consistency and Idioms(习惯用法)}
+\section{Consistency and Idioms (习惯用法)}
 \label{sec:consist_idom}
 Consitency leads to better programs. If formatting varies unpredictably, or
 loop over an array runs upill this time and downhill the next, or strings
 are copied with \verb'strcpy' and a \verb'for' loop there, the variations
 make it harder to see what's really going on. But if the same computation
 is done the same way every time it appears, any variation suggests a
-genuine(真正的) difference, one worth nothing.
+genuine (真正的) difference, one worth nothing.
 
 \emph{Use a consistent indentation and brace style.} Indentation show
 structure, but which indentation style is best? Should the opening brace go
 one the same line as the \verb'if' for on the next? Programmers have always
 argued about the layout of program, but the specific style is much less
 important than its consistent application. Pick one style,
-preferably(更合意地) ours, use it consistently, and don't waste time
+preferably (更合意地) ours, use it consistently, and don't waste time
 arguing.
 
 Should you include braces even when they are not needed? Like parentheses,
@@ -541,7 +541,7 @@ consistency, many experienced programmers always put braces around loop
 or \verb'if' bodies. But if the body is a single statement they are
 unnecessary, so we tend to omit them. If you also choose to leave them out,
 make sure you don't drop them when they are needed to resolve the
-"dangling(悬挂的) else" ambiguity exemplified(示例) by this excerpt(摘录):
+"dangling (悬挂的) else" ambiguity exemplified (示例) by this excerpt (摘录):
 \begin{badcode}
     if (month == FEB) {
         if (year%4 == 0)
@@ -656,7 +656,7 @@ but
 is also popular. Don't use anything other than these forms.
 
 Indentation should be idiomatic, too. This unusual vertical layout
-detracts(贬低) from readability; it looks like three statements, not a loop:
+detracts (贬低) from readability; it looks like three statements, not a loop:
 \begin{badcode}
     for (
         ap = arr;
@@ -672,7 +672,7 @@ A standard loop is much easier to read:
     for (ap = arr; ap < arr+128; ap++)
         *ap = 0;
 \end{wellcode}
-Sprawling(蔓延的) layout also force code onto multiple screens or pages,
+Sprawling (蔓延的) layout also force code onto multiple screens or pages,
 and thus detract from readability.
 
 Another common idiom is to nest an assignment inside a loop condition, as
@@ -691,7 +691,7 @@ bug waiting to bite, as in this rewrite of the \verb'getchar' loop:
         putchar(c);
     } while (c != EOF);
 \end{badcode}
-It write a spurious(假的) output character because the test occurs after
+It write a spurious (假的) output character because the test occurs after
 the call to \verb'putchar'. The \verb'do-while' loop is the right one only
 when the body of the loop must always be executed at least once; we'll see
 some examples later.
@@ -712,7 +712,7 @@ Unfortunately, error like this are often not detected until long after the
 damage has been done.
 
 C and C++ also have idioms for allocating space for strings and then
-manipulating it, and code that doesn't use them often harbors(隐藏) a bug:
+manipulating it, and code that doesn't use them often harbors (隐藏) a bug:
 \begin{badcode}
     char *p, buf[256];
 
@@ -771,18 +771,18 @@ The \textit{conditions} read from top to bottom; at the first
 is executed, and then rest of the construct is skipped. The
 \textit{statement} part may be a single statement or group of statements
 enclosed in braces. The last \verb'else' handles the "default" situation,
-where none of the other alternatives was chosen. This trailing(拖尾的)
+where none of the other alternatives was chosen. This trailing (拖尾的)
 \verb'else' part may be ommited if there is no action for the default,
 although leaving it with an error message may help to catch conditions that
 "can't happen".
 
-Align all of the \verb'else' clauses(子句) vertically rather than lining
-up(排列) each \verb'else' with the corresponding \verb'if'. Vertial
+Align all of the \verb'else' clauses (子句) vertically rather than lining
+up (排列) each \verb'else' with the corresponding \verb'if'. Vertial
 alignment emphasizes that test are done in sequence and keep them from
-marching off(步进, 越来越近) the right side of the page.
+marching off (步进, 越来越近) the right side of the page.
 
 A sequence of nested \verb'if' statement is often a warning of
-awkward(笨拙的) code, if not outright(显示) errors:
+awkward (笨拙的) code, if not outright (显示) errors:
 \begin{badcode}
     if (argc == 3)
         if ((find == fopen(argv[1], "r")) != NULL)
@@ -797,13 +797,13 @@ awkward(笨拙的) code, if not outright(显示) errors:
     else 
         printf("Usage: cp inputfile outputfile\n");
 \end{badcode}
-The sequence of \verb'if's requires us to maintain a mental(心理的)
-pushdown(推进) stack of what tests were make, so that at the appropriate
+The sequence of \verb'if's requires us to maintain a mental (心理的)
+pushdown (推进) stack of what tests were make, so that at the appropriate
 point we can pop them until we determine the corresponding action (if we
 can still remember). Since at most one action will be performed, we really
 want an \verb'else if'. Changing the order in which the decisions are made
 leads to a clearer version, in which we have also corrected the resource
-leak(泄漏) in the original:
+leak (泄漏) in the original:
 \begin{wellcode}
     if (argc != 3)
         printf("Usage: cp inputfile outputfile\n");
@@ -824,7 +824,7 @@ corresponding action, and continue after the last \verb'else'. The rule is
 to follow each decision as closely as possible by it's associated action.
 Or, to put it another way, each time you make a test, do something.
 
-Attempts to re-use pieces of code often lead to tightly knotted(纠缠的) programs.
+Attempts to re-use pieces of code often lead to tightly knotted (纠缠的) programs.
 \begin{badcode}
     switch (c) {
     case '-': sign = -1;
@@ -923,20 +923,20 @@ and no comment is required.
 There is a tendency among older C programmers to write macros instead of
 function for very short computations that will be executed frequently; I/O
 operations such as \verb'getchar' and character test like \verb'isdigit'
-are officially sanctioned(认可的) examples. The reason is performance: a
+are officially sanctioned (认可的) examples. The reason is performance: a
 macro avoids the overhead of a function call. This argument was weak even
 when C was first defined, a time of slow machines and expensive function
 calls; today it is irrelevant. With modern machines and compilers, the
-drawbacks of function macros outweight(超过) their benefits.
+drawbacks of function macros outweight (超过) their benefits.
 
-\emph{Avoid function macros.} In C++, \verb'inline' functions render(补偿)
+\emph{Avoid function macros.} In C++, \verb'inline' functions render (补偿)
 function macros unnecessary; in Java, there are no macros. In C, they cause
 more problems than they solve.
 
 One of the most serious problem with function macros is that a
 \textit{parameter} that appears more than once in the definition might be
 evaluated more than once; if the argument in the call includes an
-expression with side effect, the result is a subtle(微妙的) bug. This code
+expression with side effect, the result is a subtle (微妙的) bug. This code
 attempts to implement one of the character tests from \verb'<ctype.h>':
 \begin{badcode}
     #define isupper(c) ((c) >= 'A' && (c) <= 'Z')
@@ -972,7 +972,7 @@ outright error. Consider this example:
 This will perform the square root computation twice as often as necessary.
 Even given simple arguments, a complex expression like the body of
 \verb'ROUND_TO_INT' translates into many instructions, which should be
-housed(收藏) in a single function to be called when needed. Instantiating a
+housed (收藏) in a single function to be called when needed. Instantiating a
 macro at every occurence makes the compiled program larger. (C++
 \verb'inline' functions have this drawback, too.)
 
@@ -1009,4 +1009,196 @@ for short functions that set or retrieve a single value.
     \begin{badcode}
         #define ISDIGIT(c) ((c >= '0') && (c <= '9')) 1 : 0
     \end{badcode}
+\end{exercise}
+
+\section{Magic Numbers}
+\label{sec:magic_number}
+\textit{Magic numbers} are the constants, array sizes, character positions,
+conversion factors, and other literal numeric values that appear in programs.
+
+\emph{Give names to magic numbers.} As a guideline, any number other than 0
+or 1 is likely to be magic and should have a name of its own. A raw number
+in program source gives no indication of its importance or
+derivation (来历), making the program harder to understand and modify. This
+excerpt from a program to print a histogram of letter frequencies on a 24
+by 80 cirsor-addressed terminal is needlessly opaque (不透明的) because of a
+host of magic numbers:
+\begin{badcode}
+    fac = lim / 20;     /* set scale factor */
+    if (fac < 1)
+        fac = 1;
+
+                        /* generate histogram */
+    for (i = 0, col = 0; i < 27; i++, j++) {
+        col += 3;
+        k = 21 - (let[i] / fac);
+        star = (let[i] == 0) ? ' ' : '*';
+        for (j = k; j < 22; j++)
+            draw(j, col, star);
+    }
+    draw(23, 2, ' '); /* label x axis */
+    for (i = 'A'; i <= 'Z'; i++)
+        printf("%c ", i);
+\end{badcode}
+The code includes, among othres, the number 20, 21, 22, 23. They're clearly
+related... or are they? In fact, there are only three numbers critical to
+this program: 24, the number of rows on the screen; 80, the number of
+column; and 26, the number of letters in the alphabet. But none of these
+appears in the code, which makes the numbers that do even more magical.
+
+By giving names to the principal (主要的) numbers in the calculation, we
+can make the code easier to follow. We discover, for instance, that the
+number 3 comes from (80-1)/26 and that \verb'let' should have 26 entries,
+not 27 (an off-by-one error perhaps caused by 1-indexed screen
+coordinates). Mking a couple of other simplifications, this is the result:
+\begin{wellcode}
+    enum {
+        MINROW  = 1,                        /* top edge */
+        MINCOL  = 1,                        /* left edge */
+        MAXROW  = 24,                       /* bottom edge (<=) */
+        MAXCOL  = 80,                       /* right edge (<=) */
+        LABELROW = 1,                       /* position of labels */
+        NLET    = 26,                       /* size of alphabet */
+        HEIGHT  = MAXROW - 4,               /* height of bars */
+        WIDTH   = (MAXCOL-1)/NLET,          /* width of bars */
+    };
+
+    ...
+    fac = (lim + HEIGHT - 1) / HEIGHT;  /* set scale factor */
+    if (fac < 1)
+        fac = 1;
+    for (i = 0; i < NLET; i++) { /* generate histogram */
+        if (let[i] == 0)
+            continue;
+        for (j = HEIGHT - let[i]/fac; j < HEIGHT; j++)
+            draw(j+1+LABELROW, (i+1)*WIDTH, '*');
+    }
+    draw(MAXROW-1, MINCOL+1, ' '); /* label x axis */
+    for (i = 'A'; i <= 'Z'; i++)
+        printf("%c ", i);
+\end{wellcode}
+Now it's clearer what the main loop does: it's an idiomatic loop from 0 to
+\verb'NLET', indicating that the loop is over the elements of the data.
+Also the calls to \verb'draw' are easier to understand because words like
+\verb'MAXROW' and \verb'MINCOL' remind us of the order of arguments. Most
+important, it's now feasible to adapt the program to another size of
+display or different data. The numbers are demystified (易懂的) and so is
+the code.
+
+\emph{Define numbers as constants, not macros.} C programmers have
+traditional used \verb'#define' to manage magic number values. Te C
+preprocesser is a powerful but blunt (愚蠢的) tool, however, and macros are
+a dangerous way to program because they change the lexical structure of the
+program underfoot (碍事的). Let the language proper do the work. In C and
+C++, integer constants can be defined with an \verb'enum' statement, as we
+say in the previous example. Constants of any type can be declared with
+\verb'const' in C++:
+\begin{wellcode}
+    const int MAXROW = 24, MAXCOL = 80;
+\end{wellcode}
+or \verb'final' in Java:
+\begin{wellcode}
+    static final int MAXROW = 24, MAXCOL = 80;
+\end{wellcode}
+C also has \verb'const' values but they cannot be used as array bounds, so
+the \verb'enum' statement remains the method of choice in C.
+
+\emph{Use character constants, not integers.} The functions in
+\verb'<ctype.h>' or their equivalent should be used to test the properties
+of character. A test like this:
+\begin{badcode}
+    if (c >= 65 && c <= 90)
+        ...
+\end{badcode}
+depends completely on a particular character representation. It's better to
+use
+\begin{badcode}
+    if (c >= 'A' && c <= 'Z')
+        ...
+\end{badcode}
+but that may not have the desired effect if the letters are not contiguous
+in the character set encoding or if the alphabet include other letters.
+Best is to use the library:
+\begin{wellcode}
+    if (isupper(c))
+        ...
+\end{wellcode}
+in C or C++, or 
+\begin{wellcode}
+    if (Character.isUpperCase(c))
+        ...
+\end{wellcode}
+in Java.
+
+A related issue is that the number 0 appears often in programs, in many
+contexts. The compiler will convert the number into the appropriate type,
+but it helps the reader to understand the role of each 0 if the type is
+explicit. For example, use \verb'(void *)0' or \verb'NULL' to represent a
+zero pointer in C, and \verb"'\0'" instead of \verb'0' to represent the
+null byte at the end of a string. In other words, don't write 
+\begin{badcode}
+    str = 0;
+    name[i] = 0;
+    x = 0;
+\end{badcode}
+but rather:
+\begin{wellcode}
+    str = NULL;
+    name[i] = '\0';
+    x = 0.0;
+\end{wellcode}
+We prefer to use different explicit constants, reserving 0 for a literal
+integer zero, because they indicate the use of the value and thus provide a
+bit of documentation. In C++, however, \verb'0' rather than \verb'NULL' is
+the acceptable notation for a null pointer. Java solves the problem best by
+defining the keyword \verb'null' for an object reference that doesn't refer
+to anything.
+
+\emph{Use the language to calculate the size of an object.} Don't use an
+explicit size for any data type; use \verb'sizeof(int)' instead of \verb'2'
+or \verb'4', for instance. For similar reasons, \verb'sizeof(array[0])' may
+be better than \verb'sizeof(int)' because it's one less thing to change if
+the type of the array changes.
+
+The \verb'sizeof' operator is sometimes a convenient way to avoid inventing
+names for the numbers that determine array size. For example, if we write 
+\begin{wellcode}
+    char    buf[1024];
+    fgets(buf, sizeof(buf), stdin);
+\end{wellcode}
+the buffer size is still a magic number, but it occurs only once, in the
+declaration. It may not be worth inventing a name for the size of a local
+array, but it is definitely worth writing code that does not have to change
+if the size or type changes.
+
+Java arrays have \verb'length' that gives the numbers of elements:
+\begin{wellcode}
+    char buf[] = new char[1024];
+    for (int i = 0; i < buf.length; i++)
+        ...
+\end{wellcode}
+
+There is no equivalent of \verb'.length' in C and c++, but for an array
+(not a pointer) whose declaration is visible, this macro computes the
+number of elements in the array:
+\begin{wellcode}
+    #define NELEMS(array) (sizeof(array) / sizeof(array[0]))
+
+    double dbuf[100];
+    for (i = 0; i < NELEMS(dbuf); i++)
+        ...
+\end{wellcode}
+The array size is set in only one place; the rest of the code not change if
+the size does. There is no problem with multiple evaluation of the macro
+argument here, since there can be no side effects, and in fact the
+computation is done as the program is being compiled. This is an
+appropriate use for a macro because it does something that a function
+cannot: compute the size of an array from its declaration.
+
+\begin{exercise}
+    #define FTZMETER    0.3048
+    #define METERZFT    328084
+    #define MIZFT       5280.0
+    #define MIZKM       1.609344
+    #define SQMIZSQKM   2.589988
 \end{exercise}
