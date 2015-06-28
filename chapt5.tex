@@ -443,3 +443,32 @@ and abort the programs:
         }
     }
 \end{wellcode}
+We wrote \verb'check' to call \verb'abort', a standard C library function
+that causes program execution to be terminated abnormally for analysis with
+a debugger. In a different application, you might want \verb'check' to
+carry on after printing.
+
+Next, add calls to \verb'check' wherever they might be useful in your code:
+\begin{wellcode}
+    check("before suspect");
+    /* ... suspect code ... */
+    check("after suspect");
+\end{wellcode}
+
+After a bug is fixed, don't throw \verb'check' away. Leave it in the
+source, commented out or controlled by a debugging option, so that it can
+be turned on again when the next difficult problem appears.
+
+For harder problems, \verb'check' might evolve to do verification and
+display of data structures. This approach can be generalized to routine
+that perform ongoing (进行中) consistency checks of data structures and
+other information. In a program with intricate (复杂的) data structures,
+it's good idea to write these checks \emph{before} problems happen, as
+components of the program proper (适当的), so they can be turned on when
+trouble starts. Don't use then only when debugging; leave them installed
+during all stages of program development. If they're not expensive, it
+might be wise to leave them always enables. Large programs like telephone
+switching systems often devote a significant amount of code to "audit"
+(审计) subsystems that monitor information and equipment, and report or
+even fix problems if they occur.
+
