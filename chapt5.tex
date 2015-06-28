@@ -373,4 +373,36 @@ or denies hypothesis (假说) about what is wrong.
 
 Proceed by binary search. Throw away half the input and see if the output
 is still wrong; if not, go back to the previous state and discard the other
-half of the input. The same 
+half of the input. The same binary search process can be used on the proram
+text itself: eliminate some part of the program that should have no
+relationship to the bug and see if the bug is still there. An editor with
+undo is helpful in reducing big test cases and big programs without losing
+the bug.
+
+\emph{Study the numerology (命理) of failures.} Sometimes a pattern in the
+numerology of failing examples give a clue that focues the search. We found
+some spelling mistakes in a newly written section of this book, where
+occasional letters had simply disappeared. this was mystifying (迷惑的).
+The text had been created by cutting and pasting from another file, so it
+seemed possible that something was wrong with the cut or paste commands in
+the text editor. But where to start looking for the problem? For clues we
+looked at the data, and noticed that the missing characters seemed
+uniformly (均匀地) distributed through the text. We measured the intervals
+and found that the distance between dropped characters was always 1023
+bytes, a suspiciously non-random value. A search through the editor source
+code for numbers near 1024 found a couple of candidates. One of those was
+in new code, so we examined that first, and the bug was easy to spot, a
+classic off-by-one error where a null byte overwrote the last character in
+a 1024-byte buffer.
+
+Studying the patterns of numbers related to the failure pointed us right at
+the bug. Elapsed time? A couple of minutes of mystification, five minutes
+of looking at the data to discover the pattern of missing characters, a
+minute to search for likely places to fix, and another minute to identify
+and eliminate the bug. This one would have ben hopeless to find with a
+debugger, since it involved two multiprocess programs, driven by mouse
+clicks, communicating through a file system.
+
+\emph{Display output to localize your search.} If you don't understand what
+the program is doing, adding statements to display more information can be
+the easiest, most cost-effective way to find out.
