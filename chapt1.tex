@@ -1205,3 +1205,256 @@ cannot: compute the size of an array from its declaration.
         #define SQMIZSQKM   2.589988
     \end{badcode}
 \end{exercise}
+
+\section{Comments}
+\label{sec:comments}
+Comments are meant to help the reader of a program. They do not help by
+saying things the code already plainly (清楚地) says, or by contradicting
+(矛盾) the code, or by distracting (分心) the reader with elaborate
+(详细说明) typographical (印刷的) displays. The best comments aid the
+understanding of a program by briefly pointing out salient (突出的) details
+or by providing a larger-scale view of the proceedings (进程, 进行).
+
+\emph{Don't belabor (痛打) the obvious.} Comments shouldn't report
+self-evident information, such as the fact that \verb'i++' increments
+\verb'i'. Here are some of our favorite worthless comments:
+\begin{badcode}
+    /* 
+     * default 
+     */
+    default:
+        break;
+\end{badcode}
+\begin{badcode}
+    /* return SUCCESS */
+    return SUCCESS;
+\end{badcode}
+\begin{badcode}
+    zerocount++;    /* increment zero entry counter */
+\end{badcode}
+\begin{badcode}
+    /* initialize "total" to "number_received" */
+    node->total = node->number_received;
+\end{badcode}
+All of these comments should be deleted; they're just clutter (杂物).
+
+Comments sould add somthing that is not immediately evident from the code,
+or collect into one place information that is spread through the source.
+When something subtle (微妙的) is happening, a comment may clarify, but if
+the actions are obvious already, restating them in words is pointless:
+\begin{badcode}
+    while ((c = getchar()) != EOF && isspace(c))
+        ;   /* skip white space */
+    if (c == EOF)   /* end of file */
+        type = endoffile;
+    else if (c == '(')  /* left parenthes */
+        type = leftparen;
+    else if (c == ';')  /* semicolon */
+        type = semicolon;
+    else if (isdigit(c))    /* number */
+        ...
+\end{badcode}
+These comments should also be deleted, since the well-chosen names already
+convey the information.
+
+\emph{Comment functions and global data.} Comments can be useful, of
+course. We comment functions, global variables, constant definitions,
+fields in structures and classes, and anything else where a brief summary
+can aid understanding.
+
+Global variables have a tendency to crop up (突然出现) intermittently
+(间歇地) throughout a program; a comment serves as a reminder to be
+referred to as needed. Here's an example from a program in Chapter
+\ref{chap:desipl} of this book:
+\begin{wellcode}
+    struct State { /* prefix + suffix list */
+        char    *pref[NPREF];   /* prefix words */
+        Suffix  *suf;           /* list of suffixes */
+        State   *next;          /* next in hash table */
+    };
+\end{wellcode}
+A comment that introduces each function set the stage for reading the code
+itself. If the code isn't too long or technical, a single line is enough:
+\begin{wellcode}
+    // random: retrn an integer in the range [0, r-1].
+    int random(int r)
+    {
+        return (int)(Math.floor(Math.random() * r));
+    }
+\end{wellcode}
+Sometimes coe is genuinely (真正地) difficult, perhaps because the
+algorithm is complicated or the data structure are intricate (复杂的). In
+that case, a comment that points to a source of understanding can aid the
+reader. It may also be valuable to suggest why particular dicisions were
+made. This comment introduces an extremly efficient implementation of an
+inverse (反转) discrete (离散) cosine transform (DCT) used in JPEG image
+decoder:
+\begin{wellcode}
+    /*
+     * idct: Scaled integer implementation of 
+     * inverse two dimentional 8*8 Discrete Cosine Transform,
+     * Chen-Wang algorithm (IEEE ASSP-32, pp 803-816, Aug 1984)
+     *
+     * 32-bit integer arithmetic (8-bit coefficents)
+     * 11 multiplies, 29 adds per DCT
+     *
+     * coefficents extended to 12 bits for IEEE 1180-1990 compliance.
+     */
+     static void dict(int b[8*8])
+     {
+         ...
+     }
+\end{wellcode}
+This helpful comments cites the reference, briefly describes the data used,
+indicates the performance of the algorithm, and tells how and why the
+original algorithm has been modified.
+
+\emph{Don't comment bad code, rewrite it.} Comment anything unusual or
+potentially confusing, but when the comment outweight the code, the code
+probably needs fixing. This example uses a long, muddled (胡乱对付的)
+comment and a conditional-compiled debugging print statement to explain to
+a single statement:
+\begin{badcode}
+    /* if "result" is 0, a match was found, so return true.
+     * otherwise, "result" is non-zero, so return false 
+     */
+    #ifdef DEBUG 
+    printf("*** isword returns !result = %d\n", !result);
+    fflush(stdout);
+    #endif
+
+    return(!result);
+\end{badcode}
+Negation is hard to understand and should be avoided. Part of the problem
+is the uninformative (无法提供信息的) variable name, \verb'result'. A more
+descriptive name, \verb'matchfound', makes the comment unnecessary and
+cleans up the print statement, too.
+\begin{wellcode}
+    #ifdef DEBUG
+    printf("*** isword returns matchfound = %d\n", matchfound);
+    fflush(stdout);
+    #endif
+
+    return(matchfound);
+\end{wellcode}
+
+\emph{Don't contradict the code.} Most comments argee with code when they
+are written, but as bugs are fixed and the program evolves, the comments
+are foten left in their original form, resulting in disagremment with the
+code. This is the likely explanation for the inconsistentency in the
+example that opens this chapter.
+
+Whatever the source of the disagremment, a comment that contradicts the
+code is confusing, and many a debugging session has been needlessly
+protracted (拖延) because a mistaken comment was taken as truth. When you
+change the code, make sure the comments are stil accurate.
+
+Comments should not only agree with code, they should support it. The
+comment in this example is correct -- it explains the purpose of the next
+two lines -- but it appears to contradict the code; the comment talks aboue
+newline and the code talks about blanks:
+\begin{badcode}
+    time(&now);
+    strcpy(date, ctime(&now));
+    /* get rid of trailing newline character copied from ctime */
+    i = 0;
+    while (date[i] != ' ') i++;
+    date[i] = 0;
+\end{badcode}
+One improvement is to rewrite the code more idiomatically:
+\begin{badcode}
+    time(&now);
+    strcpy(date, ctime(&now));
+    /* get rid of trailing newline character copied from ctime */
+    i = 0;
+    while (date[i] != '\n') i++;
+    date[i] = '\0';
+\end{badcode}
+Code and comment now agree, but both can be improved by beging made more
+direct. The problem is to delete the newline that \verb'ctime' puts on the
+end of the string it returns. The comment should say so, and the code
+should do so:
+\begin{wellcode}
+    time(&now);
+    strcpy(date, ctime(&now));
+    /* ctime() puts newline at end of string, delete it */
+    date[strlen(data) - 1] = '\0';
+\end{wellcode}
+This last expression is the C idiom for removing the last character from a
+string. The code is now short, idiomatic and clear, and the comment support
+it by explaining why it needs to be there.
+
+\emph{Clarify, don't confuse.} Comments are supposed to help readers over
+the hard parts, not create more obstacles. This example follows our
+guidelines of commenting the function and explaining unusual properties; on
+other hand, the function is \verb'strcmp' and the unusual properties are
+peripheral(无关紧要的) to the job at hand, which is the implementation of a
+standard and familiar interface:
+\begin{badcode}
+    int strcmp(char *s1, char *s2)
+    /* string comparison routine returns -1 if s1 is 
+     * above s2 in an ascending order list, 0 if equal,
+     * 1 if s1 below s2 
+     */
+    {
+        while (*s1 == *s2) {
+            if (*s1 == '\0') return(0);
+            s1++;
+            s2++;
+        }
+        if (*s1 > *s2) return(1);
+        return(-1);
+    }
+\end{badcode}
+When it takes more than a few words to explain what's happening,it's often
+and indication that the code should be rewriting. Here, the code could
+perhaps be improved but the real problem is the comment, which is nearly as
+long as the implementation ans confusing. too (which way is "above"?).
+We're stretching (伸展) the point to say this routine is hard to
+understand, but since it implements a standard function, its comment can
+help by summarizing the behavior and telling us where the definition
+originates; that's all that's needed:
+\begin{wellcode}
+    /*
+     * strcmp: return <0 if s1 < s2, > 0 if s1 > s2, 0 if equal.
+     * ANSI C, section 4.11.4.2
+     */
+    int strcmp(const char *s1, const char *s2)
+    {
+        ...
+    }
+\end{wellcode}
+
+Students are taught that it's important to comment everything. Professional
+programmers are foten require to comment all their code. But the purpose of
+commenting can be lost in blindly following rules. Comments are meant to
+help a reader understand pans (全景) of the program that are not readily
+understood from the code itself. As much as possible, write code that is
+easy to understand; the better you do this, the fewer comments you need.
+Good code needs fewer comments than bad code.
+
+\begin{exercise}
+    Comment on these comments.
+    \begin{badcode}
+        void dict::insert(string& w)
+        // returns 1 if w in dictionary, otherwise returns 0.
+    \end{badcode}
+    \begin{badcode}
+        if (n > MAX || n % 2 > 0) // test for even number
+    \end{badcode}
+    \begin{badcode}
+        // write a message
+        // Add to line counter for each line written
+        void write_message()
+        {
+            // increment line counter
+            line_number = line_number + 1;
+            fprintf(fout, "%d %s\n%d %s\n%d %s\n",
+                line_number, HEADER,
+                line_number + 1, BODY,
+                line_number + 2, TRAILER);
+            // increment line counter
+            line_number = line_number + 2;
+        }
+    \end{badcode}
+\end{exercise}
