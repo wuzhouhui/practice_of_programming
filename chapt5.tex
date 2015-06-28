@@ -1,4 +1,67 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Debugging}
+\label{chap:debug}
 \begin{quotation}
+    bug, a defect or fault in a machine, plan, or the like. orig.U.S. 1889
+    Pall Mall Gaz. 11 Mar: 1/1 Mr. Edison, I was informed, has been up the
+    two previous nights discovering 'a bug' in his phonograph -- an
+    expression for solving a diffculty, implying that some imaginary insect
+    has secreted itself inside and is causing all the trouble.
 \end{quotation}
+
+\begin{quotesrc}
+    \bookname{Oxford English Dictionary. 2nd Edition
+\end{quotesrc}
+
+We have presented a lot of code in the past four chapters, and we've
+pretended that it all pretty much worked the first time. Naturally this
+wasn't ture; there were plenty of bugs. The word "bug" didn't originate
+with programmers, but it is certainly one of the most common terms in
+computing. Why should software be so hard?
+
+One reason is that the complexity of a program is related to the number of
+ways that its components can interact, and software is full of components
+and interactions. Many techniques attempt to reduce the connections between
+components so there are fewer pieces to interact; examples include
+information hiding, abstraction and interfaces, and the language features
+that support them. There are also techniques for ensuring the integrity of
+a software design -- program proofs, modeling, requirements analysis,
+formal verification -- but none of these has yet changed the way software
+is built; they have been successful only on small problems. The reality is
+that there will always be errors that we find by testing and eliminate by
+debugging.
+
+Good programmers know that they spend as much time debugging as writing so
+they try to learn from their mistakes. Every bug you find can teach you how
+to prevent a similar bug from happening again or to recognize it if it
+does.
+
+Debugging is hard and can take long and unpredictable amount of time, so
+the goal is to avoid having to do much of it. Techniques that help reduce
+debugging time include good design, good style, boundary condition tests,
+assertions (断言) and sanity (完整性) checks in the code, defensive
+(防御性) programming, well-designed interfaces, limited global data, and
+checking tools. An ounce (盎司) of prevention really is worth a pound (磅)
+of cure.
+
+What is the role of language? A major force in the evolution of programming
+language has been the attempt to prevent bugs through language features.
+Some features make classes of errors less likely: range checking on
+substript, restricted pointers or no pointers at all, garbage collection,
+string data types, typed UO, and strong type-checking. On the opposite side
+of the coin, some features are prone (倾向的) error, like \verb'goto'
+statements, global variables, unrestricted pointers, and automatic type
+conversions. Programmers should know the potentially risky bits of their
+languages and take extra care when using them. They should also enable all
+compiler checks and heed (注意) warnings.
+
+Each language feature that prevents some problem has a cost of its own. If
+a higher-level language makes the simple bugs disappear automatically, the
+price is that it makes it easier to create higher-level bugs. No language
+prevents you from making mistakes.
+
+Even though we wish it were otherwise, a majority of programming time is
+spent testing and debugging. In this chapter, we'll discuss how to make
+your debugging time as short and productive as possible; we'll come back to
+testing in Chapter \ref{chap:testing}.
+
