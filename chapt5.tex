@@ -1,16 +1,16 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Debugging}
 \label{chap:debug}
-\begin{quotation}
-    bug, a defect or fault in a machine, plan, or the like. orig.U.S. 1889
+\begin{quote}
+    Bug, a defect or fault in a machine, plan, or the like. orig.U.S. 1889
     Pall Mall Gaz. 11 Mar: 1/1 Mr. Edison, I was informed, has been up the
     two previous nights discovering 'a bug' in his phonograph -- an
     expression for solving a diffculty, implying that some imaginary insect
     has secreted itself inside and is causing all the trouble.
-\end{quotation}
+\end{quote}
 
 \begin{quotesrc}
-    \bookname{Oxford English Dictionary. 2nd Edition
+    \bookname{Oxford English Dictionary. 2nd Edition}
 \end{quotesrc}
 
 We have presented a lot of code in the past four chapters, and we've
@@ -65,3 +65,312 @@ spent testing and debugging. In this chapter, we'll discuss how to make
 your debugging time as short and productive as possible; we'll come back to
 testing in Chapter \ref{chap:testing}.
 
+\section{Debuggers}
+\label{sec:debuggers}
+Compiler for major languages usually come with sophisticated (复杂的)
+debuggers, often packaged as part of a development environment that
+integrates creation and edition of source code, compilation, execution, and
+debugging, all in a single system. Debuggers include graphical interfaces
+for stepping through a program one statement or function at a time,
+stopping at particular lines or when a specific condition occurs. They also
+provide facilities for formatting and displaying the values of variables.
+
+A debugger can be invoked directly when a problem is known to exist. Some
+debuggers take over automatically when something unexpectedly goes wrong
+during program execution. It's usually easy to find out where the program
+was executing when it died, examing the sequence of functions that were
+active (the stack trace), and display the values of local and global
+variables. That much information may be sufficient to identify a bug. If
+not, breakpoints and stepping make it possible to re-run a failing program
+one step at a time to find the first place where something goes wrong.
+
+In the right environment and in the hands of an experienced user, a good
+debugger can make debugging effective and efficent, if not exactly
+painless. With such powerful tools at one's disposal, why would anyone ever
+debug without them? Why do we need a whole chapter on debugging?
+
+There are several good reasons, some objective and some based on personal
+experience. Some languages outside the mainstream have no debugger or
+provide only rudimentary (基本的) debugging facilities. Debuggers are
+system-dependent, so you may not have access to the familiar debugger from
+one system when you work on another. Some programs are not handled well by
+debuggers: multi-process or multi-thread programs, operating systems, and
+distributed systems must often be debugged by lower-level approaches. In
+such situations, you're on your own, without much help besides print
+statements and your own experience and ability to reason about code.
+
+As a personal choice, we tend not to use debuggers beyond getting a stack
+trace or the value of a variable or two. One reason is that it is easy to
+et lost in details of complicated data structures and control flow; we find
+stepping through a program less productive than thinking harder and adding
+out statements and self-checking code at critical places. Clicking over
+statements takes longer than scanning the output of judiciously-placed
+(精心放置的) displays. It takes less time to decide where to put print
+statements than to single-step to the critical section of code, even
+assuming we know where that is. More important, debugging statements stay
+with the program; debugger sessions are transient.
+
+Blind probing with a debugger is not likely to be productive. It is more
+helpful to use the debugger to discover the state of the program when it
+fails, then think about how the failure could have happened. Debuggers can
+be arcane (晦涩难解的) and diffcult programs, and especially for beginners
+may provide more confusion than help. If you ask the wrong question, they
+will probably give you an answer, but you may not know it's misleading.
+
+A debugger can be of enormous (庞大的) value, however, and you should
+certainly include one in your debugging toolkit; it is likely to be the
+first thing you turn to. But if you don't have a debugger, or if you're
+stuck on an especially hard problem, the techniques in this chapter will
+help you to debug effectively and efficently anyway. They should make your
+use of your debugger more productive as well, since they are largely
+concerned with how to reason about errors and probable causes.
+
+\section{Good Clues, Easy Bugs}
+Oops! Something is badly wrong. My program crashed, or printed nonsense, or
+seems to be running forever. Now what?
+
+Beginners have a tendency to blame the compiler, the library, or anything
+other than their own code. Experienced programmers would love to do the
+same, but they know that, realistically, most problems are their own fault.
+
+Fortunately, most bugs are simple and can be found with simple techniques.
+Examine the evidence in the erroneous output and try to infer (推论) how it
+could have been produced. Look at any debugging output before the crash; if
+possible get a stack trace from a debugger. Now you know something of what
+happened, and where. Pause to reflect. How could that happen? Reason back
+from the state of the crashed program to determine what could have caused
+this.
+
+Debugging involves backwards reasoning, like solving murder mysteries.
+Something impossible occurred, and the only solid information is that it
+really did occur. So we must think backwards from the result to discover
+the reasons. Once we have a full explanation, we'll know what to fix and,
+along the way, likely discover a few other things we hadn't expected.
+
+\emph{Look for familiar patterns.} Ask yourself whether this is familiar
+pattern. "I've senn that before" is often the beginning of understanding,
+or even the whole answer. Common bugs have distinctive signatures. For
+instance, novice (新手) C programmers often write:
+\begin{badcode}
+    int n;
+    scanf("%d", n);
+\end{badcode}
+instead of 
+\begin{wellcode}
+    int n;
+    scanf("%d", &n);
+\end{wellcode}
+ans this typically causes an attempt to access out-of-bounds memory when a
+line of input is read. People who teach C recognize the symptom instantly.
+
+Mismatched types and conversion in \verb'printf' and \verb'scanf' are an
+endless source of easy bugs:
+\begin{badcode}
+    int n = 1;
+    double d = PI;
+    printf("%d %f\n", d, n);
+\end{badcode}
+The signature of this error is sometimes the appearance of preposterous
+(反常的) values: huge integers or improbably large or small floating-point
+values. On a Sun SPARC, the output from this program is a huge number and
+% XXX The hyper link of footnote doesn't responce when click.
+an astronomical (天文的) one\footnote{It's hard to type a long number, so I
+    omit most of digits.} (folded to fit):
+\begin{wellcode}
+    107434034 26815 ... 30144.000000
+\end{wellcode}
+
+Another common error is using \verb'%f' instead of \verb'%lf' to read a
+\verb'double' with \verb'scanf'. Some compilers catch such mistakes by
+verifying that the type of \verb'scanf' and \verb'printf' arguments match
+their format string; if all warnings are enabled. for the \verb'printf'
+above, the GNU compiler gcc reports that 
+\begin{wellcode}
+    x.c:9: warning: int format, double arg (arg 2)
+    x.c:9: warning: double format, different type arg (arg 3)
+\end{wellcode}
+
+Failing to initialize a local variable give rise to another distinctive
+error. The result often an extremely large value, the garbage left over
+from whatever previous value was stored in the same memory location. Some
+compilers will warn you, though you may have enable the compile-time check,
+and they can never catch all cases. Memory returned by allocators like
+\verb'malloc', \verb'realloc', and \verb'new' is likely to be garbage too;
+be sure to initialize it.
+
+\emph{Examine the most recent change.} What was the last change? If you're
+changing only one at a time as a program evolves, the bug most likely is
+either in the new code or has been exposed by it. Looking carefully at
+recent changes helps to localize the problem. If the bug appears in the new
+version and not in the old, the new code is part of the problem. This means
+that you should preserve at least the previous version of the program,
+which you believe to be correct, so that you can compare behaviors. It also
+means that you should keep records of the changes made and bugs fixed, so
+you don't have to redicover this vital information while you're trying to
+fix a bug. Source code control systems and other history mechanisms are
+helpful here.
+
+\emph{Don't make the same mistake twice.} After you fix a bug, ask whether
+you might have made the same mistake somewhere else. This happened to one
+of us just days before beginning to write this chapter. The program was a
+quick prototype for a colleague, and included some boilerplate (样板) for
+optional arguments:
+\begin{badcode}
+    for (i = 1; i < argc; i++) {
+        if (argv[i][0] != '-')  /* options finished */
+            break;
+        switch (argv[i][1]) {
+        case 'o':           /* output filename */
+            outname = argv[i];
+            break;
+        case 'f':
+            from = atoi(argv[i]);
+            break;
+        case 't':
+            to = atoi(argv[i]);
+            break;
+        ...
+\end{badcode}
+Shortly after our colleague tried it, he reported that the output file name
+always had the prefix \verb'-o' attached to it. This was embarrassing but
+easy to repair; the code should have read 
+\begin{wellcode}
+    outname = &argv[i][2];
+\end{wellcode}
+So that was fixed up and shipped off, and back came another report that the
+program failed to handle an argument like \verb'-f123' properly: the
+converted numeric value was always zero. This is the same error; the next
+case in the \verb'switch' should have read
+\begin{wellcode}
+    from = atoi(&argv[i][2]);
+\end{wellcode}
+Because the author was still in a hurry, he failed to notic that the same
+blunder (错误) occurred twice more and it took another round before all of
+the fundamentally identical errors were fixed.
+
+Easy code can have bugs if its familiarity causes us to let down our guard.
+Even when code is so simple you could write it in your sleep, don't fall
+asleep while writing it.
+
+\emph{Debug it now, not later.} Being in too much of a hurry can hurt in
+other situations as well. Don't ignore a crash when it happens; track it
+down right away, since it may not happen again until it's too late. A
+famous example occurred on the Mars Pathfinder mission. After the flawless
+(完美的) landing in July 1977 the spacecraft's computers tended to reset
+once a day or so, and the engineer were baffled (困惑). Once they tracked
+down the problem, they realized that they had seed that problem before.
+During pre-launch tests the resets had occurred, but had been ignored
+because the engineers were working on unrelated problems. So they were
+forced to deal with the problem later when the machine was tens of millions
+of miles away and much harder to fix.
+
+\emph{Get a stack trace.} Although debuggers can probe running programs,
+one of their most common uses is to examing the state of a program after
+death. The source line number of the failure, often part of a stack trace,
+is the most useful single piece of debugging information; improbable
+(不太可能的) values of arguments are also a big clue (zero pointers,
+integers that are huge when they should be small, or negative when they
+should be positive, character strings that aren't alphabetic).
+
+Here is a typical example, based on the discussion of sorting in Chapter
+\ref{chap:alds}. To sort an array of integers, we should call \verb'qsort'
+with the integer comparison function \verb'icmp':
+\begin{wellcode}
+    int arr[N];
+    qsort(arr, N, sizeof(arr[0]), icmp);
+\end{wellcode}
+but suppose it is inadvertently (粗心地) passed the name of the string
+comparison function \verb'scmp' instead:
+\begin{badcode}
+    int arr[N];
+    qsort(arr, n, sizeof(arr[0]), scmp);
+\end{badcode}
+A compiler can't detect the mismatch of types here, so disaters awaits.
+When we run the program, it crashes by attempting to access an illegal
+memory location. Running the \verb'dbx' debugger producess a stack trace
+% XXX The hyper link of footnote doesn't responce when click.
+like this, edited to fit\footnote{The source pdf is blurry (模糊的), so the
+    stack trace may contain some typing errors}:
+\begin{wellcode}
+    0 strcmp(0x1a2, 0x1c2) ["strcmp.s":31]
+    1 scmp(p1 = 0x10001048, p2 = 0x1000105c) ["badqs.c":31]
+    2 qst(0x10001048, 0x10001074, 0x400b20, 0x4) ["qsort.c":147]
+    3 qsort(0x10001048, 0x1c2,0x4, 0x400b20) ["qsort.c",63]
+    4 main() ["badqs.c":45]
+    5 __istart() ["crtltinit.s":13]
+\end{wellcode}
+This says that the program died in strcmp; by inspection, the tow pointers
+passed to \verb'strcmp' are much too small, a clear sign of trouble. The
+stack trace gives a trail (痕迹) of line numbers where each function was
+called. Line 13 in our test file \verb'badqs.c' is the call 
+\begin{wellcode}
+    return strcmp(v1, v2);
+\end{wellcode}
+which identifies the failing call and points towards the error.
+
+A debugger can also be used to display values of local or global variables
+that will give additional information about what went wrong.
+
+\emph{Read before typing.} One effective but under-appreciated debugging
+technique is to read the code very carefully and think about it for a while
+without making changes. There's a powerful urge to get to the keyboard and
+start mofitying the program to see if the bug goes away. But chances are
+that you don't know what's really broken and will change the wrong thing,
+perhaps breaking something something else. A listing of the cirtical part
+of program on paper can give a different perspective than what you see on
+the screen, and encourages you to take more time for reflection. Don't make
+listings as a matter of routine, though. Printing a complete program wastes
+trees since it's hard to see the structure when it's spread across many
+pages and the listing will be obsolete (荒废的) the moment you start
+editing again.
+
+Take a break for while; sometimes what you see in the source code is what
+you meant rather than what you wrote, and an interval away from it can
+soften your misconception (误解) and help the code speak for itself when
+you return.
+
+Resist the urge to start typing; thinking is a worthwhile alternative.
+
+\emph{Explain your code to someone else.} Another effective technique is to
+explain your code to someone else. This will often cause you to explain the
+bug to yourself. Sometimes it takes no more than a few sentences, followed
+by an embarrassed "Never mind, I see what's wrong. Sorry to bother you."
+This works remarkably well; you can even use non-programmer as listeners.
+One university computer center kept a teddy bear near the help desk.
+Students with mysterious bugs were required to explain to the bear before
+they could speak to a human counselor (顾问).
+
+\section{No Clues, Hard Bugs}
+"I haven't got a clue. What on earth is going on?" If you really haven't
+any idea what could be wrong, life get tougher.
+
+\emph{Make the bug reproducible.} The first step is to make sure you can
+make the bug appear on demand. It's frustrating to chase down a bug that
+doesn't happen every time. Spend some time construting input and parameter
+settings that reliably cause the problem, then wrap up the recipe (处方) so
+it can be run with a button push or a few keystrokes. If it's a hard bug,
+you'll be making it happen over and over as you track down the problem, so
+you'll save yourself time by making it easy to reproduce.
+
+If the bug can't be made to happen every time, try to understand why not.
+Does some set of conditions make it happen more often than others? Even if
+you can't make it happen every time, if you can decrease the time spent
+waiting for it, you'll find it faster. 
+
+If a program provides debugging output, enable it. Simulation program like
+the Markov chain program in Chapter \ref{chap:desipl} should include an
+option that produces debugging information such as the seed of the random
+number generator so that output can be reproduced; another option should
+allow for setting the seed. Many programs include such options and it is a
+good idea to include similar facilities in your own programs.
+
+\emph{Divide and conquer (分而治之).} Can the input that causes the program
+to fail be made smaller or more focused? Narrow down the possibilities by
+creating the smallest input where the bug still shows up. What changes make
+the error go way? Try to find crucial (决定性的) test cases that focus on
+the error. Each test case should aim at a definitive outcome that confirms
+or denies hypothesis (假说) about what is wrong.
+
+Proceed by binary search. Throw away half the input and see if the output
+is still wrong; if not, go back to the previous state and discard the other
+half of the input.
