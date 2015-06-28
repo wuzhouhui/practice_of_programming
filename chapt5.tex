@@ -405,4 +405,41 @@ clicks, communicating through a file system.
 
 \emph{Display output to localize your search.} If you don't understand what
 the program is doing, adding statements to display more information can be
-the easiest, most cost-effective way to find out.
+the easiest, most cost-effective way to find out. Put them in to verify
+your understanding or refine your ideas of what's wrong. For example,
+diplay "can't get here" if you think it's not possible to reach a certain
+point in the code; then if you see that message, move the output statements
+back towards the start to figure out where things first begin to go wrong.
+Or show "got here" messages going forward, to find the last place where
+things seem to be working. Each message should be distinct so you can tell
+which one you're looking at.
+
+Display messages in a compact fixed format so they are easy to scan by eye
+or with programs like the pattern-matching tool \verb'grep'. (A grep-like
+program is invaluabe (无价的) for searching text. Chapter
+\ref{chap:notation} includes a simple implementation.) If you're displaying
+the value of a variable, format it the same way each time. In C and C++,
+show pointers as hexadecimal numbers with \verb'%x' or \verb'%p'; this will
+help you to see whether two pointers have the same value or are related.
+Learn to read pointer values and recognize likely and unlikely ones, like
+zero, negative numbers, odd numbers, and small numbers. Familiarity with
+the form of address will pay off (获益) when you're using a debugger, too.
+
+If output is potentially voluminous (长篇的), it might be sufficient to
+print single-letter outputs like \verb'A', \verb'B', \verb'...', as a
+compact display of where the program went.
+
+\emph{Write self-checking code.} If more information is needed, you can
+write your own check function to test a condition, dump relevant variables,
+and abort the programs:
+\begin{wellcode}
+    /* check: test condition, print and dir */
+    void check(char *s)
+    {
+        if (var1 > var2) {
+            printf("%s, var1 %d var2 %d\n", s, var1, var2);
+            fflush(stdout); /* make sure all output is out */
+            abort();        /* signal abnormal termination */
+        }
+    }
+\end{wellcode}
