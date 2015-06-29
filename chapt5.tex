@@ -299,7 +299,7 @@ like this, edited to fit\footnote{The source pdf is blurry (模糊的), so the
     4 main() ["badqs.c":45]
     5 __istart() ["crtltinit.s":13]
 \end{wellcode}
-This says that the program died in strcmp; by inspection, the tow pointers
+This says that the program died in strcmp; by inspection, the two pointers
 passed to \verb'strcmp' are much too small, a clear sign of trouble. The
 stack trace gives a trail (痕迹) of line numbers where each function was
 called. Line 13 in our test file \verb'badqs.c' is the call 
@@ -553,3 +553,161 @@ something or to think that you have checked some possibility when you
 haven't. The act of writing will help you remember the problem the next
 time something similar comes up, and will also serve when you're explaining
 it to someone else.
+
+\section{Last Resorts (手段)}
+\label{sec:last_resorts}
+What do you do if none of this advice help? This may be the time to use a
+good debugger to step through the program. If your mental (精神上的) model
+of how something works is just pain wrong, so you're looking in the wrong
+place entirely, or looking in the right place but not seeing the problem, a
+debugger forces you to think differently. These "mental model" bugs are
+among the hardest to find; the mechanical aid is invaluabe.
+
+Sometimes the misconception (误解) is simple: incorrect operator
+precedence, or the wrong operator, or indentation that doesn't match the
+actual structure, or a scope error where a local name hides a global name
+or a global name introduces into a local scope. For example, programmers
+often forget that \verb'&' and \verb'|' have lower precedence than
+\verb'==' and \verb'!='. They write
+\begin{badcode}
+    if (x & 1 == 0)
+        ...
+\end{badcode}
+and can't figure out why this is always false. Occasionally a slip of the
+finger converts a single \verb'=' into two or vice versa:
+\begin{badcode}
+    while ((c == getchar()) != EOF)
+        if (c = '\n')
+            break;
+\end{badcode}
+Or extra code is left behind during editing:
+\begin{badcode}
+    for (i = 0; i < n; i++)
+        a[i++] = 0;
+\end{badcode}
+Or hasty typing creates a problem:
+\begin{badcode}
+    switch (c) {
+        case '<':
+            mode = LESS;
+            break;
+        case '>':
+            mode = GREATER;
+            break;
+        default:
+            mode = EQUAL;
+            break;
+    }
+\end{badcode}
+
+Sometimes the error involes arguments in the wrong order in a situation
+where type-checking can't help, like writing
+\begin{badcode}
+    memset(p, n, 0);    /* store n 0's in p */
+\end{badcode}
+instead of 
+\begin{wellcode}
+    memset(p, 0, n);    /* store n 0's in p */
+\end{wellcode}
+
+Sometimes something changes behind your back -- global or shared variables
+are modified and you don't realize that some other routine can touch them.
+
+Sometimes your algorithms or data structure has a fatal flaw (缺陷) and you
+just can't see it. While preparing material on linked lists, we wrote a
+package of list functions to create new elements, link them to the front or
+back of lists, and so on; these functions appear in Chapter
+\ref{chap:alds}. Of course we wrote a test program to make sure everything
+was correct. The first few tests worked but then one failed spectacularly
+(惊人地). In essence (基本), this was the testing program:
+\begin{badcode}
+    while (scanf(%s %d", name, &value) != EOF) {
+        p = newitem(name, value);
+        list1 = addfront(list1, p);
+        list2 - addend(list2, p);
+    }
+    for (p = list1; p != NULL; p = p->next)
+        printf("%s %d\n", p->name, p->value);
+\end{badcode}
+It was surprisingly difficult to see that the first loop was putting the
+same node \verb'p' on both lists so the pointers were hopelessly scrambled
+(扰乱) by the time we got to printing.
+
+It's tough to find this kind of bug, because your brain takes you right
+around the mistake. Thus a debugger is a help, since it forces you to go in
+a different direction, to follow what the program is doing, not what you
+think it is doing. Often the underlying problem is something wrong with the
+structure of the whole program, and to see the error you need to return to
+your starting assumptions.
+
+Notice, by the way, that in the list example the error was in the test
+code, which made the bug that much harder to find. It is frustratingly easy
+to waste time chasing bugs that aren't there, because the test program is
+wrong, or by testing the wrong version of the program, or by failing go
+update or recompile before testing.
+
+If you can't find a bug after considerable work, take a break. Clear your
+mind, do something else. Talk to a friend and ask for help. The answer
+might appear out of the blue, but if not, you won't be stuck in the same
+rut (凹槽) in the next debugging session.
+
+Once in a long while, the problem really is the compiler or a library or
+the operating system or even the hardware, especially if something changed
+in the environment just before a bug appeared. You should never start by
+blaming one of these, but when everything else has been eliminated, that
+might be all that's left. We once had to move a large text-formatting
+program from its original Unix home to a PC.  The program compiled without
+incident, but behaved in an extremely odd way: it dropped roughly every
+second (次要的) character of its input. Our first thought was that this
+must be some property of using 16-bit integers instead of 32-bit, or
+perhaps some strange byte-order problem. But by printing out the characters
+seen by the main loop, we finally tracked it down to an error in the
+standard header file \verb'ctype.h' provided by the compiler vendor. It
+implemented \verb'isprint' as a function macro:
+\begin{badcode}
+    #define isprint(c) ((c) >= 040 && (c) < 0177)
+\end{badcode}
+and the main input loop was basically
+\begin{badcode}
+    while (isprint(c = getchar()))
+        ...
+\end{badcode}
+
+Each time an input character was blank (octal 40, a poor way to write ' ')
+or greater, which was most of the time, \verb'getchar' was called a second
+time because the macro evaluated its argument twice, and the first input
+character disappeared forever. The original code was not as clean as it
+should have been -- there's too much in the loop condition -- but the
+vendor's header file was inexcusably (无法容许地) wrong.
+
+One can still find instances of this problem today; this macor comes from a
+different verdor's current header files:
+\begin{badcode}
+    #define __iscsym(c) (isalnum(c) || ((c) == '_'))
+\end{badcode}
+
+Memory "leaks" -- the failure to reclaim memory that is no longer in use --
+are a significant source of erratic behavior. Another problem is forgetting
+to close files, until the table of open files is full and the program
+cannot open any more.  Programs with leaks tend to fail mysteriously
+because they run out of some resource but the specific failure can't be
+reproduced.
+
+Occasionally hardware itself goes bad. The floating-point flaw (缺陷) in
+the 1994 Pentium processor that caused certain computations to produce
+wrong answers was a highly publicized (广为宣传的) and costly bug in the
+design of the hardware, but once it had been identified, it was of course
+reproducible.  One of the strangest bugs we ever saw involved a calculator
+program, long ago on a two-processor system.  Sometimes the expression
+$1/2$ would print $0.5$ and sometimes it would print some consistent but
+utterly (完全) wrong value like $0.7432$; there was no pattern as to
+whether one got the right answer or the wrong one. The problem was
+eventually traced to a failure of the floating-point unit in one of the
+processors. As the calculator program was randomly executed on one
+processor or the other, answers were either correct or nonsense.
+
+Many years ago we used a machine whose internal temperature could be
+estimated from the number of low-order bits it got wrong in floating-point
+calculations. One of the circuit cards was loose; as the machine got
+warmer, the card tilted (倾斜的) further out of its socket, and more data
+bits were disconnected from the backplane (基架).
