@@ -369,7 +369,7 @@ to fail be made smaller or more focused? Narrow down the possibilities by
 creating the smallest input where the bug still shows up. What changes make
 the error go way? Try to find crucial (决定性的) test cases that focus on
 the error. Each test case should aim at a definitive outcome that confirms
-or denies hypothesis (假说) about what is wrong.
+or denies hypotheses (假说) about what is wrong.
 
 Proceed by binary search. Throw away half the input and see if the output
 is still wrong; if not, go back to the previous state and discard the other
@@ -520,4 +520,29 @@ cases, no chain is longer than 15 or 16 elements and most elements are in
 chains of length 5 or 6. In the third, the distribution is broader, the
 longest chain has 187 elements, and there are thousands of elements in
 chains longer than 20.
+
+\emph{Use tools.} Make good use of the facilities of the environment where
+you are debugging. For example, a file comparison program like \verb'diff'
+compares the outputs from successful and failed debugging runs so you can
+focus on what has changed. If your debugging output is long, use
+\verb'grep' to search it or an editor to examine it. Resist the temptation
+to send the debugging output to a printer: computers scan voluminous output
+better than people do. Use shell scripts and other tools to automate the
+processing of the output from debugging runs.
+
+Write trivial programs to test hypotheses or confirm your understanding of
+how something works. For instance, is it valid to free a \verb'NULL' pointer?
+\begin{wellcode}
+    int main(void)
+    {
+        free(NULL);
+        return 0;
+    }
+\end{wellcode}
+
+Source code control programs like RCS keep track of versions of code so you
+can see what has changed and revert to previous to restore a known state.
+Besides indicating what has changed recently, they can identify sections of
+code that have a long history of frequent modification; these are often a
+good place for bugs to lurk (潜伏).
 
