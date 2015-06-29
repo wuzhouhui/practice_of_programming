@@ -498,4 +498,26 @@ buffering; \verb'setbuf(fp, NULL)' turns off buffering on the stream
 \verb'fp'. The standard error streams (\verb'stderr', \verb'cerr',
 \verb'System.err') are normally unbuffered by default.
 
+\emph{Draw a picture}. Sometimes pictures are more effective than text for
+testing and debugging. Pictures are especially helpful for understanding
+data structures, as we say in Chapter \ref{chap:alds}, and of course when
+writing graphics software, but they can be used for all kinds of programs.
+Scatter (散点) plots display misplaced values more effectively than columns
+of numbers. A histogram of data reveals anomalies in exam grades, random
+numbers, bucket sizes in allocators and hash tables, and the like.
+
+If you don't understand what's happening inside your program, try
+annotating the data structures with statistics and plotting the result. The
+% XXX The hyperlink of footnote doesn't response when click.
+following graphs plot\footnote{Lack of graphs, because the graph is too
+blurry and ugly to represent.}, for the C \verb'markov' program in Chapter
+\ref{chap:desipl}, hash chain lengths on the $x$ axis and the number of
+elements in chains of that length on the $y$ axis. The input data is our
+standard test, \bookname{The Book of Psalms} (42685 words, 22482
+prefixes). The first two graphs are for the good hash multipliers of 31 and
+37 and the third is for the awful multiplier of 128. In the first two
+cases, no chain is longer than 15 or 16 elements and most elements are in
+chains of length 5 or 6. In the third, the distribution is broader, the
+longest chain has 187 elements, and there are thousands of elements in
+chains longer than 20.
 
