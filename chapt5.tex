@@ -711,3 +711,85 @@ estimated from the number of low-order bits it got wrong in floating-point
 calculations. One of the circuit cards was loose; as the machine got
 warmer, the card tilted (倾斜的) further out of its socket, and more data
 bits were disconnected from the backplane (基架).
+
+\section{Non-reproducible Bugs}
+
+Bugs that won't stand still are the most difficult to deal with, and
+usually the prob- lem isn't as obvious as failing hardware. The very fact
+that the behavior is non- deterministic is itself information, however; it
+means that the error is not likely to be a flaw (缺陷) in your algorithm
+but that in some way your code is using information that changes each time
+the program runs.
+
+Check whether all variables have been initialized; you may be picking up a
+random value from whatever was previously stored in the same memory
+location.  Local variables of functions and memory obtained from allocators
+are the most likely culprits (罪魁祸首) in C and C++. Set all variables to
+known values; if there's a random number seed that is normally set from the
+time of day, force it to a constant, like zero.
+
+If the bug changes behavior or even disappears when debugging code is
+added, it may be a memory allocation error -- somewhere you have written
+outside of allocated memory, and the addition of debugging code changes the
+layout of storage enough to change the effect of the bug. Most output
+functions, from \verb'printf' to dialog windows, allocate memory
+themselves, further muddying the waters (进一步把水搅混).
+
+If the crash site seems far away from anything that could be wrong, the
+most likely problem is overwriting memory by storing into a memory location
+that isn't used until much later. Sometimes this is a dangling (悬挂)
+pointer problem, where a pointer to a local variable is inadvertently
+(不慎地) returned from a function, then used. Returning the address of a
+local variable is a recipe (秘诀) for delayed disaster:
+\begin{badcode}
+    char *msg(int n, char *s)
+    {
+        char buf[100];
+
+        sprintf(buf, "error %d: %s\n", n, s);
+        return buf;
+    }
+\end{badcode}
+By the time the pointer returned by \verb'msg' is used, it no longer points
+to meaningful storage. You must allocate storage with \verb'malloc', use a
+static array, or require the caller to provide the space.
+
+Using a dynamically allocated value after it has been freed has similar
+symptoms. We mentioned this in Chapter \ref{chap:alds} when we wrote
+\verb'freeall'. This code is wrong:
+\begin{badcode}
+    for (p = listp; p != NULL; p = p->next)
+        free(p);
+\end{badcode}
+Once memory has been freed, it must not be used since its contents may have
+changed and there is no guarantee that \verb'p->next' still points to the
+right place.
+
+In some implementations of \verb'malloc' and \verb'free', freeing an item
+twice corrupts the internal data structures but doesn't cause trouble until
+much later, when a subsequent call slips (滑过) on the mess made earlier.
+Some allocators come with debugging options that can be set to check the
+consistency of the arena (竞技场) at each call; turn them on if you have a
+non-deterministic bug. Failing that, you can write your own allocator that
+does some of its own consistency checking or logs all calls for separate
+analysis. An allocator that doesn't have to run fast is easy to write, so
+this strategy is feasible when the situation is dire (可怕的). There are
+also excellent commercial products that check memory management and catch
+errors and leaks: writing your own \verb'malloc' and \verb'free' can give
+you some of their benefits if you don't have access to them.
+
+When a program works for one person but fails for another, something must
+depend on the external environment of the program. This might include files
+read by the program, file permissions, environment variables, search path
+for commands, defaults, or startup files. It's hard to be a consultant for
+these situations, since you have to become the other person to duplicate
+the environment of the broken program.
+
+\begin{exercise}
+Write a version of \verb'malloc' and \verb'free' that can be used for
+debugging storage-management problems. One approach is to check the entire
+workspace on each call of \verb'malloc' and \verb'free'; another is to
+write logging information that can be processed by another program. Either
+way, add markers to the beginning and end of each allocated block to detect
+overruns (超限) at either end.
+\end{exercise}
