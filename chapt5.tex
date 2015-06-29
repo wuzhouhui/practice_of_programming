@@ -85,7 +85,7 @@ not, breakpoints and stepping make it possible to re-run a failing program
 one step at a time to find the first place where something goes wrong.
 
 In the right environment and in the hands of an experienced user, a good
-debugger can make debugging effective and efficent, if not exactly
+debugger can make debugging effective and efficient, if not exactly
 painless. With such powerful tools at one's disposal, why would anyone ever
 debug without them? Why do we need a whole chapter on debugging?
 
@@ -121,7 +121,7 @@ A debugger can be of enormous (庞大的) value, however, and you should
 certainly include one in your debugging toolkit; it is likely to be the
 first thing you turn to. But if you don't have a debugger, or if you're
 stuck on an especially hard problem, the techniques in this chapter will
-help you to debug effectively and efficently anyway. They should make your
+help you to debug effectively and efficiently anyway. They should make your
 use of your debugger more productive as well, since they are largely
 concerned with how to reason about errors and probable causes.
 
@@ -471,4 +471,31 @@ might be wise to leave them always enables. Large programs like telephone
 switching systems often devote a significant amount of code to "audit"
 (审计) subsystems that monitor information and equipment, and report or
 even fix problems if they occur.
+
+\emph{Write a log file.} Another tactic (策略) is to write a \emph{log
+    file} containing a fixed-format stream of debugging output. When a
+crash occurs, the log records what happened just before the crash. Web
+servers and other network programs maintain extensive logs of traffic so
+they can monitor themselves and their clients; this fragment (edited to
+fit) comes from a local system:
+\begin{wellcode}
+    [Sun Dec 27 16:19:24 1998]
+    HTTPd: access to /usr/local/httpd/cgi-bin/test.html
+        failed for m1.cs.bell-labs.com,
+        reason: client denied by server (CGI non-executable)
+        from http://m2.cs.bell-labs.com/cgi-bin/test.pl
+\end{wellcode}
+
+Be sure to flush I/O buffers so the final log records appear in the log
+file. Output functions like \verb'printf' normally buffer their output to
+print it efficiently; abnormal termination may discard this buffered
+output. In C, a call to \verb'fflush' guarantees that all output is written
+before the program dies; there are analogous \verb'flush' function for
+output streams in C++ and Java. Or, if you can afford the overhead, you can
+avoid the flushing problem altogether by using unbuffered I/O for log
+files. The standard functions \verb'setbuf' and \verb'setvbuf' control
+buffering; \verb'setbuf(fp, NULL)' turns off buffering on the stream
+\verb'fp'. The standard error streams (\verb'stderr', \verb'cerr',
+\verb'System.err') are normally unbuffered by default.
+
 
