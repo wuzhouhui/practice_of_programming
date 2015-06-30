@@ -5,8 +5,8 @@
     It is an old observation that the best writers sometimes disregard the
     rules of rhetoric (修辞学). When they do so, however, the reader will
     usually find in the sentence some compensating (补偿) merit (优点),
-    attained at the cost of the violation (违反). Unless he is centain of
-    doing as well, he will probaly do best to follow the rules.
+    attained at the cost of the violation (违反). Unless he is certain of
+    doing as well, he will probably do best to follow the rules.
 \end{quote}
 
 \begin{quotesrc}
@@ -29,7 +29,7 @@ This fragment of code comes from a large program written many years ago:
 \end{wellcode}
 
 It's carefully written, formatted, and commented, and the program it comes
-from works extremly well; the programmers who create these system are
+from works extremely well; the programmers who create these system are
 rightly proud of what they built. But this except is puzzling to the casual
 reader. What relationship links Singapore, Brunei, Poland and Italy? Why
 isn't Italy mentioned in the comment? Since the comment and the code
@@ -42,7 +42,7 @@ maintain this code, you would need to know more.
 The few lines above are typical of much real code: mostly well done, but
 with some things could be improved.
 
-This book is about te practice of programming -- how to write programs for
+This book is about the practice of programming -- how to write programs for
 real. Our purpose is to help you to write software that works at least as
 well as the program this example was take from, while avoiding trouble
 spots and weakness. We will talk about writing better code from the
@@ -50,7 +50,7 @@ beginning and improving it as it evolves.
 
 We are going to start in an unusual place, however, by discussing
 programming style. The purpose of style is to make the code easy to read
-for yourself and others, and good style is curcial to good programming. We
+for yourself and others, and good style is crucial to good programming. We
 want to talk about it first so you will be sensitive to it as you read the
 code in the rest of the book.
 
@@ -63,9 +63,9 @@ this discipline is not hard.
 
 The principles of programming style are based on common sense guided
 experience, not on arbitrary rules and prescriptions (命令). Code should be
-clear and simle -- straightforward login, natural expression, conventional
-language use, meaningful names, neet formatting, helpful comments -- and it
-should be avoid clever tricks and unusual constructions. Consitency is
+clear and simple -- straightforward login, natural expression, conventional
+language use, meaningful names, neat formatting, helpful comments -- and it
+should be avoid clever tricks and unusual constructions. Consistency is
 important because others will find it easier to read your code, and you
 theirs, if you all stick to the same style. Detail many be imposed by local
 conventions, management edict (法令), or a program, but even if not, but if
@@ -75,7 +75,7 @@ minor adjustments for C++ and Java.
 
 We will often illustrate rules of style by small example of bad and good
 programming, since the contrast between two ways of saying the same thing
-is instructive. These example are not artifical. The "bad" ones are all
+is instructive. These example are not artificial. The "bad" ones are all
 adapted from real code, written by ordinary programmers (occasionally
 yourselves) working under the common pressures of too much work and too
 little time. Some will be distilled (提取) for brevity (简短), but they will
@@ -85,7 +85,7 @@ code, however, they may exhibit (展现) multiple problems. Addressing every
 shortcoming would take us too far off topics, so some of the good examples
 will still harbor (隐藏) other, unremarked flaws (缺点).
 
-To distiguish bad examples from good, throughout the book we will place
+To distinguish bad examples from good, throughout the book we will place
 question marks in the questionable code, as in this real excerpt (摘录):
 \begin{badcode}
     #define ONE 1
@@ -106,7 +106,7 @@ indicates the role of the specific value in the program:
 \label{sec:names}
 What's in a name? A variable or function name labels an object and conveys
 information about its purpose. A name should be informative, concise,
-memorable, and pronounceable if possible. Much information coomes from
+memorable, and pronounceable if possible. Much information comes from
 context and scope; the broader the scope of a variable, the more
 information should be conveyed by it's name.
 
@@ -142,7 +142,7 @@ to
 Programmers are often encouraged to use long variable names regardless of
 context. That is s mistake: clarity is often achieved through brevity.
 
-There are many naming convensions and local customs. Common ones include
+There are many naming conventions and local customs. Common ones include
 using names that begin or end with \verb"p", such as \verb"nodep", for
 pointer; initial capital letters for \verb"Global"s; and all capital for
 \verb"CONSTANT"s. Some programming shop use more sweeping (彻底的) rules,
@@ -163,9 +163,9 @@ Namespaces in C++ and packages in Java provide ways to manage the scope of
 names and help to keep meanings clear without unduly (过度的) long names.
 
 \emph{Be consistent.} Give related things related names that show their
-relationshipt and highlight their difference.
+relationship and highlight their difference.
 
-Besides beging much too long, the member names in this Java class are
+Besides being much too long, the member names in this Java class are
 wildly (鲁莽地) inconsistent:
 \begin{badcode}
     class UserQueue {
@@ -240,7 +240,7 @@ contradiction (矛盾):
 
 The function \verb"getIndex" returns a value between zero and
 \verb"nTable-1" if it finds the object, and returns \verb"nTable" if not.
-The boolean value returned by \verb"inTable" is thus the oppsite of what
+The boolean value returned by \verb"inTable" is thus the opposite of what
 the name implies. At the time code is written, this might not cause
 trouble, but it the program is modified later, perhaps by a different
 programmer, the name is sure to confuse.
@@ -282,8 +282,8 @@ By analogy (类比) with choosing names to aid the reader's understanding,
 write expressions and statements in a way that makes their meaning as
 transport as possible. Write the clearest code that does the job. Use
 spaces around operators to suggest grouping; more generally, format to help
-readability. This is trivial (琐细的) but valuable, like keeping a neat dest
-so you can find things. Unlike your dest, your programs are likely bo be
+readability. This is trivial (琐细的) but valuable, like keeping a neat desk
+so you can find things. Unlike your desk, your programs are likely to be
 examined by others.
 
 \emph{Indent to show structure.} A consistent indentation style is the
@@ -328,9 +328,9 @@ can be used to make the intent clear event when they are not required. The
 inner parentheses in the previous example are not necessary, but they don't
 hurt, either. Seasoned (经验丰富的) programmers might omit them, because the
 relational operators(\verb"< <= == != >= >") have higher precedence than
-the locgical operators(\verb"&&" and \verb"||").
+the logical operators(\verb"&&" and \verb"||").
 
-When mixing unrelated oprators, though, it's a good idea to parenthesize. C
+When mixing unrelated operators, though, it's a good idea to parenthesize. C
 and it's friends present pernicious (恶劣的) precedence problems, and it's
 easy to make a mistake. Because the logical operators bind tighter than
 assignment, parentheses are mandatory for most expressions that combine them:
@@ -349,7 +349,7 @@ actually means
     if (x & (MASK==BITS))
         ...
 \end{badcode}
-which is centainly not the programmer's intent. Because it combines bitwise
+which is certainly not the programmer's intent. Because it combines bitwise
 and relational operators, the expression need parentheses:
 \begin{wellcode}
     if ((x&MASK) == BITS)
@@ -365,13 +365,13 @@ but they make it easier to understand:
     leap_year = ((y%4 == 0) && (y%100 != 0)) || (y%400 == 0);
 \end{wellcode}
 We also removed some of the blanks: grouping the operands of
-higher-precendence operators helps the readers to see the structure more
+higher-precedence operators helps the readers to see the structure more
 quickly.
 
 \emph{Break up complex expressions.} C, C++ and Java have rich expression
 syntax and operators, and it's easy to get carried away by cramming (塞满)
 everything into one construction. An expression like the following is
-compact (紧凑的) but it packs too many oprations into a single statement:
+compact (紧凑的) but it packs too many operations into a single statement:
 \begin{badcode}
     *x += (*xp=(2*k < (n-m) ? c[k+1] : d[k--]));
 \end{badcode}
@@ -454,7 +454,7 @@ statements:
     str[i++] = ' ';
 \end{wellcode}
 
-Even though it cantains only one increment, this assignment can also give
+Even though it contains only one increment, this assignment can also give
 varying results:
 \begin{badcode}
     array[i++] = i;
@@ -479,7 +479,7 @@ language. The fix is, as usual, to break up the expression:
     scanf("%d", &yr);
     scanf("%d", &profit[yr]);
 \end{wellcode}
-Exercises cantion in any expression with side effects.
+Exercises caution in any expression with side effects.
 
 \begin{exercise}
 Improves each of these fragments:
@@ -520,8 +520,8 @@ Try it on as many compilers as you can, to see what happens in practice.
 
 \section{Consistency and Idioms (习惯用法)}
 \label{sec:consist_idom}
-Consitency leads to better programs. If formatting varies unpredictably, or
-loop over an array runs upill this time and downhill the next, or strings
+Consistency leads to better programs. If formatting varies unpredictably, or
+loop over an array runs until this time and downhill the next, or strings
 are copied with \verb'strcpy' and a \verb'for' loop there, the variations
 make it harder to see what's really going on. But if the same computation
 is done the same way every time it appears, any variation suggests a
@@ -595,7 +595,7 @@ though you prefer it. The program's consistency is more important than your
 own, because it makes life easier for those who follow.
 
 \emph{Use idioms for consistency.} Like natural language, programming
-languages have idioms, conventional ways that exprerienced programmers
+languages have idioms, conventional ways that experienced programmers
 write common pieces of code. A central part of learning any language is
 developing a familiarity with its idioms.
 
@@ -622,10 +622,10 @@ All of these are correct, but the idiomatic form is like this:
     for (i = 0; i < n; i++)
         array[i] = 1.0;
 \end{wellcode}
-This is not an arbitrary choice. It visits ecah member of an n-element
+This is not an arbitrary choice. It visits each member of an n-element
 array indexed from \verb'0' to \verb'n-1'. It places all the loop control
 in the \verb'for' itself, runs in increasing order, and uses the very
-idiomatic \verb'++' operator to undate the loop variable. It leaves the
+idiomatic \verb'++' operator to update the loop variable. It leaves the
 index variable at a known value just beyond the last array element. Native
 speakers recognize it which study and write it correctly without a moment's
 thought.
@@ -736,10 +736,10 @@ or
     p = new char[strlen(buf) + 1];
     strcpy(p, buf);
 \end{wellcode}
-in C++. If you don't see the \verb'+1', bewary.
+in C++. If you don't see the \verb'+1', beware.
 
 Java doesn't suffer from this specific problem, since string are not
-prepresented as null-terminated arrays. Array substripts are checked as
+represented as null-terminated arrays. Array subscripts are checked as
 well, so it is not possible to access outside the bounds of an array in Java.
 
 Most C and C++ environments provide a library function, \verb'strdup', that
@@ -761,8 +761,8 @@ idiomatically expressed as a chain of \verb'if .. else if .. else', like this:
     else if (condition2)
         statement2
     ...
-    else if (conditioni)
-        statementi
+    else if (condition_i)
+        statement_i
     else 
         default-statement
 \end{wellcode}
@@ -772,12 +772,12 @@ is executed, and then rest of the construct is skipped. The
 \textit{statement} part may be a single statement or group of statements
 enclosed in braces. The last \verb'else' handles the "default" situation,
 where none of the other alternatives was chosen. This trailing (拖尾的)
-\verb'else' part may be ommited if there is no action for the default,
+\verb'else' part may be omitted if there is no action for the default,
 although leaving it with an error message may help to catch conditions that
 "can't happen".
 
 Align all of the \verb'else' clauses (子句) vertically rather than lining
-up (排列) each \verb'else' with the corresponding \verb'if'. Vertial
+up (排列) each \verb'else' with the corresponding \verb'if'. Vertical
 alignment emphasizes that test are done in sequence and keep them from
 marching off (步进, 越来越近) the right side of the page.
 
@@ -834,7 +834,7 @@ Attempts to re-use pieces of code often lead to tightly knotted (纠缠的) prog
                 return 0;
     }
 \end{badcode}
-This uses a tricky sequence of fall-throughs in the \verb'switch' statement
+This uses a tricky sequence of fall-through in the \verb'switch' statement
 to avoid duplicating one line of code. It's also not idiomatic; cases
 should almost always end with a \verb'break', with the rare exceptions
 commented. A more traditional layout and structure is easier to read,
@@ -927,7 +927,7 @@ are officially sanctioned (认可的) examples. The reason is performance: a
 macro avoids the overhead of a function call. This argument was weak even
 when C was first defined, a time of slow machines and expensive function
 calls; today it is irrelevant. With modern machines and compilers, the
-drawbacks of function macros outweight (超过) their benefits.
+drawbacks of function macros outweigh (超过) their benefits.
 
 \emph{Avoid function macros.} In C++, \verb'inline' functions render (补偿)
 function macros unnecessary; in Java, there are no macros. In C, they cause
@@ -950,7 +950,7 @@ Note that the parameter \verb'c' occurs twice in the body of the macro. If
 then each time an input character is greater than or equal to \verb'A', it
 will be discarded and another character read to be tested against \verb'Z'.
 The C standard is carefully written to permit \verb'isupper' and analogous
-functions to be macros, but only if they gurantee to evaluate the argument
+functions to be macros, but only if they guarantee to evaluate the argument
 only once, so this implementation is broken.
 
 It's always better to use the ctype function than to implement them
@@ -973,7 +973,7 @@ This will perform the square root computation twice as often as necessary.
 Even given simple arguments, a complex expression like the body of
 \verb'ROUND_TO_INT' translates into many instructions, which should be
 housed (收藏) in a single function to be called when needed. Instantiating a
-macro at every occurence makes the compiled program larger. (C++
+macro at every occurrence makes the compiled program larger. (C++
 \verb'inline' functions have this drawback, too.)
 
 \emph{Parenthesize the macro body and arguments.} If you insist on using
@@ -997,10 +997,10 @@ The macro should be rewritten as
     #define square(x) ((x) * (x))
 \end{wellcode}
 All those parentheses are necessary. Even parenthesizing the macro properly
-does not addres the multiple evaluation problem. If an operation is
+does not address the multiple evaluation problem. If an operation is
 expensive or common enough to be wrapped up, use a function.
 
-In C++, \verb'inline' functions avoid the syntatic trouble while offering
+In C++, \verb'inline' functions avoid the syntactic trouble while offering
 whatever performance advantage macros might provide. They are appropriate
 for short functions that set or retrieve a single value.
 
@@ -1021,7 +1021,7 @@ or 1 is likely to be magic and should have a name of its own. A raw number
 in program source gives no indication of its importance or
 derivation (来历), making the program harder to understand and modify. This
 excerpt from a program to print a histogram of letter frequencies on a 24
-by 80 cirsor-addressed terminal is needlessly opaque (不透明的) because of a
+by 80 cursor-addressed terminal is needlessly opaque (不透明的) because of a
 host of magic numbers:
 \begin{badcode}
     fac = lim / 20;     /* set scale factor */
@@ -1040,7 +1040,7 @@ host of magic numbers:
     for (i = 'A'; i <= 'Z'; i++)
         printf("%c ", i);
 \end{badcode}
-The code includes, among othres, the number 20, 21, 22, 23. They're clearly
+The code includes, among others, the number 20, 21, 22, 23. They're clearly
 related... or are they? In fact, there are only three numbers critical to
 this program: 24, the number of rows on the screen; 80, the number of
 column; and 26, the number of letters in the alphabet. But none of these
@@ -1050,7 +1050,7 @@ By giving names to the principal (主要的) numbers in the calculation, we
 can make the code easier to follow. We discover, for instance, that the
 number 3 comes from (80-1)/26 and that \verb'let' should have 26 entries,
 not 27 (an off-by-one error perhaps caused by 1-indexed screen
-coordinates). Mking a couple of other simplifications, this is the result:
+coordinates). Making a couple of other simplifications, this is the result:
 \begin{wellcode}
     enum {
         MINROW  = 1,                        /* top edge */
@@ -1086,8 +1086,8 @@ display or different data. The numbers are demystified (易懂的) and so is
 the code.
 
 \emph{Define numbers as constants, not macros.} C programmers have
-traditional used \verb'#define' to manage magic number values. Te C
-preprocesser is a powerful but blunt (愚蠢的) tool, however, and macros are
+traditional used \verb'#define' to manage magic number values. The C
+preprocessor is a powerful but blunt (愚蠢的) tool, however, and macros are
 a dangerous way to program because they change the lexical structure of the
 program underfoot (碍事的). Let the language proper do the work. In C and
 C++, integer constants can be defined with an \verb'enum' statement, as we
@@ -1238,7 +1238,7 @@ self-evident information, such as the fact that \verb'i++' increments
 \end{badcode}
 All of these comments should be deleted; they're just clutter (杂物).
 
-Comments sould add somthing that is not immediately evident from the code,
+Comments should add something that is not immediately evident from the code,
 or collect into one place information that is spread through the source.
 When something subtle (微妙的) is happening, a comment may clarify, but if
 the actions are obvious already, restating them in words is pointless:
@@ -1247,7 +1247,7 @@ the actions are obvious already, restating them in words is pointless:
         ;   /* skip white space */
     if (c == EOF)   /* end of file */
         type = endoffile;
-    else if (c == '(')  /* left parenthes */
+    else if (c == '(')  /* left parenthe */
         type = leftparen;
     else if (c == ';')  /* semicolon */
         type = semicolon;
@@ -1276,29 +1276,29 @@ referred to as needed. Here's an example from a program in Chapter
 A comment that introduces each function set the stage for reading the code
 itself. If the code isn't too long or technical, a single line is enough:
 \begin{wellcode}
-    // random: retrn an integer in the range [0, r-1].
+    // random: return an integer in the range [0, r-1].
     int random(int r)
     {
         return (int)(Math.floor(Math.random() * r));
     }
 \end{wellcode}
-Sometimes coe is genuinely (真正地) difficult, perhaps because the
+Sometimes code is genuinely (真正地) difficult, perhaps because the
 algorithm is complicated or the data structure are intricate (复杂的). In
 that case, a comment that points to a source of understanding can aid the
-reader. It may also be valuable to suggest why particular dicisions were
-made. This comment introduces an extremly efficient implementation of an
+reader. It may also be valuable to suggest why particular decisions were
+made. This comment introduces an extremely efficient implementation of an
 inverse (反转) discrete (离散) cosine transform (DCT) used in JPEG image
 decoder:
 \begin{wellcode}
     /*
      * idct: Scaled integer implementation of 
-     * inverse two dimentional 8*8 Discrete Cosine Transform,
+     * inverse two dimensional 8*8 Discrete Cosine Transform,
      * Chen-Wang algorithm (IEEE ASSP-32, pp 803-816, Aug 1984)
      *
-     * 32-bit integer arithmetic (8-bit coefficents)
+     * 32-bit integer arithmetic (8-bit coefficients)
      * 11 multiplies, 29 adds per DCT
      *
-     * coefficents extended to 12 bits for IEEE 1180-1990 compliance.
+     * coefficients extended to 12 bits for IEEE 1180-1990 compliance.
      */
      static void dict(int b[8*8])
      {
@@ -1310,7 +1310,7 @@ indicates the performance of the algorithm, and tells how and why the
 original algorithm has been modified.
 
 \emph{Don't comment bad code, rewrite it.} Comment anything unusual or
-potentially confusing, but when the comment outweight the code, the code
+potentially confusing, but when the comment outweigh the code, the code
 probably needs fixing. This example uses a long, muddled (胡乱对付的)
 comment and a conditional-compiled debugging print statement to explain to
 a single statement:
@@ -1338,20 +1338,20 @@ cleans up the print statement, too.
     return(matchfound);
 \end{wellcode}
 
-\emph{Don't contradict the code.} Most comments argee with code when they
+\emph{Don't contradict the code.} Most comments agree with code when they
 are written, but as bugs are fixed and the program evolves, the comments
-are foten left in their original form, resulting in disagremment with the
+are often left in their original form, resulting in disagreement with the
 code. This is the likely explanation for the inconsistentency in the
 example that opens this chapter.
 
-Whatever the source of the disagremment, a comment that contradicts the
+Whatever the source of the disagreement, a comment that contradicts the
 code is confusing, and many a debugging session has been needlessly
 protracted (拖延) because a mistaken comment was taken as truth. When you
-change the code, make sure the comments are stil accurate.
+change the code, make sure the comments are still accurate.
 
 Comments should not only agree with code, they should support it. The
 comment in this example is correct -- it explains the purpose of the next
-two lines -- but it appears to contradict the code; the comment talks aboue
+two lines -- but it appears to contradict the code; the comment talks about
 newline and the code talks about blanks:
 \begin{badcode}
     time(&now);
@@ -1370,7 +1370,7 @@ One improvement is to rewrite the code more idiomatically:
     while (date[i] != '\n') i++;
     date[i] = '\0';
 \end{badcode}
-Code and comment now agree, but both can be improved by beging made more
+Code and comment now agree, but both can be improved by being made more
 direct. The problem is to delete the newline that \verb'ctime' puts on the
 end of the string it returns. The comment should say so, and the code
 should do so:
@@ -1409,7 +1409,7 @@ standard and familiar interface:
 When it takes more than a few words to explain what's happening,it's often
 and indication that the code should be rewriting. Here, the code could
 perhaps be improved but the real problem is the comment, which is nearly as
-long as the implementation ans confusing. too (which way is "above"?).
+long as the implementation and confusing. too (which way is "above"?).
 We're stretching (伸展) the point to say this routine is hard to
 understand, but since it implements a standard function, its comment can
 help by summarizing the behavior and telling us where the definition
@@ -1426,7 +1426,7 @@ originates; that's all that's needed:
 \end{wellcode}
 
 Students are taught that it's important to comment everything. Professional
-programmers are foten require to comment all their code. But the purpose of
+programmers are often require to comment all their code. But the purpose of
 commenting can be lost in blindly following rules. Comments are meant to
 help a reader understand pans (全景) of the program that are not readily
 understood from the code itself. As much as possible, write code that is
@@ -1480,9 +1480,9 @@ examples in this chapter show what can go wrong if there isn't enough
 attention to good style. Sloppy (粗心的) code is bad code -- not just
 awkward and hard to read, but often broken.
 
-The key observation is that good style should be a matter of habbit. If you
+The key observation is that good style should be a matter of habit. If you
 think about style as you write the code originally, and if you take the
-time to revise and improve it, you will develop good habbits. Once they
+time to revise and improve it, you will develop good habits. Once they
 become automatic, your subconscious will take care of many of the details
 for you, and even the code you produce under pressure will be better.
 
@@ -1495,7 +1495,7 @@ English well.
 This chapter draw on the approach of \bookname{The Elements of Programming
 Style} by Brian Kernighan and P. J. Plauger (McGraw-Hill, 1978). Steve
 Maguire's \bookname{Writing Solid Code} (Microsoft Press, 1993) is an
-excellent source of programming advise. There are also helpful descussions
+excellent source of programming advise. There are also helpful discussions
 of style in Steve McConnell's \bookname{Code Complete} (Microsoft Press,
 1993) and Peter van der Linder's \bookname{Expert C Programming: Deep C
 Secrets} (Prentice Hall, 1994).

@@ -7,3 +7,4 @@
 *.xdv
 *.fls
 *latexmk
+*.bak

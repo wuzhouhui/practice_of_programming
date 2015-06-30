@@ -5,7 +5,7 @@
     Bug, a defect or fault in a machine, plan, or the like. orig.U.S. 1889
     Pall Mall Gaz. 11 Mar: 1/1 Mr. Edison, I was informed, has been up the
     two previous nights discovering 'a bug' in his phonograph -- an
-    expression for solving a diffculty, implying that some imaginary insect
+    expression for solving a difficulty, implying that some imaginary insect
     has secreted itself inside and is causing all the trouble.
 \end{quote}
 
@@ -15,7 +15,7 @@
 
 We have presented a lot of code in the past four chapters, and we've
 pretended that it all pretty much worked the first time. Naturally this
-wasn't ture; there were plenty of bugs. The word "bug" didn't originate
+wasn't true; there were plenty of bugs. The word "bug" didn't originate
 with programmers, but it is certainly one of the most common terms in
 computing. Why should software be so hard?
 
@@ -47,7 +47,7 @@ of cure.
 What is the role of language? A major force in the evolution of programming
 language has been the attempt to prevent bugs through language features.
 Some features make classes of errors less likely: range checking on
-substript, restricted pointers or no pointers at all, garbage collection,
+subscript, restricted pointers or no pointers at all, garbage collection,
 string data types, typed UO, and strong type-checking. On the opposite side
 of the coin, some features are prone (倾向的) error, like \verb'goto'
 statements, global variables, unrestricted pointers, and automatic type
@@ -78,7 +78,7 @@ provide facilities for formatting and displaying the values of variables.
 A debugger can be invoked directly when a problem is known to exist. Some
 debuggers take over automatically when something unexpectedly goes wrong
 during program execution. It's usually easy to find out where the program
-was executing when it died, examing the sequence of functions that were
+was executing when it died, examine the sequence of functions that were
 active (the stack trace), and display the values of local and global
 variables. That much information may be sufficient to identify a bug. If
 not, breakpoints and stepping make it possible to re-run a failing program
@@ -113,7 +113,7 @@ with the program; debugger sessions are transient.
 Blind probing with a debugger is not likely to be productive. It is more
 helpful to use the debugger to discover the state of the program when it
 fails, then think about how the failure could have happened. Debuggers can
-be arcane (晦涩难解的) and diffcult programs, and especially for beginners
+be arcane (晦涩难解的) and difficult programs, and especially for beginners
 may provide more confusion than help. If you ask the wrong question, they
 will probably give you an answer, but you may not know it's misleading.
 
@@ -148,7 +148,7 @@ the reasons. Once we have a full explanation, we'll know what to fix and,
 along the way, likely discover a few other things we hadn't expected.
 
 \emph{Look for familiar patterns.} Ask yourself whether this is familiar
-pattern. "I've senn that before" is often the beginning of understanding,
+pattern. "I've seen that before" is often the beginning of understanding,
 or even the whole answer. Common bugs have distinctive signatures. For
 instance, novice (新手) C programmers often write:
 \begin{badcode}
@@ -160,7 +160,7 @@ instead of
     int n;
     scanf("%d", &n);
 \end{wellcode}
-ans this typically causes an attempt to access out-of-bounds memory when a
+and this typically causes an attempt to access out-of-bounds memory when a
 line of input is read. People who teach C recognize the symptom instantly.
 
 Mismatched types and conversion in \verb'printf' and \verb'scanf' are an
@@ -206,7 +206,7 @@ version and not in the old, the new code is part of the problem. This means
 that you should preserve at least the previous version of the program,
 which you believe to be correct, so that you can compare behaviors. It also
 means that you should keep records of the changes made and bugs fixed, so
-you don't have to redicover this vital information while you're trying to
+you don't have to rediscover this vital information while you're trying to
 fix a bug. Source code control systems and other history mechanisms are
 helpful here.
 
@@ -244,7 +244,7 @@ case in the \verb'switch' should have read
 \begin{wellcode}
     from = atoi(&argv[i][2]);
 \end{wellcode}
-Because the author was still in a hurry, he failed to notic that the same
+Because the author was still in a hurry, he failed to notice that the same
 blunder (错误) occurred twice more and it took another round before all of
 the fundamentally identical errors were fixed.
 
@@ -265,7 +265,7 @@ forced to deal with the problem later when the machine was tens of millions
 of miles away and much harder to fix.
 
 \emph{Get a stack trace.} Although debuggers can probe running programs,
-one of their most common uses is to examing the state of a program after
+one of their most common uses is to examine the state of a program after
 death. The source line number of the failure, often part of a stack trace,
 is the most useful single piece of debugging information; improbable
 (不太可能的) values of arguments are also a big clue (zero pointers,
@@ -285,9 +285,9 @@ comparison function \verb'scmp' instead:
     int arr[N];
     qsort(arr, n, sizeof(arr[0]), scmp);
 \end{badcode}
-A compiler can't detect the mismatch of types here, so disaters awaits.
+A compiler can't detect the mismatch of types here, so disasters awaits.
 When we run the program, it crashes by attempting to access an illegal
-memory location. Running the \verb'dbx' debugger producess a stack trace
+memory location. Running the \verb'dbx' debugger produces a stack trace
 % XXX The hyperlink of footnote doesn't response when click.
 like this, edited to fit\footnote{The source pdf is blurry (模糊的), so the
     stack trace may contain some typing errors}:
@@ -314,9 +314,9 @@ that will give additional information about what went wrong.
 \emph{Read before typing.} One effective but under-appreciated debugging
 technique is to read the code very carefully and think about it for a while
 without making changes. There's a powerful urge to get to the keyboard and
-start mofitying the program to see if the bug goes away. But chances are
+start modifying the program to see if the bug goes away. But chances are
 that you don't know what's really broken and will change the wrong thing,
-perhaps breaking something something else. A listing of the cirtical part
+perhaps breaking something something else. A listing of the critical part
 of program on paper can give a different perspective than what you see on
 the screen, and encourages you to take more time for reflection. Don't make
 listings as a matter of routine, though. Printing a complete program wastes
@@ -346,7 +346,7 @@ any idea what could be wrong, life get tougher.
 
 \emph{Make the bug reproducible.} The first step is to make sure you can
 make the bug appear on demand. It's frustrating to chase down a bug that
-doesn't happen every time. Spend some time construting input and parameter
+doesn't happen every time. Spend some time constructing input and parameter
 settings that reliably cause the problem, then wrap up the recipe (处方) so
 it can be run with a button push or a few keystrokes. If it's a hard bug,
 you'll be making it happen over and over as you track down the problem, so
@@ -373,14 +373,14 @@ or denies hypotheses (假说) about what is wrong.
 
 Proceed by binary search. Throw away half the input and see if the output
 is still wrong; if not, go back to the previous state and discard the other
-half of the input. The same binary search process can be used on the proram
+half of the input. The same binary search process can be used on the program
 text itself: eliminate some part of the program that should have no
 relationship to the bug and see if the bug is still there. An editor with
 undo is helpful in reducing big test cases and big programs without losing
 the bug.
 
 \emph{Study the numerology (命理) of failures.} Sometimes a pattern in the
-numerology of failing examples give a clue that focues the search. We found
+numerology of failing examples give a clue that focus the search. We found
 some spelling mistakes in a newly written section of this book, where
 occasional letters had simply disappeared. this was mystifying (迷惑的).
 The text had been created by cutting and pasting from another file, so it
@@ -399,7 +399,7 @@ Studying the patterns of numbers related to the failure pointed us right at
 the bug. Elapsed time? A couple of minutes of mystification, five minutes
 of looking at the data to discover the pattern of missing characters, a
 minute to search for likely places to fix, and another minute to identify
-and eliminate the bug. This one would have ben hopeless to find with a
+and eliminate the bug. This one would have been hopeless to find with a
 debugger, since it involved two multiprocess programs, driven by mouse
 clicks, communicating through a file system.
 
@@ -407,7 +407,7 @@ clicks, communicating through a file system.
 the program is doing, adding statements to display more information can be
 the easiest, most cost-effective way to find out. Put them in to verify
 your understanding or refine your ideas of what's wrong. For example,
-diplay "can't get here" if you think it's not possible to reach a certain
+display "can't get here" if you think it's not possible to reach a certain
 point in the code; then if you see that message, move the output statements
 back towards the start to figure out where things first begin to go wrong.
 Or show "got here" messages going forward, to find the last place where
@@ -416,7 +416,7 @@ which one you're looking at.
 
 Display messages in a compact fixed format so they are easy to scan by eye
 or with programs like the pattern-matching tool \verb'grep'. (A grep-like
-program is invaluabe (无价的) for searching text. Chapter
+program is invaluable (无价的) for searching text. Chapter
 \ref{chap:notation} includes a simple implementation.) If you're displaying
 the value of a variable, format it the same way each time. In C and C++,
 show pointers as hexadecimal numbers with \verb'%x' or \verb'%p'; this will
@@ -561,7 +561,7 @@ good debugger to step through the program. If your mental (精神上的) model
 of how something works is just pain wrong, so you're looking in the wrong
 place entirely, or looking in the right place but not seeing the problem, a
 debugger forces you to think differently. These "mental model" bugs are
-among the hardest to find; the mechanical aid is invaluabe.
+among the hardest to find; the mechanical aid is invaluable.
 
 Sometimes the misconception (误解) is simple: incorrect operator
 precedence, or the wrong operator, or indentation that doesn't match the
@@ -600,7 +600,7 @@ Or hasty typing creates a problem:
     }
 \end{badcode}
 
-Sometimes the error involes arguments in the wrong order in a situation
+Sometimes the error involves arguments in the wrong order in a situation
 where type-checking can't help, like writing
 \begin{badcode}
     memset(p, n, 0);    /* store n 0's in p */
@@ -680,8 +680,8 @@ character disappeared forever. The original code was not as clean as it
 should have been -- there's too much in the loop condition -- but the
 vendor's header file was inexcusably (无法容许地) wrong.
 
-One can still find instances of this problem today; this macor comes from a
-different verdor's current header files:
+One can still find instances of this problem today; this macro comes from a
+different vendor's current header files:
 \begin{badcode}
     #define __iscsym(c) (isalnum(c) || ((c) == '_'))
 \end{badcode}
@@ -715,7 +715,7 @@ bits were disconnected from the backplane (基架).
 \section{Non-reproducible Bugs}
 
 Bugs that won't stand still are the most difficult to deal with, and
-usually the prob- lem isn't as obvious as failing hardware. The very fact
+usually the problem isn't as obvious as failing hardware. The very fact
 that the behavior is non- deterministic is itself information, however; it
 means that the error is not likely to be a flaw (缺陷) in your algorithm
 but that in some way your code is using information that changes each time
@@ -796,7 +796,7 @@ overruns (超限) at either end.
 
 \section{Debugging Tools}
 
-Debuggers aren't the only tools that help tind bugs. A variety of programs
+Debuggers aren't the only tools that help find bugs. A variety of programs
 can help us wade through voluminous output to select important bits, find
 anomalies, or rearrange data to make it easier to see what's going on. Many
 of these programs are part of the standard toolkit; some are written to
@@ -905,7 +905,7 @@ This worked fine on Unix, but under Windows 95 the command
     C:\> strings < strings.exe
 \end{wellcode}
 % XXX The hyperlink of footnote doesn't response when click.
-produced exactly five lines of output\footnote{The message mayby contains
+produced exactly five lines of output\footnote{The message maybe contains
 errors, because the source is blurry.}:
 \begin{wellcode}
     !This program cannot be run in DOS mode
@@ -948,7 +948,7 @@ way everywhere.
 \end{exercise}
 
 \begin{exercise}
-    Write \verb'vis', which copies input to output, execpt that it displays
+    Write \verb'vis', which copies input to output, except that it displays
     non-printable bytes like backspace, control characters, and non-ASCII
     characters as \verb'\Xhh' where \verb'hh' is the hexadecimal
     representation of the non-printable byte. By contrast with
@@ -983,7 +983,7 @@ task is discovering what on earth is going on in something that you didn't
 write.
 
 This is a place where tools can help significantly. Text-search programs
-like grep can find all the occurrences of names. Cross-referencers give
+like grep can find all the occurrences of names. Cross-reference give
 some idea of the program's structure. A display of the graph of function
 calls is valuable if it isn't too big. Stepping through a program a
 function call at a time with a debugger can reveal the sequence of events.
@@ -1017,7 +1017,7 @@ systems. Try your test on multiple systems and be sure you understand what
 happens; check the language definition to be sure.
 
 Make sure the bug is new. Do you have the latest version of the program? Is
-there a list of bug fixes? Most software goes through n~ultiple releases;
+there a list of bug fixes? Most software goes through multiple releases;
 if you find a bug in version 4.0b1, it might well be fixed or replaced by a
 new one in version 4.04b2. In any case, few programmers have much
 enthusiasm for fixing bugs in any- thing but the current version of a
