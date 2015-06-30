@@ -793,3 +793,176 @@ write logging information that can be processed by another program. Either
 way, add markers to the beginning and end of each allocated block to detect
 overruns (超限) at either end.
 \end{exercise}
+
+\section{Debugging Tools}
+
+Debuggers aren't the only tools that help tind bugs. A variety of programs
+can help us wade through voluminous output to select important bits, find
+anomalies, or rearrange data to make it easier to see what's going on. Many
+of these programs are part of the standard toolkit; some are written to
+help find a particular bug or to analyze a specific program.
+
+In this section we will describe a simple program called \verb'strings'
+that is especially useful for looking at files that are mostly non-printing
+characters, such as executables or the mysterious binary formats favored by
+some word processors. There is often valuable information hidden within,
+like the text of a document, or error messages and undocumented options, or
+the names of files and directories, or the names of functions a program
+might call.
+
+We also find \verb'strings' helpful for locating text in other binary
+files.  Image files often contain ASCII strings that identify the program
+that created them, and compressed files and archives (such as zip files)
+may contain file names; \verb'strings' will find these too.
+
+Unix systems provide an implementation of \verb'strings' already. although
+it's a little different from this one. It recognizes when its input is a
+program and examines only the text and data segments, ignoring the symbol
+table. Its \verb'-a' option forces it to read the whole file.
+
+In effect, \verb'strings' extracts the ASCII text from a binary file so the
+text can be read or processed by other programs. If an error message
+carries no identification, it may not be evident what program produced it,
+let alone why. In that case, searching through likely directories with a
+command like
+\begin{wellcode}
+    % strings *.exe *.dll | grep 'mystery message'
+\end{wellcode}
+might locate the producer.
+
+The \verb'strings' function reads a file and prints all run of at least
+\verb'MINLEN = 6' printable characters:
+\begin{wellcode}
+    /* strings: extract printable strings from stream */
+    void strings(char *name, FILE *fin)
+    {
+        int c, i;
+        char buf[BUFSIZ];
+
+        do {    /* once for each string */
+            for (i = 0; (c = getc(fin)) != EOF;  ) {
+                if (!isprint(c))
+                    break;
+                buf[i++] = c;
+                if (i >= BUFSIZ)
+                    break;
+            }
+            if (i >= MINLEN) /* print if long enough */
+                printf("%s: %.*s\n", name, i, buf);
+        } while (c != EOF);
+    }
+\end{wellcode}
+The \verb'printf' format string \verb'%.*s' takes the string length from
+the next argument (\verb'i'), since the string (\verb'buf') is not
+null-terminated.
+
+The \verb'do-while' loop finds and then prints each string, terminating at
+\verb'EOF'.  Checking for end of file at the bottom allows the \verb'getc'
+and \verb'string' loops to share a termination condition and lets a single
+\verb'printf' handle end of string, end of file, and string too long.
+
+A standard-issue outer loop with a test at the top, or a single \verb'getc'
+loop with a more complex body, would require duplicating the \verb'printf'.
+This function started life that way, but it had a bug in the \verb'printf'
+statement. We fixed that in one place but forgot to fix two others. ("Did I
+make the same mistake somewhere else?") At that point, it became clear that
+the program needed to be rewritten so there was less duplicated code; that
+led to the \verb'do-while'.
+
+The main routine of \verb'strings' calls the \verb'strings' function for
+each of its argument files:
+\begin{wellcode}
+    /* strings main: find printable strings in files */
+    int main(int argc, char *argv[])
+    {
+        int     i;
+        FILE    *fin;
+
+        setprogname("strings");
+        if (argc == 1)
+            printf("usage: strings filenames");
+        else {
+            for (i = 1; i < argc; i++) {
+                if ((fin = fopen(argv[i], "rb")) == NULL)
+                    printf("can't open %s: ", argv[i]);
+                else {
+                    strings(argv[i], fin);
+                    fclose(fin);
+                }
+            }
+        }
+        return 0;
+    }
+\end{wellcode}
+
+You might be surprised that \verb'strings' doesn't read its standard input
+if no files are named. Originally it did. To explain why it doesn't now, we
+need to tell a debugging story.
+
+The obvious test case for \verb'strings' is to run the program on itself.
+This worked fine on Unix, but under Windows 95 the command
+\begin{wellcode}
+    C:\> strings < strings.exe
+\end{wellcode}
+% XXX The hyperlink of footnote doesn't response when click.
+produced exactly five lines of output\footnote{The message mayby contains
+errors, because the source is blurry.}:
+\begin{wellcode}
+    !This program cannot be run in DOS mode
+    .rdata
+    @.data
+    .idata
+    .reloc
+\end{wellcode}
+The first line looks like an error message and we wasted some time before
+realizing it's actually a string in the program, and the output is correct,
+at least as far as it goes.  It's not unknown to have a debugging session
+derailed (转移) by misunderstanding the source of a message.
+
+But there should be more output. Where is it? Late one night, the light
+finally dawned. ("I've seen that before!") This is a portability problem
+that is described in more detail in Chapter 8. We had originally written
+the program to read only from its standard input using \verb'getchar'. On
+Windows. however, \verb'getchar' returns \verb'EOF' when it encounters a
+particular byte ( \verb'Ox1A' or \verb'Ctrl-Z') in text mode input and this
+was causing the early termination.
+
+This is absolutely legal behavior, but not what we were expecting given our
+Unix background. The solution is to open the file in binary mode using the
+mode \verb'"rb"'.  But \verb'stdin' is already open and there is no
+standard way to change its mode. (Functions like \verb'fdopen' or
+\verb'setmode' could be used but they are not part of the C standard.)
+Ultimately we face a set of unpalatable (不可口的) alternatives: force the
+user to provide a file name so it works properly on Windows but is
+unconventional on Unix; silently produce wrong answers if a Windows user
+attempts to read from standard input; or use conditional compilation to
+make the behavior adapt to different systems, at the price of reduced
+portability. We chose the first option so the same program works the same
+way everywhere.
+
+\begin{exercise}
+    The \verb'strings' program prints strings with \verb'MINLEN' or more
+    characters, which sometimes produces more output than is useful.
+    Provide \verb'strings' with an optional argument to define the minimum
+    string length.
+\end{exercise}
+
+\begin{exercise}
+    Write \verb'vis', which copies input to output, execpt that it displays
+    non-printable bytes like backspace, control characters, and non-ASCII
+    characters as \verb'\Xhh' where \verb'hh' is the hexadecimal
+    representation of the non-printable byte. By contrast with
+    \verb'strings', \verb'vis' is most useful for examing input that
+    contain only a few non-printable characters.
+\end{exercise}
+
+\begin{exercise}
+    What does \verb'vis' produce if the input is \verb'\X0A'? How could you
+    make the output \verb'vis' unambiguous?
+\end{exercise}
+
+\begin{exercise}
+    Extend \verb'vis' to process a sequence of files, fold long lines at
+    any desired column, and remove non-printable characters entirely.
+    What other features might be consistent with the role of the program?
+\end{exercise}
