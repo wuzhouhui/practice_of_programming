@@ -966,3 +966,91 @@ way everywhere.
     any desired column, and remove non-printable characters entirely.
     What other features might be consistent with the role of the program?
 \end{exercise}
+
+\section{Other People's Bugs}
+
+Realistically, most programmers do not have the fun of developing a brand
+new system from the ground up. Instead, they spend much of their time
+using, maintaining. modifying and thus, inevitably, debugging code written
+by other people.
+
+When debugging others' code, everything that we have said about how to
+debug your own code applies. Before starting, though, you must first
+acquire some understanding of how the program is organized and how the
+original programmers thought and wrote. The term used in one very large
+software project is "discovery," which is not a bad metaphor (隐喻). The
+task is discovering what on earth is going on in something that you didn't
+write.
+
+This is a place where tools can help significantly. Text-search programs
+like grep can find all the occurrences of names. Cross-referencers give
+some idea of the program's structure. A display of the graph of function
+calls is valuable if it isn't too big. Stepping through a program a
+function call at a time with a debugger can reveal the sequence of events.
+A revision history of the program may give some clues by showing what has
+been done to the program over time. Frequent changes are often a sign of
+code that is poorly understood or subject (屈服于) to changing
+requirements.  and thus potentially buggy.
+
+Sometimes you need to track down errors in software you are not responsible
+for and d o not have the source code for. In that case, the task is to
+identify and characterize the bug sufficiently well that you can report it
+accurately. and at the same time perhaps find a "work-around" (迂回路线)
+that avoids the problem.
+
+If you think that you have found a bug in someone else's program, the first
+step is to make absolutely sure it is a genuine (真正的) bug, so you don't
+waste the author's time and lose your own credibility.
+
+When you find a compiler bug, make sure that the error is really in the
+compiler and not in your own code. For example, whether a right shift
+operation fills with zero bits (logical shift) or propagates (蔓延) the
+sign bit (arithmetic shift) is unspecified in C and C++, so novices (新手)
+sometimes think it's an error if a construct like
+\begin{badcode}
+    i = -1;
+    printf("%d\n", i >> 1);
+\end{badcode}
+yields an unexpected answer. But this is a portability issue, because this
+statement can legitimately (合法地) behave differently on different
+systems. Try your test on multiple systems and be sure you understand what
+happens; check the language definition to be sure.
+
+Make sure the bug is new. Do you have the latest version of the program? Is
+there a list of bug fixes? Most software goes through n~ultiple releases;
+if you find a bug in version 4.0b1, it might well be fixed or replaced by a
+new one in version 4.04b2. In any case, few programmers have much
+enthusiasm for fixing bugs in any- thing but the current version of a
+program.
+
+Finally, put yourself in the shoes of the person who receives your report.
+You want to provide the owner with as good a test case as you can manage.
+It's not very helpful if the bug can be demonstrated (示范) only with large
+inputs, or an elaborate (复杂的) environment, or multiple supporting files.
+Strip the test down to a minimal and self-contained case. Include other
+information that could possibly be relevant, like the version of the
+program itself, and of the compiler, operating system, and hardware.  For
+the buggy version of \verb'isprint' mentioned in Section
+\ref{sec:last_resorts}, we could provide this as a test program:
+\begin{wellcode}
+    /* test program for isprint bug */
+    int main(void)
+    {
+        int c;
+
+        while (isprint(c = getchar()) || c != EOF)
+            print("%c", c);
+        return 0;
+    }
+\end{wellcode}
+Any line of printable text will serve as a test case, since the output will
+contain only half the input:
+\begin{wellcode}
+    % echo 1234567890 | isprint_test
+    24680
+    %
+\end{wellcode}
+
+The best bug reports are the ones that need only a line or two of input on
+a plain vanilla system to demonstrate the fault, and that include a fix.
+Send the kind of bug report you'd like to receive yourself.
