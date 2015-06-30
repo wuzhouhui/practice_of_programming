@@ -1054,3 +1054,42 @@ contain only half the input:
 The best bug reports are the ones that need only a line or two of input on
 a plain vanilla system to demonstrate the fault, and that include a fix.
 Send the kind of bug report you'd like to receive yourself.
+
+\section{Summary}
+With the right attitude debugging can be fun, like solving a puzzle, but
+whether we enjoy it or not, debugging is an art that we will practice
+regularly.  Still, it would be nice if bugs didn't happen, so we try to
+avoid them by writing code well in the first place. Well-written code has
+fewer bugs to begin with and those that remain are easier to find.  Once a
+bug has been seen, the first thing to do is to think hard about the clues
+it presents. How could it have come about? Is it something familiar? Was
+something just changed in the program? Is there something special about the
+input data that provoked (触发) it? A few well-chosen test cases and a few
+print statements in the code may be enough. 
+
+If there aren't good clues, hard thinking is still the best first step, to
+be followed by systematic attempts to narrow down the location of the
+problem. One step is cutting down the input data to make a small input that
+fails; another is cutting out code to eliminate regions that can't be
+related. It's possible to insert checking code that gets turned on only
+after the program has executed some number of steps, again to try to
+localize the problem. All of these are instances of a general strategy,
+divide and conquer, which is as effective in debugging as it is in politics
+and war. 
+
+Use other aids as well. Explaining your code to someone else (even a teddy
+bear) is wonderfully effective. Use a debugger to get a stack trace. Use
+some of the commercial tools that check for memory leaks, array bounds
+violations, suspect (可疑的) code, and the like. Step through your program
+when it has become clear that you have the wrong mental picture of how the
+code works.
+
+Know yourself, and the kinds of errors you make. Once you have found and
+fixed a bug, make sure that you eliminate other bugs that might be similar.
+Think about what happened so you can avoid making that kind of mistake
+again.
+
+\section*{Supplementary Reading}
+Steve Maguire's \bookname{Writing Solid Code} (Microsoft Press, 1993) and
+Steve McConnell's \bookname{Code Complete} (Microsoft Press, 1993) both
+have much good advice on debugging.
