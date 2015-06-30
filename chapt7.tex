@@ -2,4 +2,268 @@
 \chapter{Performance}
 \label{chap:performance}
 \begin{quotation}
+    His promises were, as he then was, mighty; But his performance, as he
+    is now, nothing.
 \end{quotation}
+\begin{quotesrc}
+    Shakespeare, \bookname{King Henry VIII}
+\end{quotesrc}
+
+Long ago, programmers went to great effort to make their programs efficient
+because computers were slow and expensive. Today, machines are much cheaper
+and faster, so the need for absolute efficiency is greatly reduced. Is it
+still worth worrying about performance?
+
+Yes, but only if the problem is important, the program is genuinely too
+slow, and there is some expectation that it can be made faster while
+maintaining correctness, robustness, and clarity. A fast program that gets
+the wrong answer doesn't save any time.
+
+Thus the first principle of optimization is don't. Is the program good
+enough already? Knowing how a program will be used and the environment it
+runs in, is there any benefit to making it faster? Programs written for
+assignments in a college class are never used again; speed rarely matters.
+Nor will speed matter for most personal programs, occasional tools, test
+frameworks, experiments, and prototypes. The run-time of a commercial
+product or a central component such as a graphics library can be critically
+important, however, so we need to understand how to think about performance
+issues.
+
+When should we try to speed up a program? How can we do so? What can we
+expect to gain? This chapter discusses how to make programs run faster or
+use less memory. Speed is usually the most important concern, so that is
+mostly what we'll talk about. Space (main memory, disk) is less frequently
+an issue but can be crucial, so we will spend some time and space on that
+too.
+
+As we observed in Chapter \ref{chap:alds}, the best strategy is to use the
+simplest, cleanest algorithms and data structures appropriate for the task.
+Then measure performance to see if changes are needed; enable compiler
+options to generate the fastest possible code; assess what changes to the
+program itself will have the most effect; make changes one at a time and
+re-assess; and keep the simple versions for testing revisions against.
+
+Measurement is a crucial component of performance improvement since
+reasoning and intuition are fallible (易错的) guides and must be
+supplemented with tools like timing commands and profilers (探查).
+Performance improvement has much in common with testing, including such
+techniques as automation, keeping careful records, and using regression
+(回归) tests to make sure that changes preserve correctness and do not undo
+previous improvements.
+
+If you choose your algorithms wisely and write well originally you may find
+no need for further speedups. Often minor changes will fix any performance
+problems in well-designed code, while badly-designed code will require
+major rewriting.
+
+\section{A Bottleneck}
+\label{sec:bootleneck}
+Let us begin by describing how a bottleneck was removed from a critical
+program in our local environment.
+
+Our incoming mail funnels (漏斗) through a machine, called a gateway, that
+connects our internal network with the external Internet. Electronic mail
+messages from outside -- tens of thousands a day for a community of a few
+thousand people -- arrive at the gateway and are transferred to the
+internal network; this separation isolates our private network from the
+public Internet and allows us to publish a single machine name (that of the
+gateway) for everyone in the community.
+
+One of the services of the gateway is to filter out "spam (罐头猪肉)."
+unsolicited (未经同意的) mail that advertises services of dubious (可疑的)
+merit (值得). After successful early trials of the spam filter, the service
+was installed as a permanent feature for all users of the mail gateway, and
+a problem immediately became apparent. The gateway machine, antiquated
+(老旧的) and already very busy, was overwhelmed (倾覆) because the
+filtering program was taking so much time -- much more time than was
+required for all the other processing of each message -- that the mail
+queues filled and message delivery was delayed by hours while the system
+struggled to catch up.
+
+This is an example of a true performance problem: the program was not fast
+enough to do its job, and people were inconvenienced by the delay. The
+program simply had to run much faster.
+
+Simplifying quite a bit, the spam filter runs like this. Each incoming
+message is treated as a single string, and a textual pattern matcher
+examines that string to see if it contains any phrases from known spam,
+such as "Make millions in your spare time" or "XXX-rated." Messages tend to
+recur (重发), so this technique is remarkably effective, and if a spam
+message is not caught, a phrase is added to the list to catch it next time.
+
+None of the existing string-matching tools, such as \verb'grep', had the
+right combination of performance and packaging (封装), so a special-purpose
+spam filter was written. The original code was very simple; it looked to
+see if each message contained any of the phrases (patterns):
+\begin{wellcode}
+    /* isspam: test mesg for occurrence of any pat */
+    int isspam(char *mesg)
+    {
+        int i;
+
+        for (i = 0; i < npat; i++)
+            if (strstr(mesg, pat[i]) != NULL) {
+                printf("spam: match for '%s'\n", pat[i]);
+                return 1;
+            }
+
+        return 0;
+    }
+\end{wellcode}
+How could this be made faster? The string must be searched, and the
+\verb'strstr' function from the C library is the best way to search: it's
+standard and efficient.
+
+\emph{Using profiling (靠模切削),} a technique we'll talk about in the next
+section, it became clear that the implementation of \verb'strstr' had
+unfortunate properties when used in a spam filter. By changing the way
+\verb'strstr' worked, it could be made more efficient \emph{for this
+    particular problem}.
+
+The existing implementation of \verb'strstr' looked something like this:
+\begin{wellcode}
+    /* simple strstr: use strchr to look for first character */
+    char *strstr(const char *s1, const char *s2)
+    {
+        int n;
+
+        n = strlen(s2);
+        for (;;) {
+            s1 = strchr(s1, s2[0]);
+            if (s1 == NULL)
+                return NULL;
+            if (strncmp(s1, s2, n) == 0)
+                return s1;
+            s1++;
+        }
+    }
+\end{wellcode}
+It had been written with efficiency in mind, and in fact for typical use it
+was fast because it used highly-optimized library routines to do the work.
+It called \verb'strchr' to find the next occurrence of the first character
+of the pattern, and then called \verb'strncmp' to see if the rest of the
+string matched the rest of the pattern. Thus it skipped quickly over most
+of the message looking for the first character of the pattern.  and then
+did a fast scan to check the rest. Why would this perform badly?
+
+There are several reasons. First, strncmp takes as an argument the length
+of the pattern. which must be computed with \verb'strlen'. But the patterns
+are fixed, so it shouldn't be necessary to recompute their lengths for each
+message.
+
+Second, \verb'strncmp' has a complex inner loop. It must not only compare
+the bytes of the two strings, it must look for the terminating \verb'\0'
+byte on both strings while also counting down the length parameter. Since
+the lengths of all the strings are known in advance (though not to
+strncmp), this complexity is unnecessary; we know the counts are right so
+checking for the \verb'\n' wastes time.
+
+Third, \verb'strchr' is also complex, since it must look for the character
+and also watch for the \verb'\0' byte that terminates the message. For a
+given call to \verb'isspam', the message is fixed, so time spent looking
+for the \verb'\0' is wasted since we know where the message ends.
+
+Finally, although \verb'strncmp', \verb'strchr' , and \verb'strlen' are all
+efficient in isolation, the overhead of calling these functions is
+comparable to the cost of the calculation they will perform. It's more
+efficient to do all the work in a special, carefully written version of
+\verb'strstr' and avoid calling other functions altogether.
+
+These sorts of problems are a common source of performance trouble -- a
+routine or interface works well for the typical case, but performs poorly
+in an unusual case that happens to be central to the program at issue. The
+existing \verb'strstr' was fine when both the pattern and the string were
+short and changed each call, but when the string is long and fixed, the
+overhead is prohibitive (可抑制的).
+
+With this in mind, \verb'strstr' was rewritten to walk the pattern and
+message strings together looking for matches, without calling subroutines.
+The resulting implementation has predictable behavior: it is slightly
+slower in some cases, but much faster in the spam filter and, most
+important, is never terrible. To verify the new implementation's
+correctness and performance, a performance test suite was built.  This
+suite included not only simple examples like searching for a word in a
+sentence, but also pathological (病态的) cases such as looking for a
+pattern of a single x in a string of a thousand e's and a pattern of a
+thousand x's in a string of a single e, both of which can be handled badly
+by naive implementations. Such extreme cases are a key part of performance
+evaluation.
+
+The library was updated with the new \verb'strstr' and the spam filter ran
+about $30\%$ faster, a good payoff for rewriting a single routine.
+
+Unfortunately, it was still too slow.
+
+When solving problems, it's important to ask right question. Up to now,
+we've been asking for the fastest way to search for a textual pattern in a
+string. But the real problem is to search for a large, fixed set of textual
+patterns in a long, variable string. Put that way, \verb'strstr' is not so
+obviously the right solution.
+
+The most effective way to make a program faster is to use a better
+algorithm.  With a clearer idea of the problem, it's time to think about
+what algorithm would work best.
+
+The basic loop,
+\begin{wellcode}
+    for (i = 0; i < npat; i++)
+        if (strstr(mesg, pat[i]) != NULL)
+            return 1;
+\end{wellcode}
+scans down the message \verb'npat' independent times; assuming it doesn't
+find any matches, it examines each byte of the message \verb'npat' times,
+for a total of \verb'strlen(mesg)*npat' comparisons.
+
+A better approach is to invert the loops, scanning the message once in the
+outer loop while searching for all the patterns in parallel in the inner loop:
+\begin{wellcode}
+    for (j = 0; mesg[j] != '\0'; j++)
+        if (some pattern matches starting at mesg[j])
+            return 1;
+\end{wellcode}
+The performance improvement stems from (主要来源于) a simple observation.
+To see if any pattern matches the message at position \verb'j', we don't
+need to look at all patterns, only those that begin with the same character
+as \verb'mesg[j]'. Roughly, with 52 upper and lower-case letters we might
+expect to do only \verb'strlen(mesg)*npat/52' comparisons. Since the
+letters are not evenly distributed -- words with \verb's' more often than
+\verb'x' -- we won't see a factor of 52 improvement, but we should see
+some. In effect, we construct a hash table using the first character of the
+pattern as the key.
+
+Given some precomputation to construct a table of which patterns begin with
+each character, \verb'isspam' is still short:
+\begin{wellcode}
+    int patlen[NPAT];                   /* length of pattern */
+    int starting[UCHAR_MAX+1][NSTART];  /* pats starting with char */
+    int nstarting[UCHAR_MAX+1];         /* number of such patterns */
+    ...
+    /* isspam: test mesg for occurrence of any pat */
+    int isspam(char *mesg)
+    {
+        int i, j, k;
+        unsigned char c;
+
+        for (j = 0; (c = mesg[j]) != '\0'; j++) {
+            for (i = 0; i < nstarting[c]; i++) {
+                k = starting[c][i];
+                if (memcmp(mesg+j, pat[k], patlen[k]) == 0) {
+                    printf("spam: match for '%s'\n", pat[k]);
+                    return 1;
+                }
+            }
+        }
+        return 0;
+    }
+\end{wellcode}
+The two-dimensional array \verb'starting[c][]' stores, for each character
+\verb'c', the indices of those patterns that begin with that character. Its
+companion \verb'nstarting[c]' records how many patterns begin with
+\verb'c'. Without these tables, the inner loop would run from 0 to
+\verb'npat', about a thousand; instead it runs from 0 something like 20.
+Finally, the array element \verb'patlen[k]' stores the precomputed result
+of \verb'strlen(pat[k])'.
+
+The following figure sketches (概括) these data structures for a set of
+three pattern that begin with the letter \verb'b':
+
