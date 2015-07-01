@@ -266,4 +266,139 @@ of \verb'strlen(pat[k])'.
 
 The following figure sketches (概括) these data structures for a set of
 three pattern that begin with the letter \verb'b':
+\begin{figure}[h]
+\centering
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\draw (0, 0) -- (1, 0);
+\draw (0, 4.5) -- (1, 4.5);
+\draw (0, 0) -- (0, 4.5);
+\draw (1, 0) -- (1, 4.5);
 
+\draw (0, 3.0) -- (1, 3.0);
+\draw (0, 3.5) -- (1, 3.5);
+\draw (0, 4.0) -- (1, 4.0);
+\node at (0.5, 3.25) {3};
+
+\draw (0.5, 1.5) circle (0.02);
+\draw (0.5, 2.0) circle (0.02);
+\draw (0.5, 2.5) circle (0.02);
+
+\draw (0, 0.5) -- (1, 0.5);
+\draw (0, 1.0) -- (1, 1.0);
+
+\node at (0.5, 5.5) {\texttt{nstarting}};
+\end{tikzpicture}
+\end{varwidth}
+\qquad
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\draw (0, 0) -- (3, 0);
+\draw (0, 4.5) -- (3, 4.5);
+\draw (0, 0) -- (0, 4.5);
+\draw (3, 0) -- (3, 4.5);
+
+\draw (0, 3.5) -- (3, 3.5);
+\draw (0, 3.0) -- (3, 3.0);
+
+\draw (0.5, 3.0) -- (0.5, 3.5);
+\draw (1.0, 3.0) -- (1.0, 3.5);
+\draw (1.5, 3.0) -- (1.5, 3.5);
+\node at (0.25, 3.25) {17};
+\node at (0.75, 3.25) {35};
+\node at (1.25, 3.25) {97};
+\node at (-0.7, 3.25) {\verb"['b']"};
+
+\node at (1.5, 5.5) {\texttt{starting}};
+\end{tikzpicture}
+\end{varwidth}
+\qquad
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\foreach \y in {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 5.0, 5.5, 6.5,
+	7.0} {
+    \draw (0, \y) -- (1, \y);
+}
+\draw (0, 0) -- (0, 7.0);
+\draw (1, 0) -- (1, 7.0);
+
+\node at (0.5, 1.25) {14};
+\node at (0.5, 3.75) {9};
+\node at (0.5, 5.25) {4};
+\node at (-0.5, 1.25) {[97]};
+\node at (-0.5, 3.75) {[35]};
+\node at (-0.5, 5.25) {[17]};
+
+\node at (0.5, 8.0) {\texttt{patlen}};
+\end{tikzpicture}
+\end{varwidth}
+\qquad
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\foreach \y in {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 5.0, 5.5, 6.5,
+	7.0} {
+    \draw (0, \y) -- (1, \y);
+}
+\draw (0, 0) -- (0, 7.0);
+\draw (1, 0) -- (1, 7.0);
+
+\draw[->] (0.5, 1.25) -- (1.5, 1.25);
+\draw[->] (0.5, 3.75) -- (1.5, 3.75);
+\draw[->] (0.5, 5.25) -- (1.5, 5.25);
+\node[right] at (1.5, 1.25) {\verb'"best pictures!"'};
+\node[right] at (1.5, 3.75) {\verb'"big bucks"'};
+\node[right] at (1.5, 5.25) {\verb'"buy!"'};
+
+\node at (0.5, 8.0) {\texttt{pat}};
+\end{tikzpicture}
+\end{varwidth}
+
+\end{figure}
+
+The code to build these tables is easy:
+\begin{wellcode}
+    int i;
+    unsigned char c;
+
+    for (i = 0; i < npat; i++) {
+        c = pat[i][0];
+        if (nstarting[c] >= NSTART)
+            printf("too many patterns (>=%d) begin '%c'",
+                    NSTART, c);
+        starting[c][nstarting[c]++] = i;
+        patlen[i] = strlen(pat[i]);
+    }
+\end{wellcode}
+
+Depending on the input, the spam filter is now five to ten times faster
+than it was using the improved \verb'strstr', and seven to fifteen times
+faster than the original implementation. We didn't get a factor of 52,
+partly because of the non-uniform distribution of letters, partly because
+the loop is more complicated in the new program, and partly because there
+are still many failing string comparisons to execute, but the spam filter
+is no longer the bottleneck for mail delivery. Performance problem solved.
+
+The rest of this chapter will explore the techniques used to discover
+performance problems, isolate the slow code. and speed it up. Before moving
+on, though, it's worth looking back at the spam filter to see what lessons
+it teaches. Most important, make sure performance matters. It wouldn't have
+been worth all the effort if spam filtering wasn't a bottleneck. Once we
+knew it was a problem, we used profiling and other techniques to study the
+behavior and learn where the problem really lay. Then we made sure we were
+solving the right problem, examining the overall program rather than just
+focusing on \verb'strstr', the obvious but incorrect suspect. Finally, we
+solved the correct problem using a better algorithm, and checked that it
+really was faster. Once it was fast enough, we stopped; why over-engineer?
+
+\begin{exercise}
+    A table that maps a single character to the set of patterns that begin
+    with that character gives an order of magnitude (巨大的) improvement.
+    Implement a version of \verb'isspam' that uses two characters as the
+    index. How much improvement does that lead to? These are simple special
+    cases of a data structure called a trie. Most such data structures are
+    based on trading (交易) space for time.
+\end{exercise}
