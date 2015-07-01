@@ -281,9 +281,9 @@ three pattern that begin with the letter \verb'b':
 \draw (0, 4.0) -- (1, 4.0);
 \node at (0.5, 3.25) {3};
 
-\draw (0.5, 1.5) circle (0.02);
-\draw (0.5, 2.0) circle (0.02);
-\draw (0.5, 2.5) circle (0.02);
+\fill (0.5, 1.5) circle (0.02);
+\fill (0.5, 2.0) circle (0.02);
+\fill (0.5, 2.5) circle (0.02);
 
 \draw (0, 0.5) -- (1, 0.5);
 \draw (0, 1.0) -- (1, 1.0);
@@ -402,3 +402,65 @@ really was faster. Once it was fast enough, we stopped; why over-engineer?
     cases of a data structure called a trie. Most such data structures are
     based on trading (交易) space for time.
 \end{exercise}
+
+\section{Timing and Profiling}
+\emph{Automate timing measurements.} Most systems have a command to measure
+how long a program takes. On Unix, the command is called \verb'time':
+\begin{wellcode}
+    % time slowprogram
+    real    7.0
+    user    6.2
+    sys     0.1
+    %
+\end{wellcode}
+This runs the command and reports three numbers, all in seconds: "real"
+time, the elapsed time for the program to complete; "user" CPU time, time
+spent executing the user's program; and "system" CPU time, time spent
+within the operating system on the program's behalf. If your system has a
+similar command, use it; the numbers will be more informative, reliable,
+and easier to track than time measured with a stopwatch. And keep good
+notes. As you work on the program, making modifications and measurements,
+you will accumulate a lot of data that can become confusing a day or two
+later. (Which version was it that ran $20\%$ faster?) Many of the
+techniques we discussed in the chapter on testing can be adapted for
+measuring and improving performance. Use the machine to run and measure
+your test suites and, most important, use regression (回归) testing to make
+sure your modifications don't break the program.
+
+If your system doesn't have a \verb'time' command, or if you're timing a
+function in isolation, it's easy to construct a timing scaffold (脚手架)
+analogous to a testing scaffold. C and C++ provide a standard routine,
+clock, that reports how much CPU time the program has consumed so far. It
+can be called before and after a function to measure CPU usage:
+\begin{wellcode}
+    #include <time.h>
+    #include <stdio.h>
+        ...
+        clock_t before;
+        double  elapsed;
+
+        before = clock();
+        long_running_function();
+        elapsed = clock() - before;
+        printf("function used %.3f seconds\n",
+                elapsed / CLOCKS_PER_SEC);
+\end{wellcode}
+The scaling (定比) term, \verb'CLOCKS_PER_SEC', records the resolutions of the
+timer as reported by clock. If the function takes only a small fraction of
+a second, run it in a loop, but be sure to compensate (补偿) for loop
+overhead if that is significant:
+\begin{wellcode}
+    before = clock();
+    for (i = 0; i < 1000; i++)
+        short_running_function();
+    elapsed = (clock(0 - before) / (double)i;
+\end{wellcode}
+In Java, functions in the \verb'Date' class give wall clock time, which is
+an approximation to CPU time:
+\begin{wellcode}
+    Date before = new Date();
+    long_running_function();
+    Date after = new Date();
+    long elapsed = after.getTime() - before.getTime();
+\end{wellcode}
+The return value of \verb'getTime' is in milliseconds.
