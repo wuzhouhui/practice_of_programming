@@ -68,14 +68,14 @@ This search algorithm is called \textbf{\textit{sequential search}} because
 it looks at each element in turn to see if it's the desired one. When the
 amount of data is small, sequential search is fast enough. There are
 standard library routines to do sequential search for specific data types;
-for example, functions like \textit{strchr} and \textit{strstr} search for
+for example, functions like \texttt{strchr} and \texttt{strstr} search for
 the first instance of a given character or substring in a C or C++ string.
 The Java \verb'String' class has an \verb'indexOf' method, and the generic
 C++ \verb'find' algorithms apply to most data types. If such a function
 exists for the data type you've got, use it.
 
 Sequential search is easy but the amount of work is directly proportional
-to the amount of data to be seached; doubling the number of elements will
+to the amount of data to be searched; doubling the number of elements will
 double the time to search if the desired item is not present. This is a
 linear relationship -- run-time is a linear function of data size -- so
 this method is also known as \textbf{\textit{linear search}}.
@@ -91,7 +91,7 @@ characters:
         int value;
     };
     /* HTML characters, e.g. AElig is ligature of A and E. */
-    /* Vaules are Unicode/ISO10646 encoding. */
+    /* Values are Unicode/ISO10646 encoding. */
     Nameval htmlchars[] = {
         "AElig",    0x00c6,
         "Aacute",   0x00c1,
@@ -101,7 +101,7 @@ characters:
     };
 \end{wellcode}
 For a larger array like this, it's more efficient to use
-\textit{\verb'binary'} search. The binary search algorithm is an orderly
+\verb'binary' search. The binary search algorithm is an orderly
 version of the way we look up words in a dictionary. Check the middle
 element. If that value is bigger than what we are looking for, look in the
 first half; otherwise, look in the second half. Repeat until the desired
