@@ -654,3 +654,150 @@ size once the size is above 1000 elements, nor is there a discernible
     In the first profile, \verb'strchr' was called 48,350,000 times and
     \verb'strncmp' only 46,180,000. Explain the difference.
 \end{exercise}
+
+\section{Strategies for Speed}
+
+Before changing a program to make it faster, be certain that it really is
+too slow, and use timing tools and profilers to discover where the time is
+going.  Once you know what's happening, there are a number of strategies to
+follow. We list a few here in decreasing order of profitability (收益性).
+
+\emph{Use a better algorithm or data structure.} The most important factor
+in making a program faster is the choice of algorithm and data structure;
+there can be a huge difference between an algorithm that is efficient and
+one that is not. Our spam filter saw a change in data structure that was
+worth a factor of ten; even greater improvement is possible if the new
+algorithm reduces the order (阶数) of computation, say from $O(n^2)$ to
+$O(n \log n)$. We covered this topic in Chapter \ref{chap:alds}, so we
+won't dwell on (详述) it here.
+
+Be sure that the complexity is really what you expect; if not, there might
+be a hidden performance bug. This apparently linear algorithm for scanning
+a string,
+\begin{badcode}
+    for (i = 0; i < strlen(s); i++)
+        if (s[i] == c)
+            ...
+\end{badcode}
+is in fact quadratic (平方的): if \verb's' has \verb'n' characters, each
+call to \verb'strlen' walks down the \verb'n' characters of the string and
+the loop is performed \verb'n' times.
+
+\emph{Enable compiler optimizations.} One zero-cost change that usually
+produces a reasonable improvement is to turn on whatever optimization the
+compiler provides.  Modern compilers do sufficiently well that they obviate
+(排除) much of the need for small-scale changes by programmers.
+
+By default, most C and C++ compilers do not attempt much optimization. A
+compiler option enables the optimizer ("improver" would be a more accurate
+term). It should probably be the default except that the optimizations tend
+to confuse source-level debuggers, so programmers must enable the optimizer
+explicitly once they believe the program has been debugged.
+
+Compiler optimization usually improves run-time anywhere from a few percent
+to a factor of two. Sometimes, though, it slows the program down, so
+measure the improvement before shipping (装运) your product. We compared
+unoptimized and optimized compilation on a couple of versions of the spam
+filter. For the test suite using the final version of the matching
+algorithm, the original run-time was 8.1 seconds, which dropped to 5.9
+seconds when optimization was enabled, an improvement of over 25\%. On the
+other hand, the version that used the fixed-up \verb'strstr' showed no
+improvement under optimization, because \verb'strstr' had already been
+optimized when it was installed in the library; the optimizer applies only
+to the source code being compiled now and not to the system libraries.
+However, some compilers have global optimizer -- which analyze the entire
+program for potential improvements. If such a compiler is available on your
+system, try it; it might squeeze out a few more cycles.
+
+One thing to be aware of is that the more aggressively the compiler
+optimizes, the more likely it is to introduce bugs into the compiled
+program. After enabling the optimizer, re-run your regression test suite,
+as you should for any other modification.
+
+\emph{Tune the code.} The right choice of algorithm matters if data sizes
+are big enough. Furthermore, algorithmic improvements work across different
+machines, compilers and languages. But once the right algorithm is in
+place, if speed is still an issue the next thing to try is tuning the code:
+adjusting the details of loops and expressions to make things go faster.
+
+The version of \verb'isspam' we showed at the end of Section
+\ref{sec:bootleneck} hadn't been tuned. Here, we'll show what further
+improvements can be achieved by tweaking (扭) the loop. As a reminder, this
+is how we left it:
+\begin{wellcode}
+    for (j = 0; (c = mesg[j]) != '\0'; j++) {
+        for (i = 0; i < nstarting[c]; i++) {
+            k = starting[c][i];
+            if (memcmp(mesg+j, pat[k], patlen[k]) == 0) {
+                printf("spam: match for '%s'\n", pat[k]);
+                return 1;
+            }
+        }
+    }
+\end{wellcode}
+This initial version takes 6.6 seconds in our test suite when compiled
+using the optimizer. The inner loop has an array index
+(\verb'nstarting[c]') in its loop condition whose value is fixed for each
+iteration of the outer loop. We can avoid recalculating it by saving the
+value in a local variable:
+\begin{wellcode}
+    for (j = 0; (c = mesg[j]) != '\0'; j++) {
+        n = nstarting[c];
+        for (i = 0; i < n; i++) {
+            k = starting[c][i];
+            ...
+\end{wellcode}
+This drops the time to 5.9 seconds, about 10\% faster, a speedup typical of
+what tuning can achieve. There's another variable we can pull out:
+\verb'starting[c]' is also fixed. It seems like pulling that computation
+out of the loop would also help, but in our tests it made no measurable
+difference. This, too, is typical of tuning: some things help, some things
+don't, and one must measure to find out which. And results will vary with
+different machines or compilers.
+
+There is another change we could make to the spam filter. The inner loop
+compares the entire pattern against the string, but the algorithm ensures
+that the first character already matches. We can therefore tune the code to
+start \verb'memcmp' one byte further along. We tried this and found it gave
+about 3\% improvement, which is slight but it requires modifying only three
+lines of the program, one of them in precomputation.
+
+\emph{Don't optimize what doesn't matter.} Sometimes tuning achieves
+nothing because it is applied where it makes no difference. Make sure the
+code you're optimizing is where time is really spent. The following story
+might be apocryphal (不可信的), but we'll tell it anyway. An early machine
+from a now-defunct (现已倒闭的) company was analyzed with a hardware
+performance monitor and discovered to be spending 50 percent of its time
+executing the same sequence of several instructions. The engineers built a
+special instruction to encapsulate the function of the sequence, rebuilt
+the system, and found it made no difference at all; they had optimized the
+idle loop of the operating system.
+
+How much effort should you spend making a program run faster? The main
+criterion (标准) is whether the changes will yield enough to be worthwhile.
+As a guideline, the personal time spent making a program faster should not
+be more than the time the speedup will recover during the lifetime of the
+program. By this rule, the algorithmic improvement to \verb'isspam' was
+worthwhile: it took a day of work but saved (and continues to save) hours
+every day. Removing the array index from the inner loop was less dramatic
+(戏剧性的) but still worth doing, since the program provides a service to a
+large community. Optimizing public services like the spam filter or a
+library is almost always worthwhile; speeding up test programs is almost
+never worthwhile. And for a program that runs for a year, squeeze out
+everything you can. It may be worth restarting if you find a way to make a
+ten percent improvement even after the program has been running for a
+month.
+
+Competitive programs -- games, compilers. word processors, spreadsheets,
+database systems -- fall into this category as well, since commercial
+success is often to the swiftest, at least in published benchmark results.
+
+It's important to time programs as changes are being made, to make sure
+that things are improving. Sometimes two changes that each improve a
+program will interact, negating (否定) their individual effects. It's also
+the case that timing mechanisms can be so erratic (不稳定的) that it's hard
+to draw firm conclusions about the effect of changes.  Even on single-user
+systems,  times can fluctuate (波动) unpredictably. If the variability of
+the internal timer (or at least what is reported back to you) is ten
+percent, changes that yield improvements of only ten percent are hard to
+distinguish from noise.
