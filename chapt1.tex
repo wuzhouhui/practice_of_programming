@@ -322,7 +322,8 @@ Turing the relations around lets us state the tests positively:
     if ((block-id >= actblks) || (block - id < unblocks))
         ...
 \end{wellcode}
-Node the code reads naturally.
+Now the code reads naturally.
+
 \emph{Parenthesize to resolves ambiguity.} Parentheses specify grouping and
 can be used to make the intent clear event when they are not required. The
 inner parentheses in the previous example are not necessary, but they don't
@@ -953,7 +954,7 @@ The C standard is carefully written to permit \verb'isupper' and analogous
 functions to be macros, but only if they guarantee to evaluate the argument
 only once, so this implementation is broken.
 
-It's always better to use the ctype function than to implement them
+It's always better to use the \verb'ctype' function than to implement them
 yourself, and it's safer not to nest routine like \verb'getchar' that have
 side effects. Rewriting the test to use two expressions rather one makes it
 clearer and also gives an opportunity to catch end-of-file explicitly:

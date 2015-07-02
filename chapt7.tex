@@ -831,3 +831,211 @@ by
     n = nstarting[c];
     for (i = 0; i < n; i++) {
 \end{wellcode}
+
+\emph{Replace expensive operations by cheap ones.} The term
+\textit{reduction in strength} refers to optimizations that replace an
+expensive operation by a cheaper one. In olden times, this used to mean
+replacing multiplications by additions or shifts, but that rarely buys much
+now. Division and remainder are much slower than multiplication, however,
+so there may be improvement if a division can be replaced with
+multiplication by the inverse, or a remainder by a masking operation if the
+divisor (除数) is a power of two.  Replacing array indexing by pointers in
+C or C++ might speed things up, although most compilers do this
+automatically. Replacing a function call by a simpler calculation can still
+be worthwhile. Distance in the plane (平面) is determined by the formula
+\verb'sqrt(dx*dx+dy*dy)', so to decide which of two points is further away
+would normally involve calculating two square roots. But the same decision
+can be made by comparing the squares of the distances:
+\begin{wellcode}
+    if (dx1*dx1 + dy1*dy1 < dx2*dx2 + dy2*dy2)
+        ...
+\end{wellcode}
+gives the same result as comparing the square roots of the expressions.
+
+Another instance occurs in textual pattern matchers such as our spam filter
+or \verb'grep'. If the pattern begins with a literal character, a quick
+search is made down the input text for that character; if no match is
+found, the more expensive search machinery (结构)is not invoked at all.
+
+\emph{Unroll (展开) or eliminate loops.} There is a certain overhead in
+setting up and running a loop. If the body of the loop isn't too long and
+doesn't iterate too many times, it can be more efficient to write out each
+iteration in sequence. Thus, for example:
+\begin{wellcode}
+    for (i = 0; i < 3; i++)
+        a[i] = b[i] + c[i];
+\end{wellcode}
+becomes
+\begin{wellcode}
+    a[0] = b[0] + c[0];
+    a[1] = b[1] + c[1];
+    a[2] = b[2] + c[2];
+\end{wellcode}
+This eliminates loop overhead, particularly branching, which can slow
+modern processors by interrupting the flow of execution.
+
+If the loop is longer, the same kind of transformation can be used to
+amortize (分摊) the overhead over fewer iterations:
+\begin{wellcode}
+    for (i = 0; i < 3*n; i++)
+        a[i] = b[i] + c[i];
+\end{wellcode}
+becomes
+\begin{wellcode}
+    for (i = 0; i < 3*n; i += 3) {
+        a[i+0] = b[i+0] + c[i+0];
+        a[i+1] = b[i+1] + c[i+1];
+        a[i+2] = b[i+2] + c[i+2];
+    }
+\end{wellcode}
+Note that this works only if the length is a multiple of the step size;
+otherwise additional code is needed to fix up the ends, which is a place
+for mistakes to creep in (潜入) and for some of the efficiency to be lost
+again.
+
+\emph{Cache frequently-used values.} Cached values don't have to be
+recomputed.  Caching takes advantage of \textit{locality}, the tendency for
+programs (and people) to re-use recently accessed or nearby items in
+preference to (优先于) older or distant data. Computing hardware makes
+extensive use of caches; indeed. adding cache memory to a computer can make
+great improvements in how fast a machine appears. The same is true of
+software.  Web browsers, for instance, cache pages and images to avoid the
+slow transfer of data over the Internet. In a print preview program we
+wrote years ago, non-alphabetic special characters like $\sfrac{1}{2}$ had
+to be looked up in a table. Measurement showed that much of the use of
+special characters involved drawing lines with long sequences of the same
+single character. Caching just the single most recently used character made
+the program significantly faster on typical inputs.
+
+It's best if the caching operation is invisible from outside, so that it
+doesn't affect the rest of the program except for making it run faster.
+Thus in the case of the print previewer, the interface to the character
+drawing function didn't change; it was always
+\begin{wellcode}
+    drawchar(c);
+\end{wellcode}
+The original version of \verb'drawchar' called \verb'show(lookup(c))'. The
+cache implementation used internal static variables to remember the
+previous character and its code:
+\begin{wellcode}
+    if (c != lastc) { /* update the cache */
+        lastc = c;
+        lastc = lookup(c);
+    }
+    show(lastc);
+\end{wellcode}
+
+\emph{Write a special-purpose allocator.} Often the single hot spot in a
+program is memory allocation, which manifests (表明) itself as lots of
+calls on \verb'malloc' or new. When most requests are for blocks of the
+same size, substantial (实质的) speedups are possible by replacing calls to
+the general-purpose allocator by calls to a special-purpose one.  The
+special-purpose allocator makes one call to \verb'malloc' to fetch a big
+array of items, then hands them out one at a time as needed, a cheaper
+operation. Freed items are placed back in a free list so they can be reused
+quickly.
+
+If the requested sizes are similar, you can trade space for time by always
+allocating enough for the largest request. This can be effective for
+managing short strings if you use the same size for all strings up to a
+specified length.
+
+Some algorithms can use stack-based allocation, where a whole sequence of
+allocations is done, and then the entire set is freed at once. The
+allocator obtains one big chunk for itself and treats it as a stack,
+pushing allocated items on as needed and popping them all off in a single
+operation at the end. Some C libraries offer a function \verb'alloca' for
+this kind of allocation, though it is not standard. It uses the local call
+stack as the source of memory, and frees all the items when the function
+that calls \verb'alloca' returns.
+
+\emph{Buffer input and output.} Buffering batches transactions so that
+frequent operations are done with as little overhead as possible, and the
+high-overhead operations are done only when necessary. The cost of an
+operation is thereby spread over multiple data values. When a C program
+calls \verb'printf', for example, the characters are stored in a buffer but
+not passed to the operating system until the buffer is full or flushed
+explicitly. The operating system itself may in turn (轮流) delay writing
+the data to disk. The drawback is the need to flush output buffers to make
+data visible; in the worst case, information still in a buffer will be lost
+if a program crashes.
+
+\emph{Handle special cases separately.} By handling same-sized objects in
+separate code, special-purpose allocators reduce time and space overhead in
+the general allocator and incidentally (顺便) reduce fragmentation. In the
+graphics library for the Inferno system, the basic draw function was
+written to be as simple and straightforward as possible. With that working,
+optimizations for a variety of cases (chosen by profiling) were added one
+at a time; it was always possible to test the optimized version against the
+simple one.  In the end, only a handful of cases were optimized because the
+dynamic distribution of calls to the drawing function was heavily skewed
+towards (为了) displaying characters; it wasn't worth writing clever code
+for all the cases.
+
+\emph{Precompute results.} Sometimes it is possible to make a program run
+faster by precomputing values so they are ready when they are needed. We
+saw this in the spam filter, which precomputed \verb'strlen(pat[i])' and
+stored it in the array at \verb'patlen[i]'. If a graphics system needs to
+repeatedly compute a mathematical function like sine but only for a
+discrete (离散的) set of values, such as integer degrees, it will be faster
+to precompute a table with 360 entries (or provide it as data) and index
+into it as needed.  This is an example of trading space for time. There are
+many opportunities to replace code by data or to do computation during
+compilation, to save time and sometimes space as well. For example, the
+\verb'ctype' functions like \verb'isdigit' are almost always implemented by
+indexing into a table of bit flags rather than by evaluating a sequence of
+tests.
+
+\emph{Use approximate values.} If accuracy isn't an issue, use
+lower-precision data types.  On older or smaller machines, or machines that
+simulate floating point in software, single-precision floating-point
+arithmetic is often faster than double-precision, so use \verb'float'
+instead of \verb'double' to save time. Some modern graphics processors use
+a related trick. The IEEE floating-point standard requires "graceful
+underflow" as calculations approach the low end of representable values,
+but this is expensive to compute. For images, the feature is unnecessary,
+and it is faster and perfectly acceptable to truncate to zero. This not
+only saves time when the numbers underflow, it can simplify the hardware
+for all arithmetic. The use of integer \verb'sin' and \verb'cos' routines
+is another example of using approximate values.
+
+\emph{Rewrite in a lower-level language.} Lower-level languages tend to be
+more efficient, although at a cost in programmer time. Thus rewriting some
+critical part of a C++ or Java program in C or replacing an interpreted
+script by a program in a compiled language may make it run much faster.
+
+Occasionally, one can get significant speedups with machine-dependent code.
+This is a last resort (手段), not a step to be taken lightly, because it
+destroys portability and makes future maintenance and modifications much
+harder.  Almost always, operations to be expressed in assembly language are
+relatively small functions that should be embedded in a library;
+\verb'memset' and \verb'memmove', or graphics operations, are typical
+examples. The approach is to write the code as cleanly as possible in a
+high-level language and make sure it's correct by testing it as we
+described for \verb'memset' in Chapter \ref{chap:testing}.  This is your
+portable version, which will work everywhere, albeit (虽然) slowly.  When
+you move to a new environment, you can start with a version that is known
+to work.  Now when you write an assembly-language version, test it
+exhaustively (彻底地) against (针对) the portable one.  When bugs occur,
+non-portable code is always suspect: it's comforting (令人鼓舞的) to have a
+comparison implementation.
+
+\begin{exercise}
+    One way to make a function like \verb'memset' run faster is to have it
+    write in word-sized chunks instead of byte-sized; this is likely to
+    match the hardware better and might reduce the loop overhead by a
+    factor of four or eight. The downside is that there are now a variety
+    of end effects to deal with if the target is not aligned on a word
+    boundary and if the length is not a multiple of the word size. Write a
+    version of \verb'memset' that does this optimization. Compare its
+    performance to the existing library version and to a straightforward
+    byte-at-a-time loop.
+\end{exercise}
+
+\begin{exercise}
+    Write a memory allocator \verb'smalloc' for C strings that uses a
+    special-purpose allocator for small strings but calls \verb'malloc'
+    directly for large ones. You will need to define a \verb'struct' to
+    represent the strings in either case.  How do you decide where to
+    switch from calling \verb'smalloc' to \verb'malloc'?
+\end{exercise}

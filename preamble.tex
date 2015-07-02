@@ -15,6 +15,7 @@
 \usepackage{fancyhdr}
 \usepackage{tikz}
 \usepackage{varwidth}
+\usepackage{xfrac}
 
 \geometry{bottom = 2cm, outer = 2cm}
 %\geometry{ left = 3cm, right = 3cm, bottom = 2cm }
@@ -57,6 +58,8 @@
 \newenvironment{wellcode}%
 {\linespread{0.93}\verbatim}%
 {\endverbatim}
+
+\renewcommand\emph[1]{{\bfseries\textit{#1}}}
 
 \newcounter{exercnt}[chapter]
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
