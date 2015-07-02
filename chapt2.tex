@@ -44,4 +44,74 @@ only after you have investigated what the programming language and its
 libraries have to offer.
 
 \section{Searching}
+Nothing beats an array for storing static tabular data. Compile-time
+initialization makes it cheap and easy to construct such arrays. (In Java,
+the initialization occurs at run-time, but this is an unimportant
+implementation detail unless the arrays are large.) In a program to detect
+words that are used rather too much in bad prose, we can write
+\begin{wellcode}
+    /*lookup: sequential search for word in array */
+    int lookup(char *word, char *array[])
+    {
+        int i;
+        for (i = 0; array[i] != NULL; i++)
+           if (strcmp(word, array[i] == 0))
+                return i;
+        return -1;
+    }
+\end{wellcode}
+In C and C++, a parameter that is an array of strings can be declared as
+\verb"char *array[]" or \verb"char *+array". Although these forms are
+equivalent, the first makes it clearer how the parameter will be used.
 
+This search algorithm is called \textbf{\textit{sequential search}} because
+it looks at each element in turn to see if it's the desired one. When the
+amount of data is small, sequential search is fast enough. There are
+standard library routines to do sequential search for specific data types;
+for example, functions like \textit{strchr} and \textit{strstr} search for
+the first instance of a given character or substring in a C or C++ string.
+The Java \verb'String' class has an \verb'indexOf' method, and the generic
+C++ \verb'find' algorithms apply to most data types. If such a function
+exists for the data type you've got, use it.
+
+Sequential search is easy but the amount of work is directly proportional
+to the amount of data to be seached; doubling the number of elements will
+double the time to search if the desired item is not present. This is a
+linear relationship -- run-time is a linear function of data size -- so
+this method is also known as \textbf{\textit{linear search}}.
+
+
+Here's an excerpt from an array of more realistic size from a program that
+parses HTML, which defines textual names for well over a hundred individual
+characters:
+\begin{wellcode}
+    typedef struct Nameval Nameval;
+    struct Nameval{
+        char *name;
+        int value;
+    };
+    /* HTML characters, e.g. AElig is ligature of A and E. */
+    /* Vaules are Unicode/ISO10646 encoding. */
+    Nameval htmlchars[] = {
+        "AElig",    0x00c6,
+        "Aacute",   0x00c1,
+        "Acirc",    0x00c2,
+        /* ... */
+        "zeta",     0x03b6,
+    };
+\end{wellcode}
+For a larger array like this, it's more efficient to use
+\textit{\verb'binary'} search. The binary search algorithm is an orderly
+version of the way we look up words in a dictionary. Check the middle
+element. If that value is bigger than what we are looking for, look in the
+first half; otherwise, look in the second half. Repeat until the desired
+item is found or determined not to be present.
+
+For binary search, the table must be sorted, as it is here (that's good
+style anyway; people find things faster in sorted tables too), and we must
+know how long the table is. The \verb'NELEMS' macro from Chapter 1 can
+help:
+\begin{wellcode}
+    printf("The HTML table has %d words\n", NELEMS(htmlchars));
+\end{wellcode}
+A binary search function for this table might look like this:
