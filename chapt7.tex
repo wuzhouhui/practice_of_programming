@@ -560,3 +560,65 @@ program is first profiled, it's common to see the top-running function at
 50 percent or more, as it is here, making it easy to decide where to focus
 attention.
 
+\emph{Concentrate on the hot spots.} After rewriting \verb'strstr', we
+profiled \verb'spamtest' again and found that 99.8\% of the time was now
+spent in \verb'strstr' alone, even though the whole program was
+considerable faster. When a single function is so overwhelmingly (压倒性的)
+the bottleneck, there are only two ways to go: improve the function to use
+a better algorithm, or eliminate the function altogether by rewriting the
+surrounding program.
+
+In this case, we rewrote the program. Here are the first few lines of the
+profile for \verb'spamtest' using the final, fast implementaion of
+\verb'isspam'. Notice that the overall time is much less, that
+\verb'memcmp' is now the hot spot, and that \verb'isspam' now consumes a
+significant fraction of the computation. It is more complex than the
+version that called \verb'strstr', but its cost is more than compensated
+for by eliminating \verb'strlen' and \verb'strchr' from \verb'isspam' and
+by replacing \verb'strncmp' with \verb'memcmp', which does less work per
+byte.
+\begin{tabular}{rrrrrrr}
+    secs    & \%    & cum\% & cycles    & instructions  & calls & function
+    \\
+    \hline
+    \hline
+    3.524   & 56.9\%    & 56.9\%    & 880890000 & 1027590000    & 46180000
+    & \verb'memcmp' \\
+    2.662   & 43.04\%   & 100.0\%   & 665550000 & 902920000     & 10000
+    & \verb'isspam' \\
+    0.001   & 0.0\%     & 100.0\%   & 140304    & 106043        & 652
+    & \verb'strlen' \\
+    0.000   & 0.0\%     & 100.0\%   & 100025    & 100028        & 1
+    & \verb'main'   \\
+\end{tabular}
+
+It's instructive (有益的) to spend some time comparing the cycle counts and
+number of calls in the two profiles. Notice that \verb'strlen' went from a
+couple of million calls to 652, and that strncmp and memcmp are called the
+same number of times. Also notice that \verb'isspam'. which now
+incorporates (吸收) the function of \verb'strchr', still manages to use far
+fewer cycles than \verb'strchr' did before because it examines only the
+relevant patterns at each step. Many more details of the execution can be
+discovered by examining the numbers.
+
+A hot spot can often be eliminated, or at least cooled, by much simpler
+engineering than we undertook for the spam filter. Long ago, a profile of
+Awk indicated that one function was begin called about a million times over
+the course of a regression (回归) test, in this loop:
+\begin{badcode}
+    for (j = i; j < MAXFLD; j++)
+        clear(j);
+\end{badcode}
+The loop, which clears fields before each new input line is read, was
+taking as much as 50 percent of the run-time. The constant \verb'MAXFLD'.
+the maximum number of fields permitted in an input line, was 200. But in
+most uses of Awk, the actual number of fields was only two or three. Thus
+an enormous amount of time was being wasted clearing fields that had never
+been set. Replacing the constant by the previous value of the maximum
+number of fields gave a 25 percent overall speedup. The fix was to change
+the upper limit of the loop:
+\begin{wellcode}
+    for (j = i; j < maxfld; j++)
+        clear(j);
+    maxfld = i;
+\end{wellcode}
