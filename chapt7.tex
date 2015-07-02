@@ -1,10 +1,10 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Performance}
 \label{chap:performance}
-\begin{quotation}
+\begin{quote}
     His promises were, as he then was, mighty; But his performance, as he
     is now, nothing.
-\end{quotation}
+\end{quote}
 \begin{quotesrc}
     Shakespeare, \bookname{King Henry VIII}
 \end{quotesrc}
@@ -266,4 +266,776 @@ of \verb'strlen(pat[k])'.
 
 The following figure sketches (概括) these data structures for a set of
 three pattern that begin with the letter \verb'b':
+\begin{figure}[h]
+\centering
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\draw (0, 0) -- (1, 0);
+\draw (0, 4.5) -- (1, 4.5);
+\draw (0, 0) -- (0, 4.5);
+\draw (1, 0) -- (1, 4.5);
 
+\draw (0, 3.0) -- (1, 3.0);
+\draw (0, 3.5) -- (1, 3.5);
+\draw (0, 4.0) -- (1, 4.0);
+\node at (0.5, 3.25) {3};
+
+\fill (0.5, 1.5) circle (0.02);
+\fill (0.5, 2.0) circle (0.02);
+\fill (0.5, 2.5) circle (0.02);
+
+\draw (0, 0.5) -- (1, 0.5);
+\draw (0, 1.0) -- (1, 1.0);
+
+\node at (0.5, 5.5) {\texttt{nstarting}};
+\end{tikzpicture}
+\end{varwidth}
+\qquad
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\draw (0, 0) -- (3, 0);
+\draw (0, 4.5) -- (3, 4.5);
+\draw (0, 0) -- (0, 4.5);
+\draw (3, 0) -- (3, 4.5);
+
+\draw (0, 3.5) -- (3, 3.5);
+\draw (0, 3.0) -- (3, 3.0);
+
+\draw (0.5, 3.0) -- (0.5, 3.5);
+\draw (1.0, 3.0) -- (1.0, 3.5);
+\draw (1.5, 3.0) -- (1.5, 3.5);
+\node at (0.25, 3.25) {17};
+\node at (0.75, 3.25) {35};
+\node at (1.25, 3.25) {97};
+\node at (-0.7, 3.25) {\verb"['b']"};
+
+\node at (1.5, 5.5) {\texttt{starting}};
+\end{tikzpicture}
+\end{varwidth}
+\qquad
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\foreach \y in {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 5.0, 5.5, 6.5,
+	7.0} {
+    \draw (0, \y) -- (1, \y);
+}
+\draw (0, 0) -- (0, 7.0);
+\draw (1, 0) -- (1, 7.0);
+
+\node at (0.5, 1.25) {14};
+\node at (0.5, 3.75) {9};
+\node at (0.5, 5.25) {4};
+\node at (-0.5, 1.25) {[97]};
+\node at (-0.5, 3.75) {[35]};
+\node at (-0.5, 5.25) {[17]};
+
+\node at (0.5, 8.0) {\texttt{patlen}};
+\end{tikzpicture}
+\end{varwidth}
+\qquad
+\begin{varwidth}[t]{\textwidth}
+    \vspace{0pt}
+\begin{tikzpicture}
+\foreach \y in {0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.5, 4.0, 5.0, 5.5, 6.5,
+	7.0} {
+    \draw (0, \y) -- (1, \y);
+}
+\draw (0, 0) -- (0, 7.0);
+\draw (1, 0) -- (1, 7.0);
+
+\draw[->] (0.5, 1.25) -- (1.5, 1.25);
+\draw[->] (0.5, 3.75) -- (1.5, 3.75);
+\draw[->] (0.5, 5.25) -- (1.5, 5.25);
+\node[right] at (1.5, 1.25) {\verb'"best pictures!"'};
+\node[right] at (1.5, 3.75) {\verb'"big bucks"'};
+\node[right] at (1.5, 5.25) {\verb'"buy!"'};
+
+\node at (0.5, 8.0) {\texttt{pat}};
+\end{tikzpicture}
+\end{varwidth}
+
+\end{figure}
+
+The code to build these tables is easy:
+\begin{wellcode}
+    int i;
+    unsigned char c;
+
+    for (i = 0; i < npat; i++) {
+        c = pat[i][0];
+        if (nstarting[c] >= NSTART)
+            printf("too many patterns (>=%d) begin '%c'",
+                    NSTART, c);
+        starting[c][nstarting[c]++] = i;
+        patlen[i] = strlen(pat[i]);
+    }
+\end{wellcode}
+
+Depending on the input, the spam filter is now five to ten times faster
+than it was using the improved \verb'strstr', and seven to fifteen times
+faster than the original implementation. We didn't get a factor of 52,
+partly because of the non-uniform distribution of letters, partly because
+the loop is more complicated in the new program, and partly because there
+are still many failing string comparisons to execute, but the spam filter
+is no longer the bottleneck for mail delivery. Performance problem solved.
+
+The rest of this chapter will explore the techniques used to discover
+performance problems, isolate the slow code. and speed it up. Before moving
+on, though, it's worth looking back at the spam filter to see what lessons
+it teaches. Most important, make sure performance matters. It wouldn't have
+been worth all the effort if spam filtering wasn't a bottleneck. Once we
+knew it was a problem, we used profiling and other techniques to study the
+behavior and learn where the problem really lay. Then we made sure we were
+solving the right problem, examining the overall program rather than just
+focusing on \verb'strstr', the obvious but incorrect suspect. Finally, we
+solved the correct problem using a better algorithm, and checked that it
+really was faster. Once it was fast enough, we stopped; why over-engineer?
+
+\begin{exercise}
+    A table that maps a single character to the set of patterns that begin
+    with that character gives an order of magnitude (巨大的) improvement.
+    Implement a version of \verb'isspam' that uses two characters as the
+    index. How much improvement does that lead to? These are simple special
+    cases of a data structure called a trie. Most such data structures are
+    based on trading (交易) space for time.
+\end{exercise}
+
+\section{Timing and Profiling}
+\emph{Automate timing measurements.} Most systems have a command to measure
+how long a program takes. On Unix, the command is called \verb'time':
+\begin{wellcode}
+    % time slowprogram
+    real    7.0
+    user    6.2
+    sys     0.1
+    %
+\end{wellcode}
+This runs the command and reports three numbers, all in seconds: "real"
+time, the elapsed time for the program to complete; "user" CPU time, time
+spent executing the user's program; and "system" CPU time, time spent
+within the operating system on the program's behalf. If your system has a
+similar command, use it; the numbers will be more informative, reliable,
+and easier to track than time measured with a stopwatch. And keep good
+notes. As you work on the program, making modifications and measurements,
+you will accumulate a lot of data that can become confusing a day or two
+later. (Which version was it that ran $20\%$ faster?) Many of the
+techniques we discussed in the chapter on testing can be adapted for
+measuring and improving performance. Use the machine to run and measure
+your test suites and, most important, use regression (回归) testing to make
+sure your modifications don't break the program.
+
+If your system doesn't have a \verb'time' command, or if you're timing a
+function in isolation, it's easy to construct a timing scaffold (脚手架)
+analogous to a testing scaffold. C and C++ provide a standard routine,
+clock, that reports how much CPU time the program has consumed so far. It
+can be called before and after a function to measure CPU usage:
+\begin{wellcode}
+    #include <time.h>
+    #include <stdio.h>
+        ...
+        clock_t before;
+        double  elapsed;
+
+        before = clock();
+        long_running_function();
+        elapsed = clock() - before;
+        printf("function used %.3f seconds\n",
+                elapsed / CLOCKS_PER_SEC);
+\end{wellcode}
+The scaling (定比) term, \verb'CLOCKS_PER_SEC', records the resolutions of the
+timer as reported by clock. If the function takes only a small fraction of
+a second, run it in a loop, but be sure to compensate (补偿) for loop
+overhead if that is significant:
+\begin{wellcode}
+    before = clock();
+    for (i = 0; i < 1000; i++)
+        short_running_function();
+    elapsed = (clock(0 - before) / (double)i;
+\end{wellcode}
+In Java, functions in the \verb'Date' class give wall clock time, which is
+an approximation to CPU time:
+\begin{wellcode}
+    Date before = new Date();
+    long_running_function();
+    Date after = new Date();
+    long elapsed = after.getTime() - before.getTime();
+\end{wellcode}
+The return value of \verb'getTime' is in milliseconds.
+
+\emph{Use a profiler (刻画器).} Besides a reliable timing method, the most
+important tool for performance analysis is a system for generating
+profiles. A profile is a measurement of where a program spends its time.
+Some profiles list each function, the number of times it is called, and the
+fraction of execution time it consumes. Others show counts of how many
+times each statement was executed. Statements that are executed frequently
+contribute more to run-time, while statements that are never executed may
+indicate useless code or code that is not being tested adequately.
+
+Profiling is an effective tool for finding \textit{hot spots} in a program,
+the functions or sections of code that consume most of the computing time.
+Profiles should be interpreted with care, however. Given the sophistication
+of compilers and the complexity of caching and memory effects, as well as
+the fact that profiling a program affects its performance, the statistics
+in a profile can be only approximate.
+
+In the 1971 paper that introduced the term profiling, Don Knuth wrote that
+"less than 4 percent of a program generally accounts for more than half of
+its running time." This indicates that the way to use profiling is to
+identify the critical time-consuming parts of the program, improve them to
+the degree possible, and then measure again to see if a new hot spot has
+surfaced. Eventually, often after only one or two iterations, there is no
+obvious hot spot left.
+
+Profiling is usually enabled with a special compiler flat or option. The
+program is run, and then an analysis tool shows the results. On Unix, the
+% XXX The hyperlink of footnote doesn't response when click.
+flag is usually \verb'-p' and the tool is called
+\verb"prof"\footnote{\texttt{gprof} in Linux}:
+\begin{wellcode}
+    % cc -p spamtest.c -o spamtest
+    % spamtest
+    % prof spamtest
+\end{wellcode}
+The following table shows the profile generated by a special version of the
+spam filter we built to understand its behavior. It uses a fixed message
+and a fixed set of 217 phrases, which it matches against the message
+10000 times. This run on a 250 MHz MIPS R 10000 used the original
+implementation of \verb'strstr' that calls other standard functions. The
+output has been edited reformatted so it fits the page. Notice how sizes of
+input (217 phrases) and the number of runs (10000) show up as consistency
+checks in the "calls" column, which counts the number of calls of each
+function.
+\begin{wellcode}
+    12234768552: Total number of instructions executed
+    13961810001: Total computed cycles
+    55.847: Total computed execution time (secs)
+    1.141: Average cycles per instruction
+\end{wellcode}
+\begin{tabular}{rrrrrrr}
+    secs    & \%    & cum\% & cycles    & instructions  & calls & function
+    \\
+    \hline
+    \hline
+    45.260  & 81.0\%    & 81.0\%    & 11314990000   & 9440110000    &
+    48350000    & \verb'strchr' \\
+    6.081   & 10.9\%    & 91.9\%    & 1520280000    & 1566460000    &
+    46180000    & \verb'strncmp'    \\
+    2.592   & 4.6\%     & 94.6\%    & 648080000     & 854500000     &
+    2170000 & \verb'strstr' \\
+    1.825   & 3.3\%     & 99.8\%    & 456225559     & 344882213     &
+    21704435    & \verb'strlen' \\
+    0.088   & 0.2\%     & 100.0\%   & 21950000      & 28510000      & 10000
+    & \verb'isspam' \\
+    0.000   & 0.0\%     & 100.0\%   & 100025    & 100028    & 1 &
+    \verb'main'   \\
+    0.000   & 0.0\%     & 100.0\%   & 53677     & 70268     & 219   &
+    \verb'_memcopy' \\
+    0.000   & 0.0\%     & 100.0\%   & 48888     & 46403     & 217   &
+    \verb'strcpy'   \\
+    0.000   & 0.0\%     & 100.0\%   & 17989     & 19894     & 219   &
+    \verb'fgets'    \\
+    0.000   & 0.0\%     & 100.0\%   & 16798     & 17547     & 230   &
+    \verb'__malloc' \\
+    0.000   & 0.0\%     & 100.0\%   & 10305     & 10900      & 204  &
+    \verb'realfree' \\
+    0.000   & 0.0\%     & 100.0\%   &  6293     & 7161      & 217   &
+    \verb'estrdup'  \\
+    0.000   & 0.0\%     & 100.0\%   & 6032      & 8575      & 231   &
+    \verb'cleanfree'    \\
+    0.000   & 0.0\%     & 100.0\%   & 5932      & 5729      & 1     &
+    \verb'readpat'  \\
+    0.000   & 0.0\%     & 100.0\%   & 5899      & 6339      & 219   &
+    \verb'getline'  \\
+    0.000   & 0.0\%     & 100.0\%   & 5500      & 5720      & 220   &
+    \verb'_malloc'  \\
+\end{tabular}
+
+It's obvious that \verb'strchr' and \verb'strncmp', both called by
+\verb'strstr', completely dominate the performance. Knuth's guideline is
+right: a small part of the program consumes most of the run-time. When a
+program is first profiled, it's common to see the top-running function at
+50 percent or more, as it is here, making it easy to decide where to focus
+attention.
+
+\emph{Concentrate on the hot spots.} After rewriting \verb'strstr', we
+profiled \verb'spamtest' again and found that 99.8\% of the time was now
+spent in \verb'strstr' alone, even though the whole program was
+considerable faster. When a single function is so overwhelmingly (压倒性的)
+the bottleneck, there are only two ways to go: improve the function to use
+a better algorithm, or eliminate the function altogether by rewriting the
+surrounding program.
+
+In this case, we rewrote the program. Here are the first few lines of the
+profile for \verb'spamtest' using the final, fast implementation of
+\verb'isspam'. Notice that the overall time is much less, that
+\verb'memcmp' is now the hot spot, and that \verb'isspam' now consumes a
+significant fraction of the computation. It is more complex than the
+version that called \verb'strstr', but its cost is more than compensated
+for by eliminating \verb'strlen' and \verb'strchr' from \verb'isspam' and
+by replacing \verb'strncmp' with \verb'memcmp', which does less work per
+byte.
+\begin{tabular}{rrrrrrr}
+    secs    & \%    & cum\% & cycles    & instructions  & calls & function
+    \\
+    \hline
+    \hline
+    3.524   & 56.9\%    & 56.9\%    & 880890000 & 1027590000    & 46180000
+    & \verb'memcmp' \\
+    2.662   & 43.04\%   & 100.0\%   & 665550000 & 902920000     & 10000
+    & \verb'isspam' \\
+    0.001   & 0.0\%     & 100.0\%   & 140304    & 106043        & 652
+    & \verb'strlen' \\
+    0.000   & 0.0\%     & 100.0\%   & 100025    & 100028        & 1
+    & \verb'main'   \\
+\end{tabular}
+
+It's instructive (有益的) to spend some time comparing the cycle counts and
+number of calls in the two profiles. Notice that \verb'strlen' went from a
+couple of million calls to 652, and that strncmp and memcmp are called the
+same number of times. Also notice that \verb'isspam'. which now
+incorporates (吸收) the function of \verb'strchr', still manages to use far
+fewer cycles than \verb'strchr' did before because it examines only the
+relevant patterns at each step. Many more details of the execution can be
+discovered by examining the numbers.
+
+A hot spot can often be eliminated, or at least cooled, by much simpler
+engineering than we undertook for the spam filter. Long ago, a profile of
+Awk indicated that one function was begin called about a million times over
+the course of a regression (回归) test, in this loop:
+\begin{badcode}
+    for (j = i; j < MAXFLD; j++)
+        clear(j);
+\end{badcode}
+The loop, which clears fields before each new input line is read, was
+taking as much as 50 percent of the run-time. The constant \verb'MAXFLD'.
+the maximum number of fields permitted in an input line, was 200. But in
+most uses of Awk, the actual number of fields was only two or three. Thus
+an enormous amount of time was being wasted clearing fields that had never
+been set. Replacing the constant by the previous value of the maximum
+number of fields gave a 25 percent overall speedup. The fix was to change
+the upper limit of the loop:
+\begin{wellcode}
+    for (j = i; j < maxfld; j++)
+        clear(j);
+    maxfld = i;
+\end{wellcode}
+
+\emph{Draw a picture.} Pictures are especially good for presentating
+performance measurements. They can convey information about the effects of
+parameter changes, compare algorithms and data structures, and sometimes
+point to unexpected behavior. The graphs of chain length counts for several
+hash multipliers in Chapter \ref{chap:debug} showed clearly  that some
+multipliers were better than others.
+
+% XXX The hyperlink of footnote doesn't response when click.
+The following graph\footnote{Lack of graphs, because the graph is too
+    blurry and ugly to represent.} shows the effect of the size of the hash
+table array on run-time for the C version of \verb'markov' with Psalms as
+input (42685 words, 22482 prefixes). We did two experiments. One set of
+runs used array sizes that are powers of two from 2 to 16384; the other
+used sizes that are the largest prime less than each power of two. We
+wanted to see if a prime array size made any measurable difference to the
+performance.
+
+The graph shows that run-time for this input is not sensitive to the table
+size once the size is above 1000 elements, nor is there a discernible
+(可辨别的) difference between prime and power-of-two table sizes.
+
+\begin{exercise}
+    Whether or not your system has a \verb'time' command, use \verb'clock'
+    or \verb'getTime' to write a timing facility for your own use. Compare
+    its times t a wall clock. How does other activity on the machine affect
+    the timing?
+\end{exercise}
+\begin{exercise}
+    In the first profile, \verb'strchr' was called 48,350,000 times and
+    \verb'strncmp' only 46,180,000. Explain the difference.
+\end{exercise}
+
+\section{Strategies for Speed}
+
+Before changing a program to make it faster, be certain that it really is
+too slow, and use timing tools and profilers to discover where the time is
+going.  Once you know what's happening, there are a number of strategies to
+follow. We list a few here in decreasing order of profitability (收益性).
+
+\emph{Use a better algorithm or data structure.} The most important factor
+in making a program faster is the choice of algorithm and data structure;
+there can be a huge difference between an algorithm that is efficient and
+one that is not. Our spam filter saw a change in data structure that was
+worth a factor of ten; even greater improvement is possible if the new
+algorithm reduces the order (阶数) of computation, say from $O(n^2)$ to
+$O(n \log n)$. We covered this topic in Chapter \ref{chap:alds}, so we
+won't dwell on (详述) it here.
+
+Be sure that the complexity is really what you expect; if not, there might
+be a hidden performance bug. This apparently linear algorithm for scanning
+a string,
+\begin{badcode}
+    for (i = 0; i < strlen(s); i++)
+        if (s[i] == c)
+            ...
+\end{badcode}
+is in fact quadratic (平方的): if \verb's' has \verb'n' characters, each
+call to \verb'strlen' walks down the \verb'n' characters of the string and
+the loop is performed \verb'n' times.
+
+\emph{Enable compiler optimizations.} One zero-cost change that usually
+produces a reasonable improvement is to turn on whatever optimization the
+compiler provides.  Modern compilers do sufficiently well that they obviate
+(排除) much of the need for small-scale changes by programmers.
+
+By default, most C and C++ compilers do not attempt much optimization. A
+compiler option enables the optimizer ("improver" would be a more accurate
+term). It should probably be the default except that the optimizations tend
+to confuse source-level debuggers, so programmers must enable the optimizer
+explicitly once they believe the program has been debugged.
+
+Compiler optimization usually improves run-time anywhere from a few percent
+to a factor of two. Sometimes, though, it slows the program down, so
+measure the improvement before shipping (装运) your product. We compared
+unoptimized and optimized compilation on a couple of versions of the spam
+filter. For the test suite using the final version of the matching
+algorithm, the original run-time was 8.1 seconds, which dropped to 5.9
+seconds when optimization was enabled, an improvement of over 25\%. On the
+other hand, the version that used the fixed-up \verb'strstr' showed no
+improvement under optimization, because \verb'strstr' had already been
+optimized when it was installed in the library; the optimizer applies only
+to the source code being compiled now and not to the system libraries.
+However, some compilers have global optimizer -- which analyze the entire
+program for potential improvements. If such a compiler is available on your
+system, try it; it might squeeze out a few more cycles.
+
+One thing to be aware of is that the more aggressively the compiler
+optimizes, the more likely it is to introduce bugs into the compiled
+program. After enabling the optimizer, re-run your regression test suite,
+as you should for any other modification.
+
+\emph{Tune the code.} The right choice of algorithm matters if data sizes
+are big enough. Furthermore, algorithmic improvements work across different
+machines, compilers and languages. But once the right algorithm is in
+place, if speed is still an issue the next thing to try is tuning the code:
+adjusting the details of loops and expressions to make things go faster.
+
+The version of \verb'isspam' we showed at the end of Section
+\ref{sec:bootleneck} hadn't been tuned. Here, we'll show what further
+improvements can be achieved by tweaking (扭) the loop. As a reminder, this
+is how we left it:
+\begin{wellcode}
+    for (j = 0; (c = mesg[j]) != '\0'; j++) {
+        for (i = 0; i < nstarting[c]; i++) {
+            k = starting[c][i];
+            if (memcmp(mesg+j, pat[k], patlen[k]) == 0) {
+                printf("spam: match for '%s'\n", pat[k]);
+                return 1;
+            }
+        }
+    }
+\end{wellcode}
+This initial version takes 6.6 seconds in our test suite when compiled
+using the optimizer. The inner loop has an array index
+(\verb'nstarting[c]') in its loop condition whose value is fixed for each
+iteration of the outer loop. We can avoid recalculating it by saving the
+value in a local variable:
+\begin{wellcode}
+    for (j = 0; (c = mesg[j]) != '\0'; j++) {
+        n = nstarting[c];
+        for (i = 0; i < n; i++) {
+            k = starting[c][i];
+            ...
+\end{wellcode}
+This drops the time to 5.9 seconds, about 10\% faster, a speedup typical of
+what tuning can achieve. There's another variable we can pull out:
+\verb'starting[c]' is also fixed. It seems like pulling that computation
+out of the loop would also help, but in our tests it made no measurable
+difference. This, too, is typical of tuning: some things help, some things
+don't, and one must measure to find out which. And results will vary with
+different machines or compilers.
+
+There is another change we could make to the spam filter. The inner loop
+compares the entire pattern against the string, but the algorithm ensures
+that the first character already matches. We can therefore tune the code to
+start \verb'memcmp' one byte further along. We tried this and found it gave
+about 3\% improvement, which is slight but it requires modifying only three
+lines of the program, one of them in precomputation.
+
+\emph{Don't optimize what doesn't matter.} Sometimes tuning achieves
+nothing because it is applied where it makes no difference. Make sure the
+code you're optimizing is where time is really spent. The following story
+might be apocryphal (不可信的), but we'll tell it anyway. An early machine
+from a now-defunct (现已倒闭的) company was analyzed with a hardware
+performance monitor and discovered to be spending 50 percent of its time
+executing the same sequence of several instructions. The engineers built a
+special instruction to encapsulate the function of the sequence, rebuilt
+the system, and found it made no difference at all; they had optimized the
+idle loop of the operating system.
+
+How much effort should you spend making a program run faster? The main
+criterion (标准) is whether the changes will yield enough to be worthwhile.
+As a guideline, the personal time spent making a program faster should not
+be more than the time the speedup will recover during the lifetime of the
+program. By this rule, the algorithmic improvement to \verb'isspam' was
+worthwhile: it took a day of work but saved (and continues to save) hours
+every day. Removing the array index from the inner loop was less dramatic
+(戏剧性的) but still worth doing, since the program provides a service to a
+large community. Optimizing public services like the spam filter or a
+library is almost always worthwhile; speeding up test programs is almost
+never worthwhile. And for a program that runs for a year, squeeze out
+everything you can. It may be worth restarting if you find a way to make a
+ten percent improvement even after the program has been running for a
+month.
+
+Competitive programs -- games, compilers. word processors, spreadsheets,
+database systems -- fall into this category as well, since commercial
+success is often to the swiftest, at least in published benchmark results.
+
+It's important to time programs as changes are being made, to make sure
+that things are improving. Sometimes two changes that each improve a
+program will interact, negating (否定) their individual effects. It's also
+the case that timing mechanisms can be so erratic (不稳定的) that it's hard
+to draw firm conclusions about the effect of changes.  Even on single-user
+systems,  times can fluctuate (波动) unpredictably. If the variability of
+the internal timer (or at least what is reported back to you) is ten
+percent, changes that yield improvements of only ten percent are hard to
+distinguish from noise.
+
+\section{Tuning the Code}
+
+There are many techniques to reduce run-time when a hot spot is found. Here
+are some suggestions, which should be applied with care, and with
+regression testing after each to be sure that the code still works. Bear in
+mind that good compilers will do some of these for you, and in fact you may
+impede (阻止) their efforts by complicating the program. Whatever you try,
+measure its effect to make sure it helps.
+
+\emph{Collect common subexpressions.} If an expensive computation appears
+multiple time, do it in only one place and remember the result. For
+example, in Chapter \ref{chap:style} we showed a macro that computed a
+distance by calling \verb'sqrt' twice in a row with the same values; in
+effect the computation was
+\begin{badcode}
+    sqrt(dx*dx + dy*dy) + ((sqrt(dx*dx + dy*dy) > 0) ? ...)
+\end{badcode}
+Compute the square root once and use its value in two places.
+
+If a computation is done within a loop but does not depend on anything that
+changes within the loop, move the computation outside, as when we replaced
+\begin{wellcode}
+    for (i = 0; i < nstarting[c]; i++) {
+\end{wellcode}
+by
+\begin{wellcode}
+    n = nstarting[c];
+    for (i = 0; i < n; i++) {
+\end{wellcode}
+
+\emph{Replace expensive operations by cheap ones.} The term
+\textit{reduction in strength} refers to optimizations that replace an
+expensive operation by a cheaper one. In olden times, this used to mean
+replacing multiplications by additions or shifts, but that rarely buys much
+now. Division and remainder are much slower than multiplication, however,
+so there may be improvement if a division can be replaced with
+multiplication by the inverse, or a remainder by a masking operation if the
+divisor (除数) is a power of two.  Replacing array indexing by pointers in
+C or C++ might speed things up, although most compilers do this
+automatically. Replacing a function call by a simpler calculation can still
+be worthwhile. Distance in the plane (平面) is determined by the formula
+\verb'sqrt(dx*dx+dy*dy)', so to decide which of two points is further away
+would normally involve calculating two square roots. But the same decision
+can be made by comparing the squares of the distances:
+\begin{wellcode}
+    if (dx1*dx1 + dy1*dy1 < dx2*dx2 + dy2*dy2)
+        ...
+\end{wellcode}
+gives the same result as comparing the square roots of the expressions.
+
+Another instance occurs in textual pattern matchers such as our spam filter
+or \verb'grep'. If the pattern begins with a literal character, a quick
+search is made down the input text for that character; if no match is
+found, the more expensive search machinery (结构)is not invoked at all.
+
+\emph{Unroll (展开) or eliminate loops.} There is a certain overhead in
+setting up and running a loop. If the body of the loop isn't too long and
+doesn't iterate too many times, it can be more efficient to write out each
+iteration in sequence. Thus, for example:
+\begin{wellcode}
+    for (i = 0; i < 3; i++)
+        a[i] = b[i] + c[i];
+\end{wellcode}
+becomes
+\begin{wellcode}
+    a[0] = b[0] + c[0];
+    a[1] = b[1] + c[1];
+    a[2] = b[2] + c[2];
+\end{wellcode}
+This eliminates loop overhead, particularly branching, which can slow
+modern processors by interrupting the flow of execution.
+
+If the loop is longer, the same kind of transformation can be used to
+amortize (分摊) the overhead over fewer iterations:
+\begin{wellcode}
+    for (i = 0; i < 3*n; i++)
+        a[i] = b[i] + c[i];
+\end{wellcode}
+becomes
+\begin{wellcode}
+    for (i = 0; i < 3*n; i += 3) {
+        a[i+0] = b[i+0] + c[i+0];
+        a[i+1] = b[i+1] + c[i+1];
+        a[i+2] = b[i+2] + c[i+2];
+    }
+\end{wellcode}
+Note that this works only if the length is a multiple of the step size;
+otherwise additional code is needed to fix up the ends, which is a place
+for mistakes to creep in (潜入) and for some of the efficiency to be lost
+again.
+
+\emph{Cache frequently-used values.} Cached values don't have to be
+recomputed.  Caching takes advantage of \textit{locality}, the tendency for
+programs (and people) to re-use recently accessed or nearby items in
+preference to (优先于) older or distant data. Computing hardware makes
+extensive use of caches; indeed. adding cache memory to a computer can make
+great improvements in how fast a machine appears. The same is true of
+software.  Web browsers, for instance, cache pages and images to avoid the
+slow transfer of data over the Internet. In a print preview program we
+wrote years ago, non-alphabetic special characters like $\sfrac{1}{2}$ had
+to be looked up in a table. Measurement showed that much of the use of
+special characters involved drawing lines with long sequences of the same
+single character. Caching just the single most recently used character made
+the program significantly faster on typical inputs.
+
+It's best if the caching operation is invisible from outside, so that it
+doesn't affect the rest of the program except for making it run faster.
+Thus in the case of the print previewer, the interface to the character
+drawing function didn't change; it was always
+\begin{wellcode}
+    drawchar(c);
+\end{wellcode}
+The original version of \verb'drawchar' called \verb'show(lookup(c))'. The
+cache implementation used internal static variables to remember the
+previous character and its code:
+\begin{wellcode}
+    if (c != lastc) { /* update the cache */
+        lastc = c;
+        lastc = lookup(c);
+    }
+    show(lastc);
+\end{wellcode}
+
+\emph{Write a special-purpose allocator.} Often the single hot spot in a
+program is memory allocation, which manifests (表明) itself as lots of
+calls on \verb'malloc' or new. When most requests are for blocks of the
+same size, substantial (实质的) speedups are possible by replacing calls to
+the general-purpose allocator by calls to a special-purpose one.  The
+special-purpose allocator makes one call to \verb'malloc' to fetch a big
+array of items, then hands them out one at a time as needed, a cheaper
+operation. Freed items are placed back in a free list so they can be reused
+quickly.
+
+If the requested sizes are similar, you can trade space for time by always
+allocating enough for the largest request. This can be effective for
+managing short strings if you use the same size for all strings up to a
+specified length.
+
+Some algorithms can use stack-based allocation, where a whole sequence of
+allocations is done, and then the entire set is freed at once. The
+allocator obtains one big chunk for itself and treats it as a stack,
+pushing allocated items on as needed and popping them all off in a single
+operation at the end. Some C libraries offer a function \verb'alloca' for
+this kind of allocation, though it is not standard. It uses the local call
+stack as the source of memory, and frees all the items when the function
+that calls \verb'alloca' returns.
+
+\emph{Buffer input and output.} Buffering batches transactions so that
+frequent operations are done with as little overhead as possible, and the
+high-overhead operations are done only when necessary. The cost of an
+operation is thereby spread over multiple data values. When a C program
+calls \verb'printf', for example, the characters are stored in a buffer but
+not passed to the operating system until the buffer is full or flushed
+explicitly. The operating system itself may in turn (轮流) delay writing
+the data to disk. The drawback is the need to flush output buffers to make
+data visible; in the worst case, information still in a buffer will be lost
+if a program crashes.
+
+\emph{Handle special cases separately.} By handling same-sized objects in
+separate code, special-purpose allocators reduce time and space overhead in
+the general allocator and incidentally (顺便) reduce fragmentation. In the
+graphics library for the Inferno system, the basic draw function was
+written to be as simple and straightforward as possible. With that working,
+optimizations for a variety of cases (chosen by profiling) were added one
+at a time; it was always possible to test the optimized version against the
+simple one.  In the end, only a handful of cases were optimized because the
+dynamic distribution of calls to the drawing function was heavily skewed
+towards (为了) displaying characters; it wasn't worth writing clever code
+for all the cases.
+
+\emph{Precompute results.} Sometimes it is possible to make a program run
+faster by precomputing values so they are ready when they are needed. We
+saw this in the spam filter, which precomputed \verb'strlen(pat[i])' and
+stored it in the array at \verb'patlen[i]'. If a graphics system needs to
+repeatedly compute a mathematical function like sine but only for a
+discrete (离散的) set of values, such as integer degrees, it will be faster
+to precompute a table with 360 entries (or provide it as data) and index
+into it as needed.  This is an example of trading space for time. There are
+many opportunities to replace code by data or to do computation during
+compilation, to save time and sometimes space as well. For example, the
+\verb'ctype' functions like \verb'isdigit' are almost always implemented by
+indexing into a table of bit flags rather than by evaluating a sequence of
+tests.
+
+\emph{Use approximate values.} If accuracy isn't an issue, use
+lower-precision data types.  On older or smaller machines, or machines that
+simulate floating point in software, single-precision floating-point
+arithmetic is often faster than double-precision, so use \verb'float'
+instead of \verb'double' to save time. Some modern graphics processors use
+a related trick. The IEEE floating-point standard requires "graceful
+underflow" as calculations approach the low end of representable values,
+but this is expensive to compute. For images, the feature is unnecessary,
+and it is faster and perfectly acceptable to truncate to zero. This not
+only saves time when the numbers underflow, it can simplify the hardware
+for all arithmetic. The use of integer \verb'sin' and \verb'cos' routines
+is another example of using approximate values.
+
+\emph{Rewrite in a lower-level language.} Lower-level languages tend to be
+more efficient, although at a cost in programmer time. Thus rewriting some
+critical part of a C++ or Java program in C or replacing an interpreted
+script by a program in a compiled language may make it run much faster.
+
+Occasionally, one can get significant speedups with machine-dependent code.
+This is a last resort (手段), not a step to be taken lightly, because it
+destroys portability and makes future maintenance and modifications much
+harder.  Almost always, operations to be expressed in assembly language are
+relatively small functions that should be embedded in a library;
+\verb'memset' and \verb'memmove', or graphics operations, are typical
+examples. The approach is to write the code as cleanly as possible in a
+high-level language and make sure it's correct by testing it as we
+described for \verb'memset' in Chapter \ref{chap:testing}.  This is your
+portable version, which will work everywhere, albeit (虽然) slowly.  When
+you move to a new environment, you can start with a version that is known
+to work.  Now when you write an assembly-language version, test it
+exhaustively (彻底地) against (针对) the portable one.  When bugs occur,
+non-portable code is always suspect: it's comforting (令人鼓舞的) to have a
+comparison implementation.
+
+\begin{exercise}
+    One way to make a function like \verb'memset' run faster is to have it
+    write in word-sized chunks instead of byte-sized; this is likely to
+    match the hardware better and might reduce the loop overhead by a
+    factor of four or eight. The downside is that there are now a variety
+    of end effects to deal with if the target is not aligned on a word
+    boundary and if the length is not a multiple of the word size. Write a
+    version of \verb'memset' that does this optimization. Compare its
+    performance to the existing library version and to a straightforward
+    byte-at-a-time loop.
+\end{exercise}
+
+\begin{exercise}
+    Write a memory allocator \verb'smalloc' for C strings that uses a
+    special-purpose allocator for small strings but calls \verb'malloc'
+    directly for large ones. You will need to define a \verb'struct' to
+    represent the strings in either case.  How do you decide where to
+    switch from calling \verb'smalloc' to \verb'malloc'?
+\end{exercise}

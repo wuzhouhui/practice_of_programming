@@ -13,8 +13,11 @@
 \usepackage{verbatim}
 \usepackage{fancyvrb}
 \usepackage{fancyhdr}
+\usepackage{tikz}
+\usepackage{varwidth}
+\usepackage{xfrac}
 
-\geometry{bottom = 2cm}
+\geometry{bottom = 2cm, outer = 2cm}
 %\geometry{ left = 3cm, right = 3cm, bottom = 2cm }
 
 \pagestyle{fancy}
@@ -49,12 +52,14 @@
 \renewcommand{\FancyVerbFormatLine}[1]{%
     \makebox[0cm][l]{?}#1}
 \newenvironment{badcode}
-{ \linespread{0.90}\Verbatim }
+{ \linespread{0.93}\Verbatim }
 { \endVerbatim }
 
 \newenvironment{wellcode}%
-{\linespread{0.90}\verbatim}%
+{\linespread{0.93}\verbatim}%
 {\endverbatim}
+
+\renewcommand\emph[1]{{\bfseries\textit{#1}}}
 
 \newcounter{exercnt}[chapter]
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
@@ -69,4 +74,6 @@
 {\end{proof}}
 
 \title{The Practice of Programming}
-\author{Brian W.Kernighan \and Rob Pike}
+\author{Brian W.Kernighan \and Rob Pike \and
+    \url{https://github.com/wuzhouhui/tpop}
+}
