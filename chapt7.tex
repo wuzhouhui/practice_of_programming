@@ -801,3 +801,33 @@ systems,  times can fluctuate (波动) unpredictably. If the variability of
 the internal timer (or at least what is reported back to you) is ten
 percent, changes that yield improvements of only ten percent are hard to
 distinguish from noise.
+
+\section{Tuning the Code}
+
+There are many techniques to reduce run-time when a hot spot is found. Here
+are some suggestions, which should be applied with care, and with
+regression testing after each to be sure that the code still works. Bear in
+mind that good compilers will do some of these for you, and in fact you may
+impede (阻止) their efforts by complicating the program. Whatever you try,
+measure its effect to make sure it helps.
+
+\emph{Collect common subexpressions.} If an expensive computation appears
+multiple time, do it in only one place and remember the result. For
+example, in Chapter \ref{chap:style} we showed a macro that computed a
+distance by calling \verb'sqrt' twice in a row with the same values; in
+effect the computation was
+\begin{badcode}
+    sqrt(dx*dx + dy*dy) + ((sqrt(dx*dx + dy*dy) > 0) ? ...)
+\end{badcode}
+Compute the square root once and use its value in two places.
+
+If a computation is done within a loop but does not depend on anything that
+changes within the loop, move the computation outside, as when we replaced
+\begin{wellcode}
+    for (i = 0; i < nstarting[c]; i++) {
+\end{wellcode}
+by
+\begin{wellcode}
+    n = nstarting[c];
+    for (i = 0; i < n; i++) {
+\end{wellcode}
