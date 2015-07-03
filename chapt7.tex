@@ -1160,3 +1160,150 @@ encoding was dropped and the application continues to use PPM exclusively.
 Of course the tradeoff would be different if the file were to be sent
 across a slow network instead; then a GIF encoding would be much more
 cost-effective.
+
+\section{Estimation}
+\label{sec:estimation}
+
+It's hard to estimate ahead of time how fast a program will be, and it's
+doubly hard to estimate the cost of specific language statements or machine
+instructions. It's easy, though, to create a cost model for a language or a
+system, which will give you at least a rough idea of how long a important
+operations take.
+
+One approach that is often used for conventional programming languages is a
+program that times representative code sequences. There are operational
+difficulties, like getting reproducible results and canceling out
+irrelevant overheads, but it is possible to get useful insights without
+much effort. For example, we have a C and C++ cost model program that
+estimates the costs of individual statements by enclosing them in a loop
+that runs them many millions of times, then computes an average time. On a
+250 MHz MIPS R10000, it produces this data, with times in nanoseconds per
+operation.
+\begin{wellcode}
+    int operations:
+        i1++                    8
+        i1 = i2 + i3           12
+        i1 = i2 - i3           12
+        i1 = i2 * i3           12
+        i1 = i2 / i3          114
+        i1 = i2 % i3          114
+
+    float operations
+        f1 = f2                 8
+        f1 = f2 + f3           12
+        f1 = f2 - f3           12
+        f1 = f2 * f3           11
+        f1 = f2 / f3           28
+
+    double operations
+        d1 = d2                 8
+        d1 = d2 + d3           12
+        d1 = d2 - d3           12
+        d1 = d2 * d3           11
+        d1 = d2 / d3           58
+
+    numeric conversions
+        i1 = f1                 8
+        f1 = i1                 8
+\end{wellcode}
+Integer operations are fast, except for division and modulus (取模).
+Floating-point operations are as fast or faster, a surprise to people who
+grew up at a time when floating point operations were much more expensive
+than integer operations.
+
+Other basic operations are also quite fast, including function calls, the
+last three lines of this group:
+\begin{wellcode}
+    integer vector operations
+        v[i] = i               49
+        v[v[i]] = i            81
+        v[v[v[i]]] = i        100
+
+    control structures
+        if (i == 5) i1++        4
+        if (i != 5) i1++       12
+        while (i < 0) i1++      3
+        i1 = sum1(i2)          57
+        i1 = sum2(i2, i3)      58
+        i1 = sum3(i2, i3, i4)  54
+\end{wellcode}
+But input and output are not so cheap, nor are most other library function:
+\begin{wellcode}
+    input/output
+        fputs(s, fp)                        270
+        fgets(s, 9, fp)                     222
+        fprintf(fp, "%d\n", i)             1820
+        fscanf(fp, "%d", &i1)              2070
+
+    malloc
+        free(malloc(8))                     342
+
+    string functions
+        strcpy(s, "0123456789")             157
+        i1 = strcmp(s, s)                   176
+        i1 = strcmp(s, "a123456789")         64
+
+    string/number conversions
+        i1 = atoi("12345")                  402
+        sscanf("12345", "%d", &i1)         2376
+        sprintf(s, "%d", i)                1492
+        f1 = atof("123.45")                4098
+        sscanf("123.45", "%f", &f1)        6438
+        sprintf(s, "%6.2f", 123.45)        3902
+\end{wellcode}
+The time for \verb'malloc' and \verb'free' are probably not indicative of
+true performance, since freeing immediately after allocating is not a
+typical pattern.
+
+Finally, math functions:
+\begin{wellcode}
+    math functions
+        i1 = rand()             135
+        f1 = log(f2)            418
+        f1 = exp(f2)            462
+        f1 = sin(f2)            514
+        f1 = sqrt(f2)           112
+\end{wellcode}
+
+These values would be different on different hardware, of course, but the
+trends can be used for back-of-the-envelope (粗略) estimates of how long
+something might take, or for comparing the relative costs of I/O versus
+basic operations, or for deciding whether to rewrite an expression or use
+an inline function.
+
+There are many sources of variability. One is compiler optimization level.
+Modern compilers can find optimizations that elude most programmers.
+Furthermore, current CPUs are so complicated that only a good compiler can
+take advantage of their ability to issue multiple instructions
+concurrently, pipeline their execution, fetch instructions and data before
+they are needed, and the like.
+
+Computer architecture itself is another major reason why performance
+numbers are hard to predict. Memory caches make a great difference in
+speed, and much cleverness in hardware design goes into hiding the fact
+that main memory is quite a bit slower than cache memory. Raw processor
+clock rates (频率) like "400 MHz" are suggestive (提示性的) but don't tell
+the whole story; one of our old 200 MHz Pentium is significantly slower
+than an even older 100 MHz Pentium because the latter has a big
+second-level cache and the former has none. And different generations of
+processor, even for the same instruction set, take different numbers of
+clock cycles to do a particular operation.
+
+\begin{exercise}
+    Create a set of tests for estimating the costs of basic operations for
+    computers and compilers near you, and investigates and differences in
+    performance.
+\end{exercise}
+
+\begin{exercise}
+    Create a cost model for higher-level operations in C++. Among the
+    features that might be included are construction, copying, and deletion
+    of class objects; member function calls; virtual functions; inline
+    functions; the \verb'iostream' library; the STL. This exercise is
+    open-ended (开放式的), so Concentrate on a small set of representative
+    operations.
+\end{exercise}
+
+\begin{exercise}
+    Repeat the previous exercise for Java.
+\end{exercise}
