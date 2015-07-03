@@ -54,3 +54,53 @@ abstraction and encapsulation to restrict and control unavoidable
 non-portable code. By staying within the intersection of constraints and by
 localizing (局部化) system dependencies, your code will become cleaner and
 more general as it is ported (移值).
+
+\section{Language}
+\label{sec:language}
+
+\emph{Stick to the standard.} The first step to portable code is of course
+to program in a high-level language, and within the language standard if
+there is one.  Binaries don't port well, but source code does. Even so, the
+way that a compiler translates a program into machine instructions is not
+precisely defined, even for standard languages.  Few languages in wide use
+have only a single implementation; there are usually multiple suppliers,
+or versions for different operating systems, or releases that have evolved
+over time. How they interpret your source code will vary.
+
+Why isn't a standard a strict definition? Sometimes a standard is
+incomplete and fails to define the behavior when features interact
+(互相干扰). Sometimes it's deliberately (故意地) indefinite (不确定); for
+example, the \verb'char' type in C and C++ may be signed or unsigned, and
+need not even have exactly 8 bits. Leaving such issues up to the compiler
+writer may allow more efficient implementations and avoid restricting the
+hardware the language will run on, at the risk of making life harder for
+programmers. Politics and technical compatibility issues may lead to
+compromises that leave details unspecified.  Finally, languages are
+intricate (复杂的) and compilers are complex; there will be errors in the
+interpretation and bugs in the implementation.
+
+Sometimes the languages aren't standardized at all. C has an official
+ANSI/ISO standard issued in 1988, but the ISO C++ standard was ratified
+(批准) only in 1998; at the time we are writing this, not all compilers in
+use support the official definition. Java is new and still years away from
+standardization. A language standard is usually developed only after the
+language has a variety of conflicting (互相矛盾的) implementations to unify
+(统一), and is in wide enough use to justify the expense of
+standardization.  In the meantime, there are still programs to write and
+multiple environments to support.
+
+So although reference manuals and standards give the impression (印象) of
+rigorous (严格的) specification, they never define a language fully, and
+different implementations may make valid but incompatible interpretations.
+Sometimes there are even errors. A small illustration showed up while we
+were first writing this chapter. This external declaration is illegal in C
+and C++:
+\begin{badcode}
+    *x[] = {"abc"};
+\end{badcode}
+A test of a dozen compilers turned up a few that correctly diagnosed the
+missing \verb'char' type specifier for \verb'x', a fair number that warned
+of mismatched types (apparently using an old definition of the language to
+infer (推断) incorrectly that \verb'x' is an array of \verb'int' pointers),
+and a couple that compiled the illegal code without a murmur (低语) of
+complaint.
