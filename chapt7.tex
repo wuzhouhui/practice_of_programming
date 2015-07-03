@@ -1307,3 +1307,65 @@ clock cycles to do a particular operation.
 \begin{exercise}
     Repeat the previous exercise for Java.
 \end{exercise}
+
+\section{Summary}
+
+Once you have chosen the right algorithm, performance optimization is
+generally the last thing to worry about as you write a program. If you must
+undertake it, however, the basic cycle is to measure, focus on the few
+places where a change will make the most difference, verify the correctness
+of your changes, then measure again. Stop as soon as you can, and preserve
+the simplest version as a baseline (基准) for timing and correctness.
+
+When you're trying to improve the speed or space consumption of a program,
+it's a good idea to make up some benchmark tests and problems so you can
+estimate and keep track of performance for yourself. If there are already
+standard benchmarks for your task, use them too. If the program is
+relatively self-contained, one approach is to find or create a collection
+of "typical" inputs; these might well be part of a test suite as well. This
+is the genesis (起源) of benchmark suites for commercial and academic
+systems like compilers, computers, and the like. For example, Awk comes
+with about 20 small programs that together cover most of the commonly-used
+language features; these programs are run over a very large input file to
+assure that the same results are computed and that no performance bug has
+been introduced. We also have a collection of standard large data files
+that can be used for timing tests. In some cases it might help that such
+files have easily verified properties, for example a size that is a power
+of ten or of two.
+
+Benchmarking can be managed with the same kind of scaffolding (脚手架) as
+we recommended for testing in Chapter \ref{chap:testing}. Timing tests are
+run automatically; outputs include enough identification that they can be
+understood and replicated (复制); records are kept so that trends and
+significant changes can be observed.
+
+By the way, it's extremely difficult to do good benchmarking, and it is not
+unknown for companies to tune their products to show up well on benchmarks,
+so it is wise to take all benchmark results with a grain of salt.
+
+\section*{Supplementary Reading}
+Our discussion of the spam filter is based on work by Bob Handrena and Ken
+Thompson. Their filter includes regular expressions for more sophisticated
+matching and automatically classifies messages (certainly spam, possibly
+spam, not spam) according to the strings they match.
+
+Knuth's profiling paper, "An Empirical (经验主义的) Study of FORTRAN
+Programs," appeared in \bookname{Software -- Practice and Experience, 1, 2},
+PP.105-133, 1971. The core of the paper is a statistical analysis of a set
+of programs found by rummaging (仔细搜索) in waste basket (篮子) and
+publicly-visible directories on the computer center's machines.
+
+Jon Bentley's \bookname{Programming Pearls} and \bookname{More Programming
+    Pearls} (Addison-Wesley, 1986 and 1988) have several fine example of
+algorithmic and code-tuning improvements; there are also good essays (短文)
+on scaffolds for performance improvements and the use of profiles.
+
+\bookname{Inner Loops}, by Rick Booth (Addison-Wesley, 1997), is a good
+reference on tuning PC programs, although processors evolve so fast that
+specific details age quickly.
+
+John Hennessy and David Patterson's family of books on computer
+architecture (for example, \bookname{Computer Organization and Design: The
+    Hardware/Software Interface}, Morgan Kaufman, 1997) contain thorough
+discussions of performance considerations for modern computers.
+
