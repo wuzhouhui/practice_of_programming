@@ -1,5 +1,56 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Portability}
 \label{chap:portability}
-\begin{quotation}
-\end{quotation}
+\begin{quote}
+    Finally, standardization, like convention, can be another manifestation
+    (证明) of the strong older. But unlike convention it has been accepted
+    in Modern architecture as an enriching (丰富) product of our
+    technology, yet dreaded (可怕的) for its potential domination and
+    brutality.
+\end{quote}
+\begin{quotesrc}
+    Robert Venturi, \bookname{Complexity and Contradiction (矛盾) in
+Architecture}
+\end{quotesrc}
+
+It's hard to write software that runs correctly and efficiently. So once a
+program works in one environment, you don't want to repeat much of the
+effort if you move it to a different compiler or processor or operating
+system. Ideally (理想地), it should need no changes whatsoever (无论什么).
+
+This ideal is called \emph{portability}. In practice, "portability" more
+often stands for the weaker concept that it will be easier to modify the
+program as it moves than to rewrite it from scratch (擦除). The less
+revision it needs, the more portable it is.
+
+You may wonder why we worry about portability at all. If software is going
+to run in only one environment, under specified conditions, why spend time
+giving it broader applicability? First, any successful program, almost by
+definition, gets used in unexpected ways and unexpected places. Building
+software to be more general than its original specification will result in
+less maintenance and more utility down the road. Second, environments
+change. When the compiler or operating system or hardware is upgraded,
+features may change. The less the program depends on special features, the
+less likely it is to break and the more easily it will adapt to changing
+circumstances. Finally, and most important, a portable program is a better
+program. The effort invested to make a program portable also makes it
+better designed, better constructed, and more thoroughly tested. The
+techniques of portable programming are closely related to the techniques of
+good programming in general.
+
+Of course the degree of portability must be tempered (调和) by reality.
+There is no such thing as an absolutely portable program, only a program
+that hasn't yet been tried in enough environments. But we can keep
+portability as our goal by aiming towards software that runs without change
+almost everywhere. Even if this goal isn't met completely, time spent on
+portability as the program is created will pay off when the software must
+be updated.
+
+Our message is this: try to write software that works within the
+intersection of the various standards, interfaces and environments it must
+accommodate. Don't fix every portability problem by adding special code;
+instead, adapt the software to work within the new constraints. Use
+abstraction and encapsulation to restrict and control unavoidable
+non-portable code. By staying within the intersection of constraints and by
+localizing (局部化) system dependencies, your code will become cleaner and
+more general as it is ported (移值).
