@@ -104,3 +104,56 @@ of mismatched types (apparently using an old definition of the language to
 infer (推断) incorrectly that \verb'x' is an array of \verb'int' pointers),
 and a couple that compiled the illegal code without a murmur (低语) of
 complaint.
+
+\emph{Program in the mainstream.} The inability of some compilers to flag
+this error is unfortunate, but it also indicates an important aspect of
+portability.  Languages have dark comers (死角) where practice varies --
+bit-fields in C and C++, for example -- and it is prudent (谨慎的) to avoid
+them. Use only those features for which the language definition is
+unambiguous and well understood. Such features are more likely to be widely
+available and to behave the same way everywhere. We call this the
+mainstream of the language.
+
+It's hard to know just where the mainstream is, but it's easy to recognize
+constructions that are well outside it. Brand new features such as
+\verb'//' comments and \verb'complex' in C, or features specific to one
+architecture such as the keywords \verb'near' and \verb'far', are
+guaranteed to cause trouble. If a feature is so unusual or unclear that to
+understand it you need to consult a "language lawyer" -- an expert in
+reading language definitions -- don't use it.
+
+In this discussion, we'll focus on C and C++, general-purpose languages
+commonly used to write portable software. The C standard is more than a
+decade old and the language is very stable, but a new standard is in the
+works, so upheaval (变动) is coming.  Meanwhile, the C++ standard is hot
+off the press (刚刚出炉), so not all implementations have had time to
+converge (聚合).
+
+What is the C mainstream? The term usually refers to the established style
+of use of the language, but sometimes it's better to plan for the future.
+For example, the original version of C did not require function prototypes.
+One declared \verb'sqrt' to be a function by saying
+\begin{badcode}
+    double sqrt();
+\end{badcode}
+which defines the type of the return value but not of the parameters. ANSI
+C added function prototypes, which specify everything:
+\begin{wellcode}
+    double sqrt(double);
+\end{wellcode}
+ANSI C compilers are required to accept the earlier syntax, but you should
+nonetheless (仍然) write prototypes for all your functions. Doing so will
+guarantee safer code -- function calls will be fully type-checked -- and if
+interfaces change, the compiler will catch them. If your code calls
+\begin{wellcode}
+    func(7, PI);
+\end{wellcode}
+but func has no prototype, the compiler might not verify that \verb'func'
+is being called correctly. If the library later changes so that \verb'func'
+has three arguments, the need to repair the software might be missed
+because the old-style syntax disables type checking of function arguments.
+
+C++ is a larger language with a more recent standard, so its mainstream is
+harder to identify. For example, although we expect the STL to become
+mainstream, this will not happen immediately, and some current
+implementations do not support it completely.
