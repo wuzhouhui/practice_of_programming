@@ -1039,3 +1039,124 @@ comparison implementation.
     represent the strings in either case.  How do you decide where to
     switch from calling \verb'smalloc' to \verb'malloc'?
 \end{exercise}
+
+\section{Space Efficiency}
+
+Memory used to be the most precious computing resource, always in short
+supply, and much bad programming was done in an attempt to squeeze the most
+out of what little there was. The infamous (声名狼藉的) "Year 2000 Problem"
+is frequently cited as an example of this; when memory was truly scarce
+(稀有), even the two bytes needed to store 19 were deemed (认为) too
+expensive. Whether or not space is the true reason for the problem -- such
+code may simply reflect the way people use dates in everyday life, where
+the century is commonly omitted -- it demonstrates the danger inherent
+(固有的) in short-sighted (短浅的) optimization.
+
+In any case, times have changed, and both main memory and secondary storage
+are amazingly cheap. Thus the first approach to optimizing space should be
+the same as to improving speed: don't bother.
+
+There are still situations, however, where space efficiency matters. If a
+program doesn't fit into the available main memory, parts of it will be
+paged out, and that will make its performance unacceptable. We see this
+when new versions of software squander (使分散) memory; it is a sad reality
+that software upgrades are often followed by the purchase of more memory.
+
+\emph{Save space by using the smallest-possible data type.} One step to
+space efficiency is to make minor changes to use existing memory better,
+for example by using the smallest data type that will work. This might mean
+replacing \verb'int' with \verb'short' if the data will fit; this is a
+common technique for coordinates (协调) in 2-D graphics systems, since 16
+bits are likely to handle any expected range of screen coordinates. Or it
+might mean replacing \verb'double' with \verb'float'; the potential problem
+is loss of precision, since \verb'float's usually hold only 6 or 7 decimal
+digits.
+
+In these cases and analogous ones, other changes may be required as well,
+notably (特别是) format specifications in \texttt{printf} and especially
+\texttt{scanf} statements.
+
+The logical extension of this approach is to encode information in a byte
+or even fewer bits, say a single bit where possible. Don't use C or C++
+bit-fields; they are highly non-portable and tend to generate voluminous
+(长篇的) and inefficient code.  Instead, encapsulate the operations you
+want in functions that fetch and set individual bits within words or an
+array of words with shift and mask operations. This function returns a
+group of contiguous bits from the middle of a word:
+\begin{wellcode}
+    /* getbits: get n bits from position p */
+    /* bits are numbered from 0 (least significant) up */
+    unsigned int getbits(unsigned int x, int p, int n)
+    {
+        return (x >> (p+1-n)) & ~(~0 << n);
+    }
+\end{wellcode}
+If such functions turn out to be too slow, they can be improved with the
+techniques described earlier in this chapter. In C++, operator overloading
+can be used to make bit accesses look like regular subscripting.
+
+\emph{Don't store what you can easily recompute.} Changes like these are
+minor, however; they are analogous to code tuning. Major improvements are
+more likely to come from better data structures, perhaps coupled with
+algorithm changes. Here's an example.  Many years ago, one of us was
+approached (商量) by a colleague who was trying to do a computation on a
+matrix so large that it was necessary to shut down the machine and reload a
+stripped-down (精简的) operating system so the matrix would fit. He wanted
+to know if there was an alternative, since this was an operational
+nightmare. We asked what the matrix was like, and learned that it contained
+integer values, \textit{most of which were zero.} In fact, fewer than five
+percent of the matrix elements were non-zero. This immediately suggested a
+representation in which only the non-zero elements of the matrix were
+stored, and each matrix access like \verb'm[i][j]' would be replaced by a
+function call \verb'm(i,j)'. There are several ways to store the data; the
+easiest is probably an array of pointers, one for each row, each of which
+points to a compact array of column numbers and corresponding values. This
+has higher space overhead per non-zero item but requires much less space
+overall, and although individual accesses will be slower, they will be
+noticeably faster than reloading the operating system.  To complete the
+story: the colleague applied the suggestion and went away completely
+satisfied.
+
+We used a similar approach to solve a modern version of the same problem. A
+radio design system needed to represent terrain (地形) and radio signal
+strengths over a very large geographical area (100 to 200 kilometers on a
+side) to a resolution of 100 meters. Storing this as a large rectangular
+array exceeded the memory available on the target machine and would have
+caused unacceptable paging behavior. But over large regions, the terrain
+and signal strength values are likely to be the same, so a hierarchical
+representation that coalesces (联合) regions of the same value into a
+single cell makes the problem manageable.
+
+Variations on this theme are frequent, and so are specific representations,
+but all share the same basic idea: store the common value or values
+implicitly or in a compact form, and spend more time and space on the
+remaining values. If the most common values are really common, this is a
+win.
+
+The program should be organized so that the specific data representation of
+complex types is hidden in a class or set of functions operating on a
+private data type.  This precaution (预防措施) ensures that the rest of the
+program will not be affected if the representation changes.
+
+Space efficiency concerns sometimes manifest (表现) themselves in the
+external representation of information as well, both conversion (转换) and
+storage. In general, it is best to store information as text wherever
+feasible rather than in some binary representation.  Text is portable, easy
+to read, and amenable (服从的) to processing by all kinds of tools; binary
+representations have none of these advantages. The argument in favor of
+binary is usually based on "speed," but this should be treated with some
+skepticism (批判思想), since the disparity (差异) between text and binary
+forms may not be all that great.
+
+Space efficiency often comes with a cost in run-time. One application had
+to transfer a big image from one program to another. Images in a simple
+format called PPM were typically a megabyte, so we thought it would be much
+faster to encode them for transfer in the compressed GIF format instead;
+those files were more like 50K bytes. But the encoding and decoding of GIF
+took as much time as was saved by transferring a shorter file, so nothing
+was gained. The code to handle the GIF format is about 500 lines long; the
+PPM source is about 10 lines. For ease of maintenance, therefore, the GIF
+encoding was dropped and the application continues to use PPM exclusively.
+Of course the tradeoff would be different if the file were to be sent
+across a slow network instead; then a GIF encoding would be much more
+cost-effective.
