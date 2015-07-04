@@ -388,3 +388,114 @@ Rather than writing code in a way that amplifies (放大) the differences
 among systems, environments, and compilers, we strive (争取) to create
 software that behaves independently of the variations. In short, we steer
 clear of (避开) features and properties that are likely to vary.
+
+\section{Headers and Libraries}
+\label{sec:header_library}
+
+Headers and libraries provide services that augment (增加) the basic
+language.  Examples include input and output through \verb'stdio' in C,
+\verb'iostream' in C++, and \verb'java.io' in Java.  Strictly speaking,
+these are not part of the language, but they are defined along with the
+language itself and are expected to be part of any environment that claims
+to support it. But because libraries cover a broad spectrum (范围) of
+activities, and must often deal with operating system issues, they can
+still harbor (港湾) non-portabilities.
+
+\emph{Use standard libraries.} The same general advice applies here as for
+the core language: stick to the standard, and within its older,
+well-established components. C defines a standard library of functions for
+input and output, string operations, character class tests, storage
+allocation, and a variety of other tasks. If you confine (禁止) your
+operating system interactions to these functions, there is a good chance
+that your code will behave the same way and perform well as it moves from
+system to system. But you must still be careful, because there are many
+implementations of the library and some of them contain features that are
+not defined in the standard.
+
+ANSI C does not define the string-copying function \verb'strdup', yet most
+environments provide it, even those that claim to conform (一致) to the
+standard. A seasoned (老练的) programmer may use \verb'strdup' out of habit
+(出于习惯), and not be warned that it is non-standard.  Later, the program
+will fail to compile when ported to an environment that does not provide
+the function. This sort of problem is the major portability headache
+introduced by libraries; the only solution is to stick to the standard and
+test your program in a wide variety of environments.
+
+Header files and package definitions declare the interface to standard
+functions.  One problem is that headers tend to be cluttered (杂乱的)
+because they are trying to cope (应付) with several languages in the same
+file. For example, it is common to find a single header file like
+\verb'stdio.h' serving pre-ANSI C, ANSI C, and even C++ compilers. In such
+cases, the file is littered (弄乱) with conditional compilation directives
+like \verb'#if' and \verb'#ifdef'.  Because the preprocessor language is
+not very flexible, the files are complicated and hard to read, and
+sometimes contain errors.
+
+This excerpt (摘录) from a header file on one of our systems is better than
+most, because it is neatly formatted:
+\begin{wellcode}
+    #ifdef __OLD_C
+        extern int fread();
+        extern int fwrite();
+    #else
+        #if defined(__STDC__) || defined(__cplusplus)
+            extern size_t fread(void *, size_t, size_t, FILE *);
+            extern size_t fwrite(const void *, size_t, size_t, FILE *);
+        #else /* not __STDC__ __cplusplus */
+            extern size_t fread();
+            extern size_t fwrite();
+        #endif /* else not __STDC__ || __cplusplus */
+    #endif
+\end{wellcode}
+Even though the example is relatively clean, it demonstrates that header
+files (and programs) structured like this are intricate (复杂的) and hard
+to maintain. It might be easier to use a different header for each compiler
+or environment. This would require maintaining separate files, but each
+would be self-contained and appropriate for a particular system, and would
+reduce the likelihood of errors like including \verb'strdup' in a strict
+ANSI C environment.
+
+Header files also can "pollute" the name space by declaring a function with
+the same name as one in your program. For example, our warning-message
+function \verb'weprintf' was originally called \verb'wprintf', but we
+discovered that some environments, in anticipation (预测) of the new C
+standard, define a function with that name in \verb'stdio.h'.  We needed to
+change the name of our function in order to compile on those systems and be
+ready for the future. If the problem was an erroneous implementation rather
+than a legitimate (合法的) change of specification, we could work around it
+by redefining the name when including the header:
+\begin{badcode}
+    /* some versions of stdio use wprintf so define it away */
+    #define wprintf stdio_wprintf
+    #undef wprintf
+    /* code using our wprintf() follows ... */
+\end{badcode}
+This maps all occurrences of \verb'wprintf' in the header file to
+\verb'stdio_wprintf' so they will not interfere with our version. We can
+then use our own \verb'wprintf' without changing its name, at the cost of
+some clumsiness (笨拙) and the risk that a library we link with will call
+our \verb'wprintf' expecting to get the official one. For a single
+function, it's probably not worth the trouble, but some systems make such a
+mess of the environment that one must resort to (采取) extremes (极端方法)
+to keep the code clean. Be sure to comment what the construction is doing,
+and don't make it worse by adding conditional compilation. If some
+environments define \verb'wprintf', assume they all do; then the fix is
+permanent and you won't have to maintain the \verb'#ifdef' statements as
+well.  It may be easier to switch than fight and it's certainly safer, so
+that's what we did when we changed the name to \verb'weprintf'.
+
+Even if you try to stick to the rules and the environment is clean, it is
+easy to step outside the limits by implicitly assuming that some favorite
+property is true everywhere. For instance, ANSI C defines six signals that
+can be caught with \verb'signal'; the POSIX standard defines 19; most Unix
+systems support 32 or more. If you want to use a non-ANSI signal, there is
+clearly a tradeoff (交易) between functionality and portability, and you
+must decide which matters more.
+
+There are many other standards that are not part of a programming language
+definition; examples include operating system and network interfaces,
+graphics interfaces, and the like. Some are meant to carry across more than
+one system, like POSIX; others are specific to one system, like the various
+Microsoft Windows APIs.  Similar advice holds here as well. Your programs
+will be more portable if you choose widely used and well-established
+standards, and if you stick to the most central and commonly used aspects.
