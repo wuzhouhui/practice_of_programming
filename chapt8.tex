@@ -365,3 +365,26 @@ compute the size of types and objects. Never right shift a signed value.
 Make sure the data type is big enough for the range of values you are
 storing in it.
 
+\emph{Try several compilers.} It's easy to think that you understand
+portability, but compilers will see problems that you don't, and different
+compilers sometimes see your program differently, so you should take
+advantage of their help. Turn on all compiler warnings. Try multiple
+compilers on the same machine and on different machines.  Try a C++
+compiler on a C program.
+
+Since the language accepted by different compilers varies, the fact that
+your program compiles with one compiler is no guarantee that it is even
+syntactically correct.  If several compilers accept your code, however, the
+odds (奇怪的事情) improve. We have compiled every C program in this book
+with three C compilers on three unrelated operating systems (Unix, Plan 9,
+Windows) and also a couple of C++ compilers. This was a sobering (合理的)
+experience, but it caught dozens of portability errors that no amount of
+human scrutiny (检查) would have uncovered. They were all trivial (琐细的)
+to fix.
+
+Of course, compilers cause portability problems too, by making different
+choices for unspecified behaviors. But our approach still gives us hope.
+Rather than writing code in a way that amplifies (放大) the differences
+among systems, environments, and compilers, we strive (争取) to create
+software that behaves independently of the variations. In short, we steer
+clear of (避开) features and properties that are likely to vary.
