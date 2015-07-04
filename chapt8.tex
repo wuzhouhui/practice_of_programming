@@ -722,3 +722,65 @@ more reliable the configuration and installation will be.
     code? If you have access to more than one compiler, how do the results
     compare?
 \end{exercise}
+
+\section{Isolation}
+\label{sec:isolation}
+
+Although we would like to have a single source that compiles without change
+on all systems, that may be unrealistic. But it is a mistake to have
+non-portable code scattered (分散) throughout a program: that is one of the
+problems that conditional compilation creates.
+
+\emph{Localize system dependencies in separate files.} When different code
+is needed for different systems, the differences should be localized in
+separate files, one file for each system. For example, the text editor Sam
+runs on Unix, Windows, and several other operating systems. The system
+interfaces for these environments vary widely, but most of the code for Sam
+is identical everywhere. A single file captures the system variations for a
+particular environment; \verb'unix.c' provides the interface code for Unix
+systems, and \verb'windows.c' for the Windows environment. These files
+implement a portable interface to the operating system and hide the
+differences. Sam is, in effect, written to its own virtual operating
+system, which is ported to various real systems by writing a couple of
+hundred lines of C to implement half a dozen small but non-portable
+operations using locally available system calls.
+
+The graphics environments of these operating systems are almost unrelated.
+Sam copes (应付) by having a portable library for its graphics. Although
+it's a lot more work to build such a library than to hack (劈砍) the code
+to adapt to a given system -- the code to interface to the X Window system,
+for example, is about half as big as the rest of Sam put together -- the
+cumulative (累积的) effort is less in the long run. And as a side benefit,
+the graphics library is itself valuable, and has been used separately to
+make a number of other programs portable, too.
+
+Sam is an old program; today, portable graphics environments such as
+OpenGL, Tcl/Tk and Java are available for a variety of platforms. Writing
+your code with these rather than a proprietary (私有的) graphics library
+will give your programs wider utility.
+
+\emph{Hide system dependencies behind interfaces.} Abstraction is a
+powerful technique for creating boundaries between portable and
+non-portable parts of a program.  The I/O libraries that accompany (伴随)
+most programming languages provide a good example: they present an
+abstraction of secondary storage in terms of (在...方面) files to be opened
+and closed, read and written, without any reference to their physical
+location or structure. Programs that adhere (依附) to the interface will
+run on any system that implements it.
+
+The implementation of Sam provides another example of abstraction. An
+interface is defined for the file system and graphics operations and the
+program uses only features of the interface. The interface itself uses
+whatever facilities are available in the underlying system. That might
+require significantly different implementations on different systems, but
+the program that uses the interface is independent of that and should
+require no changes as it is moved.
+
+The Java approach to portability is a good example of how far this can be
+carried.  A Java program is translated into operations in a "virtual
+machine." that is, a simulated computer that can be implemented to run on
+any real machine. Java libraries provide uniform access to features of the
+underlying system, including graphics, user interface, networking, and the
+like; the libraries map into whatever the local system provides. In theory,
+it should be possible to run the same Java program (even after translation)
+everywhere without change.
