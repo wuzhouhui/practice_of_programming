@@ -784,3 +784,62 @@ underlying system, including graphics, user interface, networking, and the
 like; the libraries map into whatever the local system provides. In theory,
 it should be possible to run the same Java program (even after translation)
 everywhere without change.
+
+\section{Data Exchange}
+\label{sec:data_exchange}
+
+Textual data moves readily (迅速地) from one system to another and is the
+simplest portable way to exchange arbitrary information between systems.
+
+\emph{Use text for data exchange.} Text is easy to manipulate with other
+tools and to process in unexpected ways. For example, if the output of one
+program isn't quite right as input for another, an Awk or Perl script can
+be used to adjust it; \verb'grep' can be used to select or discard lines;
+your favorite editor can be used to make more complicated changes. Text
+files are also much easier to document and may not even need much
+documentation, since people can read them. A comment in a text file can
+indicate what version of software is needed to process the data; the first
+line of a Postscript file, for instance, identifies the encoding:
+\begin{wellcode}
+    %!PS-Adobe-2.0
+\end{wellcode}
+
+By contrast, binary files need specialized tools and rarely can be used
+together even on the same machine. A variety of widely-used programs
+convert arbitrary binary data into text so it can be shipped (传送) with
+less chance of corruption; these include \verb'binhex' for Macintosh
+systems, \verb'uuencode' and \verb'uudecode' for Unix, and various tools
+that use MIME encoding for transferring binary data in mail messages. In
+Chapter \ref{chap:notation}, we show a family of pack and unpack routines
+to encode binary data portably for transmission. The sheer (全然的) variety
+of such tools speaks to the problems of binary formats.
+
+There is one continuing (持续的) irritation (烦恼) with exchanging text: PC
+systems use a carriage return \verb"'\r'" and a newline or line-feed
+\verb"'\n'" to terminate each line, while Unix systems use only newline.
+The carriage return is an artifact (人工产物) of an ancient device called a
+Teletype that had a carriage-return (CR) operation to return the typing
+mechanism to the beginning of a line, and a separate line-feed operation
+(LF) to advance it to the next line.
+
+Even though today's computers have no carriages to return, PC software for
+the most part continues to expect the combination (familiarly known as
+CRLF, pronounced "curliff") on each line. If there are no carriage returns,
+a file may be interpreted as one giant line. Line and character counts can
+be wrong or change unexpectedly. Some software adapts gracefully, but much
+does not. PCs are not the only culprits (罪魁祸首); thanks to a sequence of
+incremental compatibilities, some modern networking standards such as HTTP
+also use CRLF to delimit lines.
+
+Our advice is to use standard interfaces, which will treat CRLF
+consistently on any given system, either (on PCs) by removing \verb'\r' on
+input and adding it back on output, or (on Unix) by always using \verb'\n'
+rather than CRLF to delimit lines in files.  For files that must be moved
+back and forth, a program to convert files from each format to the other is
+a necessity.
+
+\begin{exercise}
+    Write a program to remove spurious (伪造的) carriage returns from a
+    file. Write a second program to add them by replacing each newline with
+    a carriage return and newline. How would you test these programs?
+\end{exercise}
