@@ -157,3 +157,211 @@ C++ is a larger language with a more recent standard, so its mainstream is
 harder to identify. For example, although we expect the STL to become
 mainstream, this will not happen immediately, and some current
 implementations do not support it completely.
+
+\emph{Beware of language trouble spots (故障点).} As we mentioned, standard
+leave some things intentionally undefined or unspecified, usually to give
+compiler writers more flexibility. The list of such behaviors is
+discouragingly long.
+
+\textbf{Size of data types.} The sizes of basic data types in C and C++ are
+not defined; other than (除了) the basic rules that
+\begin{wellcode}
+    sizeof(char) <= sizeof(short) <= sizeof(int) <= sizeof(long)
+    sizeof(float) <= sizeof(double)
+\end{wellcode}
+and that \verb'char' must have at least 8 bit, \verb'short' and \verb'int'
+at least 16, and \verb'long' at least 32, there are no guaranteed
+properties. It's not even required that a pointer value fit in an
+\verb'int'.
+
+It's easy enough to find out what the sizes are for a specific compiler:
+\begin{wellcode}
+    /* sizeof: display sizes of basic types */
+    int main(void)
+    {
+        printf("char %d, short %d, int %d, long %d",
+                sizeof(char), sizeof(short),
+                sizeof(int), sizeof(long));
+        printf(" float %d, double %d, void* %d\n",
+                sizeof(float), sizeof(double), sizeof(void *));
+        return 0;
+    }
+\end{wellcode}
+The output is the same on most of the machines we use regularly:
+\begin{wellcode}
+    char 1, short 2, int 4, long 4, float 4, double 8, void* 4
+\end{wellcode}
+but other values are certainly possible. Some 64-bit machines produce this:
+\begin{wellcode}
+    char 1, short 2, int 4, long 8, float 4, double 8, void* 8
+\end{wellcode}
+and early PC compilers typically produced this:
+\begin{wellcode}
+    char 1, short 2, int 2, long 4, float 4, double 8, void* 2
+\end{wellcode}
+In the early days of PCs, the hardware supported several kinds of pointers.
+Coping with this mess (混乱) caused the invention (发明) of pointer
+modifiers like \verb'far' and \verb'near', neither of which is standard,
+but whose reserved-word ghosts (灵魂) still haunt (出没于) current
+compilers. If your compiler can change the sizes of basic types, or if you
+have machines with different sizes, try to compile and test your program in
+these different configurations.
+
+The standard header file \verb'stddef.h' defines a number of types that can
+help with portability. The most commonly-used of these is \verb'size_t',
+which is the unsigned integer type returned by the \verb'sizeof' operator.
+Values of this type are returned by functions like \verb'strlen' and used
+as arguments by many functions, including \verb'malloc'.
+
+Learning from some of these experiences, Java defines the sizes of all
+basic data types: \verb'byte' is 8 bits, \verb'char' and \verb'short' are
+16, \verb'int' is 32, and \verb'long' is 64.
+
+We will ignore the rich set of potential issues related to floating-point
+computation since that is a book-sized topic in itself. Fortunately, most
+modern machines support the IEEE standard for floating-point hardware, and
+thus the properties of floating-point arithmetic are reasonably well
+defined.
+
+\textbf{Order of evaluation.} In C and C++, the order of evaluation of
+operands of expressions, side effects, and function arguments is not
+defined. For example, in the assignment
+\begin{badcode}
+    n = (getchar() << 8) | getchar();
+\end{badcode}
+the second \verb'getchar' could be called first: the way the expression is
+written is not necessarily the way it executes. In the statement
+\begin{badcode}
+    ptr[count] = name[++count];
+\end{badcode}
+\verb'count' might be incremented before or after it is used to index
+\verb'ptr', and in
+\begin{badcode}
+    printf("%c %c\n", getchar(), getchar());
+\end{badcode}
+the first input character could be printed second instead of first. In
+\begin{badcode}
+    printf("%f %s\n", log(-1.23), strerror(errno));
+\end{badcode}
+the value of \verb'errno' may be evaluated before \verb'log' is called.
+
+There are rules for when certain expressions are evaluated. By definition,
+all side effects and function calls must be completed at each semicolon, or
+when a function is called. The \verb'&&' and \verb'||' operators execute
+left to right and only as far as necessary to determine their truth value
+(including side effects). The condition in a \verb'?:' operator is
+evaluated (including side effects) and then exactly one of the two
+expressions that follow is evaluated.
+
+Java has a stricter definition of order of evaluation. It requires that
+expressions, including side effects, be evaluated left to right, though
+(虽然) one authoritative (权威的) manual advises not writing code that
+depends "crucially (重要的)" on this behavior. This is sound (合理的)
+advice if there's any chance that Java code will be converted to C or C++,
+which make no such promises (约定). Converting between languages is an
+extreme but occasionally reasonable test of portability.
+
+\textbf{Signedness of \texttt{char}.} In C and C++, it is not specified
+whether the \verb'char' data type is signed or unsigned. This can lead to
+trouble when combining \verb'char's and \verb'int's, such as in code that
+calls the \verb'int'-valued routine \verb'getchar()'. If you say
+\begin{wellcode}
+    char    c;  /* should be int */
+    c = getchar();
+\end{wellcode}
+the value of \verb'c' will be between 0 and 255 if \verb'char' is unsigned,
+and between -128 and 127 if \verb'char' is signed, for the almost universal
+configuration of 8-bit characters on a two's complement machine. This has
+implications if the character is to be used as an array subscript or if it
+is to be tested against \verb'EOF', which usually has value -1 in
+\verb'stdio'.  For instance, we had developed this code in Section
+\ref{sec:test_as_you_write_code} after fixing a few boundary conditions in
+the original version. The comparison \verb's[i] == EOF' will always fail if
+\verb'char' is unsigned:
+\begin{badcode}
+    int i;
+    char s[MAX];
+
+    for (i = 0; i < MAX - 1; i++)
+        if ((s[i] = getchar()) == '\n' || s[i] == EOF)
+            break;
+    s[i] = '\0';
+\end{badcode}
+When \verb'getchar' returns \verb'EOF', the value \verb'255' (\verb'0xff',
+the result of converting \verb'-1' to \verb'unsigned char') will be stored
+in \verb's[i]', If \verb's[i]' is unsigned, this will remain 255 for the
+comparison with \verb'EOF', which will fail.
+
+Even if \verb'char' is signed, however, the code isn't correct. The
+comparison will succeed at \verb'EOF', but a valid input byte of
+\verb'0xff' will look just like \verb'EOF' ad terminate the loop
+prematurely (过早). So regardless of the sign of \verb'char', you must
+always store the return value of \verb'getchar' in an \verb'int' for
+comparison with \verb'EOF'. Here is how to write the loop portably:
+\begin{wellcode}
+    int c, i;
+    char s[MAX];
+
+    for (i = 0; i < MAX - 1; i++) {
+        if ((c = getchar()) == '\n' || c == EOF)
+            break;
+        s[i] = c;
+    }
+    s[i] = '\0';
+\end{wellcode}
+
+Java has no \verb'unsigned' qualifier; integral types are signed and the
+(16-bit) \verb'char' type is not.
+
+\textbf{Arithmetic or logical shift.} Right shifts of signed quantities
+with \verb'>>' operator may be arithmetic (a copy of the sign bit is
+propagated (可繁殖的) during the shift) or logical (zeros fill the vacated
+(空出的) bits during the shift). Again, learning from the problems with C
+and C++, Java reserves \verb'>>' for arithmetic right shift and provides a
+separate operator \verb'>>>' for logical right shift.
+
+\textbf{Byte order.} The byte order within \verb'short', \verb'int', and
+\verb'long' is not defined; the byte with the lowest address may be the
+most significant byte or the least significant byte. This is a
+hardware-dependent issue that we'll discuss later in this chapter.
+
+\textbf{Alignment of structure and class members.} The alignment of items
+within structures, classes, and unions is not defined, except that members
+are laid out in the order of declaration. For example, in this structure
+\begin{wellcode}
+    struct X {
+        char    c;
+        int     i;
+    };
+\end{wellcode}
+the address of \verb'i' could be 2,4, or 8 bytes from the beginning of the
+structure. A few machines allow \verb'int's to be stored on odd boundaries,
+but most demand that an n-byte primitive data type be stored at an n-byte
+boundary, for example that \verb'doubles', which are usually 8 bytes long,
+are stored at addresses that are multiples of 8.  On top of this, the
+compiler writer may make further (更多的) adjustments, such as forcing
+alignment for performance reasons.
+
+You should never assume that the elements of a structure occupy contiguous
+memory. Alignment restrictions introduce "holes"; \verb'struct X' will have
+at least one byte of unused space. These holes imply that a structure may
+be bigger than the sum of its member sizes, and will vary from machine to
+machine. If you're allocating memory to hold one, you must ask for
+\texttt{sizeof (struct X)} bytes, not \verb'sizeof(char) + sizeof(int)'.
+
+\textbf{Bitfields.} Bitfields are so machine-dependent that no one should
+use them.
+
+This long list of perils (危险) can be skirted (绕过) by following a few
+rules. Don't use side effects except for a very few idiomatic constructions
+like
+\begin{wellcode}
+    a[i++] = 0;
+    c = *p++;
+    *s++ = *t++;
+\end{wellcode}
+Don't compare a \verb'char' to \verb'EOF'. Always use \verb'sizeof' to
+compute the size of types and objects. Never right shift a signed value.
+Make sure the data type is big enough for the range of values you are
+storing in it.
+
