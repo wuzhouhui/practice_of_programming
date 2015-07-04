@@ -559,3 +559,166 @@ defines \verb'malloc', \verb'realloc', and \verb'free', exactly as ANSI C
 defines them. This file can always be included, instead of applying
 band-aids (创可帖) throughout the code. Then we will always know that the
 necessary interface is available.
+
+\emph{Avoid conditional compilation.} Conditional compilation with
+\verb'#ifdef' and similar preprocessor directives is hard to manage,
+because information tends to get sprinkled (点缀) throughout the source.
+\begin{badcode}
+    #ifdef NATIVE
+        char *astring = "convert ASCII to native character set";
+    #else
+    #ifdef MAC
+        char *astring = "convert to Mac text file format";
+    #else
+    #ifdef DOS
+        char *astring = "convert to DOS text file format";
+    #else
+        char *astring = "convert to Unix text file format";
+    #endif /* DOS */
+    #endif /* MAC */
+    #endif /* NATIVE */
+\end{badcode}
+This excerpt (摘录) would have been better with \verb'#elif' after each definition,
+rather than having \verb'#endif's pile up (堆积) at the end. But the real problem is that, despite its
+intention, this
+code is highly non-portable because it behaves differently on each system
+and needs
+to be updated with a new \verb'#ifdef' for every new environment. A single string
+with
+more general wording would be simpler, completely portable, and just as
+informative (提供消息的):
+\begin{wellcode}
+    char *astring = "convert to local text format";
+\end{wellcode}
+This needs no conditional code since it is the same on all systems.
+
+Mixing compile-time control flow (determined by \verb'#ifdef' statements)
+with run-time control flow is much worse, since it is very difficult to
+read.
+\begin{badcode}
+    #ifndef DISKSYS
+        for (i = 1; i <= msg->dbgmsg.msg_total; i++)
+    #endif
+    #ifdef DISKSYS
+        i = dbgmsgno;
+        if (i <= msg->dbgmsg.msg_total)
+    #endif
+        {
+            ...
+            if (msg->dbgmsg.msg_total == i)
+    #ifndef DISKSYS
+                break; /* no more messages to wait for */
+            /*
+             * about 30 more lines, with further Conditional
+             * compilation.
+             */
+    #endif
+        }
+\end{badcode}
+
+Even when apparently innocuous (无害的), conditional compilation can
+frequently be replaced be cleaner methods. For instance, \verb'#ifdef's are
+often used to control debugging code:
+\begin{badcode}
+    #ifdef DEBUG
+        printf(...);
+    #endif
+\end{badcode}
+but a regular \verb'if' statement with a constant condition may work just
+as well:
+\begin{wellcode}
+    enum { DEBUG = 0 };
+    ...
+    if (DEBUG) {
+        printf(...);
+    }
+\end{wellcode}
+If \verb'DEBUG' is zero, most compilers won't generate any code for this,
+but they will check the syntax of the excluded (排除的) code. An
+\verb'#ifdef', by contrast, can conceal (掩盖) syntax errors that will
+prevent compilation if the \verb'#ifdef' is later enabled.
+
+Sometimes conditional compilation excludes large blocks of code:
+\begin{wellcode}
+    #ifdef notdef   /* undefined symbol */
+        ...
+    #endif
+
+    #if 0
+        ...
+    #endif
+\end{wellcode}
+but conditional code can often be avoided altogether by using files that
+are conditionally substituted during compilation. We will return to this
+topic in the next section.
+
+When you must modify a program to adapt to a new environment, don't begin
+by making a copy of the entire program. Instead, adapt the existing source.
+You will probably need to make changes to the main body of the code, and if
+you edit a copy, before long (不久以后) you will have divergent (分散的)
+versions. As much as possible, there should only be a single source for a
+program; if you find you need to change something to port to a particular
+environment, find a way to make the change work everywhere.  Change
+internal interfaces if you need to, but keep the code consistent and
+\verb'#ifdef'-free. This will make your code more portable over time,
+rather than more specialized.  Narrow the intersection, don't broaden the
+union.
+
+We have spoken out against conditional compilation and shown some of the
+problems it causes. But the nastiest (污秽的) problem is one we haven't
+mentioned: it is almost impossible to test. An \verb'#ifdef' turns a single
+program into two separately-compiled programs. It is difficult to know
+whether all the variant programs have been compiled and tested. If a change
+is made in one \verb'#ifdef' block, we may need to make it in others, but
+the changes can be verified only within the environment that causes those
+\verb'#ifdef's to be enabled. If a similar change needs to be made for
+other configurations, it cannot be tested. Also, when we add a new
+\verb'#ifdef' block, it is hard to isolate the change to determine what
+other conditions need to be satisfied to get here, and where else this
+problem might need to be fixed. Finally, if something is in code that is
+conditionally omitted, the compiler doesn't see it. It could be utter
+(完全) nonsense (说不通) and we won't know until some unlucky customer
+tries to compile it in the environment that triggers that condition. This
+program compiles when \verb'_MAC' is defined and fails when it is not:
+\begin{wellcode}
+    #ifdef _MAC
+        printf("This is Macintosh\r");
+    #else
+        This will give a syntax error on other systems
+    #endif
+\end{wellcode}
+
+So our preference is to use only features that are common to all target
+environments. We can compile and test all the code. If something is a
+portability problem, we rewrite to avoid it rather than adding conditional
+code; this way, portability will steadily increase and the program itself
+will improve rather than becoming more complicated.
+
+Some large systems are distributed with a configuration script to tailor
+(裁减) code to the local environment. At compilation time, the script tests
+the environment properties -- location of header files and libraries, byte
+order within words, size of types, implementations known to be broken
+(surprisingly common), and so on -- and generates configuration parameters
+or makefiles that will give the right configuration settings for that
+situation, These scripts can be large and intricate (复杂的), a significant
+fraction (成分) of a software distribution, and require continual (持续的)
+maintenance to keep them working. Sometimes such techniques are necessary
+but the more portable and \verb'#ifdef'-free the code is, the simpler and
+more reliable the configuration and installation will be.
+
+\begin{exercise}
+    Investigate how your compiler handles code contained within a
+    conditional block like
+    \begin{wellcode}
+        const int DEBUG = 0;
+        /* or enum { DEBUG = 0 }; */
+        /* or final boolean DEBUG = false; */
+
+        if (DEBUG) {
+            ...
+        }
+    \end{wellcode}
+    Under what circumstances does it check syntax? When does it generate
+    code? If you have access to more than one compiler, how do the results
+    compare?
+\end{exercise}
