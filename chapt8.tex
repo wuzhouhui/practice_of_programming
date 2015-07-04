@@ -499,3 +499,63 @@ one system, like POSIX; others are specific to one system, like the various
 Microsoft Windows APIs.  Similar advice holds here as well. Your programs
 will be more portable if you choose widely used and well-established
 standards, and if you stick to the most central and commonly used aspects.
+
+\section{Program Organization}
+\label{sec:program_organization}
+
+There are two major approaches to portability, which we will call union and
+intersection. The union approach is to use the best features of each
+particular system, and make the compilation and installation process
+conditional on properties of the local environment. The resulting code
+handles the union of all scenarios (方案), taking advantage of the
+strengths of each system. The drawbacks include the size and complexity of
+the installation process and the complexity of code riddled (充塞) with
+compile-time conditionals.
+
+\emph{Use only features available everywhere.} The approach we recommend is
+intersection: use only those features that exist in all target systems;
+don't use a feature if it isn't available everywhere. One danger is that
+the requirement of universal availability of features may limit the range
+of target systems or the capabilities of the program; another is that
+performance may suffer in some environments.
+
+To compare these approaches, let's look at a couple of examples that use
+union code and rethink them using intersection. As you will see, union code
+is by design unportable, despite (不管) its stated goal, while intersection
+code is not only portable but usually simpler.
+
+This small example attempts to cope with (应付) an environment that for
+some reason doesn't have the standard header file \verb'stdlib.h':
+
+\begin{wellcode}
+    #if defined(STDC_HEADERS) || defined(_LIBC)
+        #include <stdlib.h>
+    #else
+        extern void *malloc(unsigned int);
+        extern void *realloc(void *, unsigned int);
+    #endif
+\end{wellcode}
+This style of defense (防御) is acceptable if used occasionally, but not if
+it appears often. It also begs the question of how many other functions
+from \verb'stdlib' will eventually find their way into this or similar
+conditional code. If one is using \verb'malloc' and \verb'realloc', surely
+\verb'free' will be needed as well, for instance. What if
+\verb'unsigned int' is not the same as \verb'size_t', the proper type of
+the argument to
+\verb'malloc' and \verb'realloc'? Moreover, how do we know that
+\verb'STDC_HEADERS' or \verb'_LIBC' are defined, and defined correctly?
+How can we be sure that there is no other name that should trigger (触发)
+the substitution in some environment? Any conditional code like this is
+incomplete-unportable -- because eventually a system that doesn't match the
+condition will come along (出现), and we must edit the \verb'#ifdef's. If
+we could solve the problem without conditional compilation, we would
+eliminate the ongoing (进行中的) maintenance headache.
+
+Still, the problem this example is solving is real, so how can we solve it
+once and for all? Our preference would be to assume that the standard
+headers exist; it's someone else's problem if they don't. Failing that, it
+would be simpler to ship with (装载) the software a header file that
+defines \verb'malloc', \verb'realloc', and \verb'free', exactly as ANSI C
+defines them. This file can always be included, instead of applying
+band-aids (创可帖) throughout the code. Then we will always know that the
+necessary interface is available.
