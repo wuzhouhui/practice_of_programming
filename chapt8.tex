@@ -843,3 +843,200 @@ a necessity.
     file. Write a second program to add them by replacing each newline with
     a carriage return and newline. How would you test these programs?
 \end{exercise}
+
+\section{Byte Order}
+\label{sec:byte_order}
+
+Despite the disadvantages discussed above, binary data is sometimes
+necessary. It can be significantly more compact and faster to decode,
+factors that make it essential (本质) for many problems in computer
+networking. But binary data has severe portability problems.
+
+At least one issue is decided: all modern machines have 8-bit bytes.
+Different machines have different representations of any object larger than
+a byte, however, so relying on specific properties is a mistake. A short
+integer (typically 16 bits, or two bytes) may have its low-order byte
+stored at a lower address than the high-order byte (little-endian), or at a
+higher address (big-endian). The choice is arbitrary, and some machines
+even support both modes.
+
+Therefore, although big-endian and little-endian machines see memory as a
+sequence of words in the same order, they interpret the bytes within a word
+in the opposite order.  In this diagram, the four bytes starting at
+location 0 will represent the hexadecimal integer \verb'0x11223344' on a
+big-endian machine and \verb'0x44332211' on a little-endian.
+\begin{figure}[h]
+    \centering
+    \begin{tikzpicture}
+    \draw (0, 0) -- (8, 0);
+    \draw (0, 1) -- (8, 1);
+    \foreach \x in {0,...,8}
+        \draw (\x, 0) -- (\x, 1);
+    \foreach \x in {0,...,7}
+        \node at (\x + 0.5, 1.5) {\x};
+
+    \node at (0.5, 0.5) {11};
+    \node at (1.5, 0.5) {22};
+    \node at (2.5, 0.5) {33};
+    \node at (3.5, 0.5) {44};
+\end{tikzpicture}
+\end{figure}
+
+To see byte order in action, try this program:
+\begin{wellcode}
+    /* byte order: display bytes of a long */
+    int main(void)
+    {
+        unsigned long x;
+        unsigned char *p;
+        int i;
+
+        /* 11 22 33 44 => big-endian */
+        /* 44 33 22 11 => little-endian */
+
+        x = 0x11223344;
+        p = (unsigned char *)&x;
+        for (i = 0; i < sizeof(long); i++)
+            printf("%x ", *p++);
+        printf("\n");
+        return 0;
+    }
+\end{wellcode}
+On a 32-bit big-endian machine, the output is
+\begin{wellcode}
+    11 22 33 44
+\end{wellcode}
+but on a little-endian machine, it is
+\begin{wellcode}
+    44 33 22 11
+\end{wellcode}
+and on the PDP-11 (a vintage (古老的) 16-bit machine still found in
+embedded systems), it is
+\begin{wellcode}
+    22 11 44 33
+\end{wellcode}
+On machines with 64-bit longs, we can make the constant bigger and see
+similar behaviors.
+
+This may seem like a silly (愚蠢的) program, but if we wish to send an
+integer down a byte-wide interface such as a network connection, we need to
+choose which byte to send first, and that choice is in essence (本质上) the
+big-endian and little-endian decision. In other words, this program is
+doing explicitly what
+\begin{wellcode}
+    fwrite(&x, sizeof(x), 1, stdout);
+\end{wellcode}
+does implicitly. It is not safe to write an \verb'int' (or \verb'short' or
+\verb'long') from one computer and read it as an \verb'int' on another
+computer.
+
+For example, if the source computer writes with
+\begin{wellcode}
+    unsigned short x;
+    fwrite(&x, sizeof(x), 1, stdout);
+\end{wellcode}
+and the receiving computer reads with
+\begin{wellcode}
+    unsigned short x;
+    fread(&x, sizeof(x), 1, stdin);
+\end{wellcode}
+the value of \verb'x' will not be preserved if the machines have different
+byte orders. If \verb'x' starts as \verb'0x1000' it may arrive as
+\verb'0x0010'.
+
+This problem is frequently solved using conditional compilation and "byte
+swapping,"  something like this:
+\begin{badcode}
+    short x;
+    fread(&x, sizeof(x), 1, stdin);
+    #ifdef BIG_ENDIAN
+    /* swap bytes */
+    x = ((x&0xff) << 8) | ((x>>8) & 0xff);
+    #endif
+\end{badcode}
+This approach becomes unwieldy (笨拙的) when many two-byte and four-byte
+integers are being exchanged. In practice, the bytes end up being swapped
+more than once as they pass from place to place.
+
+If the situation is bad for \verb'short', it's worse for longer data types,
+because there are more ways to permute (变更) the bytes. Add in the
+variable padding between structure members, alignment restrictions, and the
+mysterious byte orders of older machines, and the problem looks intractable
+(棘手的).
+
+\emph{Use a fixed byte order for data exchange.} There is a solution. Write
+the bytes in a canonical order using portable code:
+\begin{wellcode}
+    unsigned short x;
+    putchar(x >> 8);    /* write high-order byte */
+    putchar(x & 0xff);  /* write low-order byte */
+\end{wellcode}
+then read it back a byte at a time and reassemble it:
+\begin{wellcode}
+    unsigned short x;
+    x = getchar() << 8);    /* read high-order byte */
+    x |= getchar() & 0xff;  /* read low-order byte */
+\end{wellcode}
+
+The approach generalizes to structures if you write the values of the
+structure members in a defined sequence, a byte at a time, without padding.
+It doesn't matter what byte order you pick; anything consistent will do.
+The only requirement is that sender and receiver agree on the byte order in
+transmission and on the number of bytes in each object. In the next chapter
+we show a pair of routines to wrap up (掩饰) the packing and unpacking of
+general data.
+
+Byte-at-a-time processing may seem expensive, but relative to (涉及) the
+I/O that makes the packing and unpacking necessary, the penalty (成本) is
+minute. Consider the X Window system, in which the client writes data in
+its native byte order and the server must unpack whatever the client sends.
+This may save a few instructions on the client end, but the server is made
+larger and more complicated by the necessity of handling multiple byte
+orders at the same time -- it may well have concurrent big-endian and
+little- endian clients -- and the cost in complexity and code is much more
+significant.  Besides, this is a graphics environment where the overhead to
+pack bytes will be swamped (淹没) by the execution of the graphical
+operation it encodes.
+
+The X Window system negotiates (协商) a byte order for the client and
+requires the server to be capable of both. By contrast, the Plan 9
+operating system defines a byte order for messages to the file server (or
+the graphics server) and data is packed and unpacked with portable code, as
+above. In practice the run-time effect is not detectable; compared to I/O,
+the cost of packing the data is insignificant.
+
+Java is a higher-level language than C or C++ and hides byte order
+completely.  The libraries provide a \verb'Serializable' interface that
+defines how data items are packed for exchange.
+
+If you're working in C or C++, however, you must do the work yourself. The
+key point about the byte-at-a-time approach is that it solves the problem
+without \verb'#ifdef's, for any machines that have 8-bit bytes. We'll
+discuss this further in the next chapter.
+
+Still, the best solution is often to convert information to text format,
+which (except for the CRLF problem) is completely portable; there is no
+ambiguity about representation. It's not always the right answer, though.
+Time or space can be critical, and some data, particularly floating point,
+can lose precision due to roundoff (四舍五入) when passed through
+\verb'printf' and \verb'scanf'. If you must exchange floating-point values
+accurately, make sure you have a good formatted I/O library; such libraries
+exist, but may not be part of your existing environment. It's especially
+hard to represent floating-point values portably in binary, but with care,
+text will do the job.
+
+There is one subtle (微妙的) portability issue in using standard function
+to handle binary file -- it is necessary to open such files in binary mode:
+\begin{wellcode}
+    FILE *fin;
+
+    fin = fopen(binary_file, "rb");
+    c = getc(fin);
+\end{wellcode}
+
+If the \verb"'b'" is omitted, it typically makes no difference at all on
+Unix systems, but on Windows systems the first control-Z byte (octal
+\verb'032', hex \verb'1A') of input will terminate reading (we saw this
+happen to the strings program in Chapter \ref{chap:debug}). On the other
+hand, using binary mode to read text files will cause \verb'\r' to be
+preserved on input, and not generated on output.
