@@ -1040,3 +1040,121 @@ Unix systems, but on Windows systems the first control-Z byte (octal
 happen to the strings program in Chapter \ref{chap:debug}). On the other
 hand, using binary mode to read text files will cause \verb'\r' to be
 preserved on input, and not generated on output.
+
+\section{Portability and Upgrade}
+\label{sec:portability_upgrade}
+
+One of the most frustrating sources of portability problems is system
+software that changes during its lifetime. These changes can happen at any
+interface in the system, causing gratuitous (无理由的) incompatibilities
+between existing versions of programs.
+
+\emph{Change the name if you change the specification.} Our favorite (if
+that is the word) example is the changing properties of the Unix
+\verb'echo' command, whose initial design was just to echo its arguments:
+\begin{wellcode}
+    % echo hello, world
+    hello, world
+    %
+\end{wellcode}
+However, \verb'echo' became a key part of many shell scripts, and the need
+to generate formatted output became important. So \verb'echo' was changed
+to interpret its arguments, somewhat like \verb'printf':
+\begin{wellcode}
+    % echo 'hello\nworld'
+    hello
+    world
+    %
+\end{wellcode}
+This new feature is useful, but causes portability problems for any shell
+script that depends on the \verb'echo' command to do nothing more than
+echo. The behavior of
+\begin{wellcode}
+    % echo BPATH
+\end{wellcode}
+now depends on which version of \verb'echo' we have. If the variable
+happens by accident to contain a backslash, as may happen on DOS or
+Windows, it may be interpreted by \verb'echo'. The difference is similar to
+that between the output from \verb'printf(str)' and
+\verb'printf("%s", str)' if the string \verb'str' contains a percent sign
+(百分号).
+
+We've told only a fraction of the full \verb'echo' story, but it
+illustrates the basic problem: changes to systems can generate different
+versions of software that intentionally behave differently, leading to
+unintentional portability problems. And the problems are very hard to work
+around. It would have caused much less trouble had the new version of
+\verb'echo' been given a distinct name.
+
+As a more direct example, consider the Unix command \verb'sum', which
+prints the size and a checksum of a file. It was written to verify that a
+transfer (转送) of information was successful:
+% TODO: The "copy file to other_machine" should be italic.
+\begin{wellcode}
+    % sum file
+    52313 2 file
+    % copy file to other_machine
+    %
+    % telnet other_machine
+    >
+    > sum file
+    52313 2 file
+    >
+\end{wellcode}
+The checksum is the same after the transfer, so we can be reasonably
+confident that the old and new copies are identical.
+
+Then systems proliferated (扩散), versions mutated (变异), and someone
+observed that the checksum algorithm wasn't perfect, so \verb'sum' was
+modified to use a better algorithm.  Someone else made the same observation
+and gave \verb'sum' a different better algorithm.  And so on, so that today
+there are multiple versions of \verb'sum', each giving a different answer.
+We copied one file to nearby machines to see what \verb'sum' computed:
+% TODO: The "copy file to machine[23]" should be italic.
+\begin{wellcode}
+    % sum file
+    52313 2 file
+    % copy file to machine2
+    % copy file to machine3
+    % telnet machine2
+    >
+    > sum file
+    eaa0d468 713 file
+    > telnet  machine3
+    >
+    > sum file
+    62992 1 file
+    >
+\end{wellcode}
+Is the \verb'file' corrupted, or do we just have different versions of
+\verb'sum'? Maybe both.
+
+Thus \verb'sum' is the perfect portability disaster: a program intended to
+aid in the copying of software from one machine to another has different
+incompatible versions that render (给予) it useless for its original
+purpose.
+
+For its simple task, the original \verb'sum' was fine; its low-tech
+(技术含量低) checksum algorithm was adequate. "Fixing" it may have made it
+a better program, but not by much, and certainly not enough to make the
+incompatibility worthwhile. The problem is not the enhancements but that
+incompatible programs have the same name. The change introduced a
+versioning problem that will plague (折磨) us for years.
+
+\emph{Maintain compatibility with existing programs and data.} When a new
+version of software such as a word processor is shipped, it's common for it
+to read files produced by the old version. That's what one would expect: as
+unanticipated (意外的) features are added, the format must evolve (演化).
+But new versions sometimes fail to provide a way to write the previous file
+format. Users of the new version, even if they don't use the new features,
+cannot share their files with people using the older software and everyone
+is forced to upgrade. Whether an engineering oversight (疏忽) or a
+marketing strategy, this design is most regrettable (可悲的).
+
+\textit{Backwards compatibility} is the ability of a program to meet its
+older specification.  If you're going to change a program, make sure you
+don't break old software and data that depend on it. Document the changes
+well, and provide ways to recover the original behavior. Most important,
+consider whether the change you're proposing is a genuine (真正的)
+improvement when weighed against the cost of any non-portability you will
+introduce.
