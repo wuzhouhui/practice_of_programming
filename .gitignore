@@ -9,3 +9,5 @@
 *latexmk
 *.bak
 image.tex
+*.gz
+*.gz*

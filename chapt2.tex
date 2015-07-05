@@ -50,6 +50,7 @@ the initialization occurs at run-time, but this is an unimportant
 implementation detail unless the arrays are large.) In a program to detect
 words that are used rather too much in bad prose, we can write
 \begin{wellcode}
+
     char *flab[] = {
         "actually",
         "just",
@@ -61,6 +62,9 @@ words that are used rather too much in bad prose, we can write
 The search routines needs to know how many elements are in the array. One way to tell it is to pass length as an argument; another, used here, is to place a \verb'NULL' marker at the end of the array:
 \begin{wellcode}
     /*lookup: sequential search for word in array */
+=======
+    /* lookup: sequential search for word in array */
+
     int lookup(char *word, char *array[])
     {
         int i;
@@ -112,7 +116,7 @@ characters:
 \end{wellcode}
 
 For a larger array like this, it's more efficient to use
-\verb'binary' search. The binary search algorithm is an orderly
+\textit{binary} search. The binary search algorithm is an orderly
 version of the way we look up words in a dictionary. Check the middle
 element. If that value is bigger than what we are looking for, look in the
 first half; otherwise, look in the second half. Repeat until the desired
@@ -120,7 +124,8 @@ item is found or determined not to be present.
 
 For binary search, the table must be sorted, as it is here (that's good
 style anyway; people find things faster in sorted tables too), and we must
-know how long the table is. The \verb'NELEMS' macro from Chapter 1 can
+know how long the table is. The \verb'NELEMS' macro from Chapter
+\ref{chap:style} can
 help:
 \begin{wellcode}
     printf("The HTML table has %d words\n", NELEMS(htmlchars));
@@ -150,7 +155,6 @@ A binary search function for this table might look like this:
         return -1;  /* no match */
     }
 \end{wellcode}
-
 Putting all this together, to search \verb'htmlchars' we write
 \begin{wellcode}
     half = lookup("frac12", htmlchars, NELEMS(htmlchars));
@@ -158,7 +162,7 @@ Putting all this together, to search \verb'htmlchars' we write
 to find the array index of the character $1/2$.
 
 Binary search eliminates half the data at each step. The number of steps is
-there- fore proportional to the number of times we can divide $n$ by 2
+therefore proportional to the number of times we can divide $n$ by 2
 before we're left with a single element. Ignoring roundoff, this is $\log_2
 n$. If we have 1000 items to search, linear search takes up to 1000 steps,
 while binary search takes about 10; if we have a million items. linear
@@ -176,6 +180,7 @@ initialization. If not, it must be sorted when the program is run.
 One of the best all-round sorting algorithms is quicksort, which was
 invented in 1960 by C. A. R. Hoare. Quicksort is a fine example of how to
 avoid extra computing. It works by partitioning an array into little and
+
 big elements:\\
 
 \indent pick one element of the array (the "pivot").
@@ -188,6 +193,15 @@ big elements:\\
 value.
 
 \indent recursively sort each group.\\
+
+=======
+big elements:                                                           \\
+\indent pick one element of the array (the "pivot").                    \\
+\indent partition the other elements into two groups:                   \\
+\indent \indent "little ones" that are less than the pivot value, and   \\
+\indent \indent "big ones" that are greater than or equal to the pivot
+value.                                                                  \\
+\indent recursively sort each group.                                    \\
 
 When this process is finished, the array is in order. Quicksort is fast
 because once an element is known to be less than the pivot value, we don't
@@ -243,14 +257,16 @@ the front, then sweeps through the remaining elements, exchanging those
 smaller than the pivot ("little ones") towards the beginning (at location
 \verb'lastr') and big ones towards At the beginning of the process, just
 after the pivot has been the end (at location \verb'i').  swapped to the
-front, \verb'last = 0' and elements \verb'i = 1' through \verb'n-1'' are
+front, \verb'last = 0' and elements \verb'i = 1' through \verb'n-1' are
 unexamined:
-
+\begin{figure}[h]
+    \centering
 \begin{tikzpicture}
     \draw (0, 0) -- (10, 0);
     \draw (0, 0.8) -- (10, 0.8);
     \draw (0, 0) -- (0, 0.8);
     \draw (1, 0) -- (1, 0.8);
+
     \draw (10, 0) -- (10, 0.8);
     \node at(0.5, 0.4) {\verb'p'};
     \node at(5.5, 0.4) {unexamined};
@@ -261,9 +277,11 @@ unexamined:
     \node at(1.5, -0.7) {\textbf{\texttt{i}}};
     \node at(9.5, -0.7) {\textbf{\texttt{n - 1}}};
 \end{tikzpicture}
+\end{figure}
 
 At the top of the \verb'for' loop, elements \verb'1' through \verb'last' are strictly less than the pivot, elements \verb'last + l' through \verb'i - 1' are greater than or equal to the pivot, and elements \verb'i' through \verb'n - 1' have not been examined yet. Until \verb'v[i] >= v[0]', the algorithm may swap \verb'v[i]' with itself; this wastes some time but not enough to worry about.
-
+\begin{figure}[h]
+    \centering
 \begin{tikzpicture}
     \draw (0, 0) -- (10, 0);
     \draw (0, 0.8) -- (10, 0.8);
@@ -288,3 +306,5 @@ At the top of the \verb'for' loop, elements \verb'1' through \verb'last' are str
     \node at(7.5, -0.7) {\textbf{\texttt{i}}};
     \node at(9.5, -0.7) {\textbf{\texttt{n - 1}}};
 \end{tikzpicture}
+\end{figure}
+
