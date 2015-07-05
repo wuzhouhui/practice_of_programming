@@ -1158,3 +1158,205 @@ well, and provide ways to recover the original behavior. Most important,
 consider whether the change you're proposing is a genuine (真正的)
 improvement when weighed against the cost of any non-portability you will
 introduce.
+
+\section{Internationalization}
+\label{sec:internationalization}
+
+If one lives in the United States, it's easy to forget that English is not
+the only language, ASCII is not the only character set, \verb'$' is not the
+only currency symbol, dates can be written with the day first, times can be
+based on a 24-hour clock, and so on. So another aspect of portability,
+taken broadly, deals with making programs portable across language and
+cultural boundaries. This is potentially a very big topic, but we have
+space to point out only a few basic concerns.
+
+\textit{Internationalization} is the term for making a program run without
+assumptions about its cultural environment. The problems are many, ranging
+from character sets to the interpretation of icons in interfaces.
+
+\emph{Don't assume ASCII.} Character sets are richer than ASCII in most
+parts of the world.  The standard character-testing functions in
+\verb'ctype.h' generally hide these differences:
+\begin{wellcode}
+    if (isalpha(c)) ...
+\end{wellcode}
+is independent of the specific encoding of characters, and in addition will
+work correctly in locales where there are more or fewer letters than those
+from \verb'a' to \verb'z' if the program is compiled in that locale. Of
+course, even the name \verb'isalpha' speaks to its origins; some languages
+don't have alphabets at all.
+
+Most European countries augment (扩展) the ASCII encoding, which defines
+values only up to \verb'Ox7F' (7 bits), with extra characters to represent
+the letters of their language.  The Latin-1 encoding, commonly used
+throughout Western Europe, is an ASCII superset that specifies byte values
+from \verb'0x80' to \verb'0xFF' for symbols and accented (重音) characters;
+\verb'0xE7', for instance, represents the accented letter \verb'c'. The
+English word "boy" is represented in ASCII (or Latin-1) by three bytes with
+hexadecimal values \verb'62 6F 79', while the French word "garcon" is
+represented in Latin-1 by the bytes \verb'67 61 72 E7 6F 6E'. Other
+languages define other symbols, but they can't all fit in the 128 values
+left unused by ASCII, so there are a variety of conflicting standards for
+the characters assigned to bytes \verb'0x80' through \verb'0xFF'.
+
+Some languages don't fit in 8 bits at all; there are thousands of
+characters in the major Asian languages. The encodings used in China,
+Japan, and Korea all have 16 bits per character. As a result, to read a
+document written in one language on a computer set up for another is a
+major portability problem. Assuming the characters arrive intact
+(原封不动地), to read a Chinese document on an American computer involves,
+at a minimum, special software and fonts. If we want to use Chinese,
+English, and Russian together, the obstacles are formidable (可怕的).
+
+The Unicode character set is an attempt to ameliorate (改善) this situation
+by providing a single encoding for all languages throughout the world.
+Unicode, which is compatible with the 16-bit subset of the IS0 10646
+standard, uses 16 bits per character, with values \verb'00FF' and below
+corresponding to Latin-1. Thus the word "garcon" is represented by the
+16-bit values \verb'0067 0061 0072 00E7 006F 006E', while the Cyrillic
+(西里尔) alphabet occupies values \verb'0401' through \verb'04FF', and the
+ideographic (表意的) languages occupy a large block starting at
+\verb'3000'. All well-known languages, and many not so well-known, are
+represented in Unicode, so it is the encoding of choice for transferring
+documents between countries or for storing multilingual (多语言的) text.
+Unicode is becoming popular on the Internet and some systems even support
+it as a standard format; Java, for example, uses Unicode as its native
+character set for strings. The Plan 9 and Inferno operating systems use
+Unicode throughout, even for the names of files and users.  Microsoft
+Windows supports the Unicode character set, but does not mandate (强制的)
+it; most Windows applications still work best in ASCII but practice is
+rapidly evolving towards Unicode.
+
+Unicode introduces a problem, though: characters no longer fit in a byte,
+so Unicode text suffers from the byte-order confusion. To avoid this,
+Unicode documents are usually translated into a byte-stream encoding
+called UTF-8 before being sent between programs or over a network. Each
+16-bit character is encoded as a sequence of 1, 2, or 3 bytes for
+transmission. The ASCII character set uses values \verb'00' through
+\verb'7F', all of which fit in a single byte using UTF-8, so UTF-8 is
+backwards compatible with ASCII. Values between \verb'80' and \verb'7FF'
+are represented in two bytes, and values \verb'800' and above are
+represented in three bytes. The word "garcon" appears in UTF-8 as the bytes
+\verb'67 61 72 C3 A7 6F 6E'; Unicode value \verb'E7', the '\c{c}'
+character, is represented as the two bytes \verb'C3 A7' in UTF-8.
+
+The backwards compatibility of UTF-8 and ASCII is a boon (恩惠), since it
+permits programs that treat text as an uninterpreted byte stream to work
+with Unicode text in any language. We tried the \verb'Markov' programs from
+Chapter \ref{chap:desipl} on UTF-8 encoded text in Russian, Greek,
+Japanese, and Chinese, and they ran without problems. For the European
+languages, whose words are separated by ASCII space, tab, or newline.  the
+output was reasonable nonsense. For the others, it would be necessary to
+change the word-breaking rules to get output closer in spirit (在精神上) to
+the intent of the program.
+
+C and C++ support "wide characters," which are 16-bit or larger integers
+and some accompanying functions that can be used to process characters in
+Unicode or other large character sets. Wide character string literals are
+written as \verb'L"..."', but they introduce further portability problems:
+a program with wide character constants can only be understood when
+examined on a display that uses that character set.  Since characters must
+be converted into byte streams such as UTF-8 for portable transmission
+between machines. C provides functions to convert wide characters to and
+from bytes. But which conversion do we use? The interpretation of the
+character set and the definition of the byte-stream encoding are hidden in
+the libraries and difficult to extract (抽取); the situation is
+unsatisfactory (不令人满意的) at best (最多). It is possible that in some
+rosy (理想的) future everyone will agree on which character set to use but
+a likelier scenario (方案) will be confusion reminiscent (回忆) of the
+byte-order problems that still pester (纠缠) us.
+
+\emph{Don't assume English.} Creators of interfaces must keep in mind that
+different languages often take significantly different numbers of
+characters to say the same thing, so there must be enough room on the
+screen and in arrays.
+
+What about error messages? At the very least (最起码), they should be free
+of jargon (术语) and slang (俚语) that will be meaningful only among a
+selected population; writing them in simple language is a good start. One
+common technique is to collect the text of all messages in one spot so that
+they can be replaced easily by translations into other languages.
+
+There are plenty of cultural dependencies, like the \verb'mm/dd/yy' date
+format that is used only in North America. If there is any prospect (可能)
+that software will be used in another country, this kind of dependency
+should be avoided or minimized.  Icons in graphical interfaces are often
+culture-dependent; many icons are inscrutable (难以理解的) to natives of
+the intended environment, let alone (更不用说) people from other
+backgrounds.
+
+\section{Summary}
+
+Portable code is an ideal that is well worth striving for, since so much
+time is wasted making changes to move a program from one system to another
+or to keep it running as it evolves and the systems it runs on changes.
+Portability doesn't come for free, however. It requires care in
+implementation and knowledge of portability issues in all the potential
+target systems.
+
+We have dubbed (轻点) the two approaches to portability union and
+intersection.  The union approach amounts to (相当于) writing versions that
+work on each target, merging the code as much as possible with mechanisms
+like conditional compilation. The drawbacks are many: it takes more code
+and often more complicated code, it's hard to keep up to date, and it's
+hard to test.
+
+The intersection approach is to write as much of the code as possible in a
+form that will work without change on each system. Inescapable (不可避免的)
+system dependencies are encapsulated in single source files that act as an
+interface between the program and the underlying system. The intersection
+approach has drawbacks too, including potential loss of efficiency and even
+of features, but in the long run, the benefits outweigh the costs.
+
+\section*{Supplementary Reading}
+
+There are many descriptions of programming languages, but few are precise
+enough to serve as definitive references. The authors admit to a personal
+bias towards \bookname{The C Programming Language} by Brian Kernighan and
+Dennis Ritchie (Prentice Hall, 1988), but it is not a replacement for the
+standard. Sam Harbison and Guy Steele's \bookname{C: A Reference Manual}
+(Prentice Hall, 1994), now in its fourth edition, has good advice on C
+portability. The official C and C++ standards are available from ISO, the
+International Organization for Standardization. The closest thing to an
+official standard for Java is \bookname{The Java Language Specification},
+by James Gosling, Bill Joy, and Guy Steele (Addison-Wesley, 1996).
+
+Rich Stevens's \bookname{Advanced Programming in the Unix Environment}
+(Addison-Wesley, 1992) is an excellent resource for Unix programmers, and
+provides thorough coverage of portability issues among Unix variants.
+
+POSIX, the Portable Operating System Interface, is an international
+standard defining commands and libraries based on Unix. It provides a
+standard environment, source code portability for applications, and a
+uniform interface to I/O, file systems and processes. It is described in a
+series of books published by the IEEE.
+
+The term "big-endian" was coined by Jonathan Swift in 1726. The article by
+Danny Cohen, "On holy wars and a plea (请求) for peace," \bookname{IEEE
+Computer}, October 1981, is a wonderful fable (寓言) about byte order
+that introduced the "endian (尾端)" terms to computing.
+
+The Plan 9 system developed at Bell Labs has made portability a central
+priority.  The system compiles from the same \verb'#ifdef'-free source on a
+variety of processors and uses the Unicode character set throughout. Recent
+versions of Sam (first described in "The Text Editor sam,"
+\bookname{Software -- Practice and Experience, 17, l1}, pp. 813-845, 1987)
+use Unicode, but run on a wide variety of systems. The problems of dealing
+with 16-bit character sets like Unicode are discussed in the paper by Rob
+Pike and
+% XXX The hyperlink of footnote doesn't response when click.
+Ken Thompson, "Hello World or\footnote{Unrecognized characters.}"
+\bookname{Proceedings of the Winter 1993 USENIX Conference}, San Diego,
+1993, pp. 43-50. The UTF-8 encoding made its first appearance in this
+paper. This paper is also available at the Plan 9 web site at Bell Labs, as
+is the current version of Sam.
+
+The Inferno system, which is based on the Plan 9 experience, is somewhat
+analogous to Java, in that it defines a virtual machine that can be
+implemented on any real machine, provides a language (Limbo) that is
+translated into instructions for this virtual machine, and uses Unicode as
+its native character set. It also includes a virtual operating system that
+provides a portable interface to a variety of commercial systems. It is
+described in "The Inferno Operating System," by Sean Dorward, Rob Pike,
+David Leo Presotto, Dennis M. Ritchie, Howard W. Trickey, and Philip
+Winterbottom, \bookname{Bell Labs Technical Journal, 2, 1}, Winter, 1997.
