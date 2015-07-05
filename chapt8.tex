@@ -275,9 +275,9 @@ configuration of 8-bit characters on a two's complement machine. This has
 implications if the character is to be used as an array subscript or if it
 is to be tested against \verb'EOF', which usually has value -1 in
 \verb'stdio'.  For instance, we had developed this code in Section
-\ref{sec:test_as_you_write_code} after fixing a few boundary conditions in
-the original version. The comparison \verb's[i] == EOF' will always fail if
-\verb'char' is unsigned:
+\ref{sec:test_as_you_write_the_code} after fixing a few boundary conditions
+in the original version. The comparison \verb's[i] == EOF' will always fail
+if \verb'char' is unsigned:
 \begin{badcode}
     int i;
     char s[MAX];

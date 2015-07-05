@@ -1,5 +1,50 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Testing}
 \label{chap:testing}
-\begin{quotation}
-\end{quotation}
+\begin{quote}
+    In ordinary computational practice by hand or by desk
+% XXX The hyperlink of footnote doesn't response when click.
+    mtichines\footnote{Unrecognized word}, it is the custom to check every
+    step of the computation and, when an error is found, to localize it by
+    a backward process starting from the first point where the error is
+    noted.
+\end{quote}
+\begin{quotesrc}
+% XXX The hyperlink of footnote doesn't response when click.
+    Norbert Wiener, \bookname{Cybernetics}\footnote{控制论.}
+\end{quotesrc}
+
+Testing and debugging are often spoken as a single phrase but they are not
+the same thing. To over-simplify, debugging is what you do when you know
+that a program is broken. Testing is a determined, systematic attempt to
+break a program that you think is working.
+
+Edsger Dijkstra made the famous observation that testing can demonstrate
+the presence of bugs, but not their absence. His hope is that programs can
+be made correct by construction, so that there are no errors and thus no
+need for testing. Though this is a fine goal, it is not yet realistic for
+substantial (大量的) programs. So in this chapter we'll focus on how to
+test to find errors rapidly, efficiently, and effectively.
+
+Thinking about potential problems as you code is a good start. Systematic
+testing, from easy tests to elaborate (详尽的) ones, helps ensure that
+programs begin life working correctly and remain correct as they grow.
+Automation helps to eliminate manual processes and encourages (促进)
+extensive (多方面的) testing. And there are plenty of tricks of the trade
+that programmers have learned from experience.
+
+One way to write bug-free code is to generate it by a program. If some
+programming task is understood so well that writing the code seems
+mechanical, then it should be mechanized (机械化的). A common case occurs
+when a program can be generated from a specification in some specialized
+language. For example, we compile high-level languages into assembly code;
+we use regular expressions to specify patterns of text; we use notations
+like \verb'SUM(A1:A50)' to represent operations over a range of cells in a
+spreadsheet. In such cases, if the generator or translator is correct and
+if the specification is correct, the resulting program will be correct too.
+We will cover this rich topic in more detail in Chapter
+\ref{chap:notation}; in this chapter we will talk briefly about ways to
+create tests from compact specifications.
+
+\section{Test as You Write the Code}
+\label{sec:test_as_you_write_the_code}
