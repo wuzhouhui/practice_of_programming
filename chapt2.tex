@@ -50,6 +50,16 @@ the initialization occurs at run-time, but this is an unimportant
 implementation detail unless the arrays are large.) In a program to detect
 words that are used rather too much in bad prose, we can write
 \begin{wellcode}
+    char *flab[] = {
+        "actually",
+        "just",
+        "quite",
+        "really",
+        NULL
+    };
+\end{wellcode}
+The search routines needs to know how many elements are in the array. One way to tell it is to pass length as an argument; another, used here, is to place a \verb'NULL' marker at the end of the array:
+\begin{wellcode}
     /*lookup: sequential search for word in array */
     int lookup(char *word, char *array[])
     {
@@ -61,7 +71,7 @@ words that are used rather too much in bad prose, we can write
     }
 \end{wellcode}
 In C and C++, a parameter that is an array of strings can be declared as
-\verb"char *array[]" or \verb"char *+array". Although these forms are
+\verb"char *array[]" or \verb"char **array". Although these forms are
 equivalent, the first makes it clearer how the parameter will be used.
 
 This search algorithm is called \textbf{\textit{sequential search}} because
@@ -100,6 +110,7 @@ characters:
         "zeta",     0x03b6,
     };
 \end{wellcode}
+
 For a larger array like this, it's more efficient to use
 \verb'binary' search. The binary search algorithm is an orderly
 version of the way we look up words in a dictionary. Check the middle
@@ -165,14 +176,18 @@ initialization. If not, it must be sorted when the program is run.
 One of the best all-round sorting algorithms is quicksort, which was
 invented in 1960 by C. A. R. Hoare. Quicksort is a fine example of how to
 avoid extra computing. It works by partitioning an array into little and
-big elements:
+big elements:\\
 
 \indent pick one element of the array (the "pivot").
+
 \indent partition the other elements into two groups:
+
 \indent \indent "little ones" that are less than the pivot value, and
+
 \indent \indent "big ones" that are greater than or equal to the pivot
-value.  
-\indent recursively sort each group.
+value.
+
+\indent recursively sort each group.\\
 
 When this process is finished, the array is in order. Quicksort is fast
 because once an element is known to be less than the pivot value, we don't
@@ -232,18 +247,44 @@ front, \verb'last = 0' and elements \verb'i = 1' through \verb'n-1'' are
 unexamined:
 
 \begin{tikzpicture}
-    \draw (0, 0) -- (6, 0);
-    \draw (0, 0.8) -- (6, 0.8);
+    \draw (0, 0) -- (10, 0);
+    \draw (0, 0.8) -- (10, 0.8);
     \draw (0, 0) -- (0, 0.8);
     \draw (1, 0) -- (1, 0.8);
-    \draw (6, 0) -- (6, 0.8);
-    \node at(0.5, 0.4) {P};
-    \node at(3.5, 0.4) {unexamined};
+    \draw (10, 0) -- (10, 0.8);
+    \node at(0.5, 0.4) {\verb'p'};
+    \node at(5.5, 0.4) {unexamined};
     \draw[->] (0.5, -0.5) -- (0.5, 0);
     \draw[->] (1.5, -0.5) -- (1.5, 0);
-    \draw[->] (5.5, -0.5) -- (5.5, 0);
-    \node at(0.5, -0.8) {\textbf{\texttt{last}}};
-    \node at(1.5, -0.8) {\textbf{\texttt{i}}};
-    \node at(5.5, -0.8) {\textbf{\texttt{n - 1}}};
+    \draw[->] (9.5, -0.5) -- (9.5, 0);
+    \node at(0.5, -0.7) {\textbf{\texttt{last}}};
+    \node at(1.5, -0.7) {\textbf{\texttt{i}}};
+    \node at(9.5, -0.7) {\textbf{\texttt{n - 1}}};
 \end{tikzpicture}
 
+At the top of the \verb'for' loop, elements \verb'1' through \verb'last' are strictly less than the pivot, elements \verb'last + l' through \verb'i - 1' are greater than or equal to the pivot, and elements \verb'i' through \verb'n - 1' have not been examined yet. Until \verb'v[i] >= v[0]', the algorithm may swap \verb'v[i]' with itself; this wastes some time but not enough to worry about.
+
+\begin{tikzpicture}
+    \draw (0, 0) -- (10, 0);
+    \draw (0, 0.8) -- (10, 0.8);
+    \draw (0, 0) -- (0, 0.8);
+    \draw (1, 0) -- (1, 0.8);
+    \draw (4, 0) -- (4, 0.8);
+    \draw (7, 0) -- (7, 0.8);
+    \draw (10, 0) -- (10, 0.8);
+    \node at(0.5, 0.4) {\verb'p'};
+    \node at(2.5, 0.4) {\verb'< p'};
+    \node at(5.5, 0.4) {\verb'>= p'};
+    %\node at(8.5, 0.4) {\verb'>= p'};
+    \node at(8.5, 0.4) {unexamined};
+    \draw[->] (0.5, -0.5) -- (0.5, 0);
+    \draw[->] (1.5, -0.5) -- (1.5, 0);
+    \draw[->] (3.5, -0.5) -- (3.5, 0);
+    \draw[->] (7.5, -0.5) -- (7.5, 0);
+    \draw[->] (9.5, -0.5) -- (9.5, 0);
+    \node at(0.5, -0.7) {\textbf{\texttt{0}}};
+    \node at(1.5, -0.7) {\textbf{\texttt{1}}};
+    \node at(3.5, -0.7) {\textbf{\texttt{last}}};
+    \node at(7.5, -0.7) {\textbf{\texttt{i}}};
+    \node at(9.5, -0.7) {\textbf{\texttt{n - 1}}};
+\end{tikzpicture}
