@@ -329,3 +329,46 @@ fragile because your refreshed understanding is likely to be incomplete.
             correctly?
     \end{enumerate}
 \end{exercise}
+
+\section{Systematic Testing}
+\label{sec:systematic_testing}
+
+It's important to test a program systematically so you know at each step
+what you are testing and what results you expect. You need to be orderly so
+you don't overlook (忽略) anything, and you must keep records so you know
+how much you have done.
+
+\emph{Test incrementally.} Testing should go hand in hand (联合) with
+program construction. A "big bang" (大撞击) where one writes the whole
+program, then tests it all at once, is much harder and more time-consuming
+than an incremental approach. Write part of a program, test it, add some
+more code, test that, and so on. If you have two packages that have been
+written and tested independently, test that they work together when you
+finally connect them.
+
+For instance, when we were testing the CSV programs in Chapter
+\ref{chap:interface}, the first step was to write just enough code to read
+the input; this let us validate input processing.  The next step was to
+split input lines at commas. Once these parts were working, we moved on to
+fields with quotes, and then gradually worked up to testing everything.
+
+\emph{Test simple parts first.} The incremental approach also applies to
+how you test features. Tests should focus first on the simplest and most
+commonly executed features of a program; only when those are working
+properly should you move on. This way, at each stage, you expose more to
+testing and build confidence that basic mechanisms are working correctly.
+Easy tests find the easy bugs. Each test does the minimum to ferret out
+(查获) the next potential problem. Although each bug is harder to trigger
+than its predecessor, it is not necessarily harder to fix.
+
+In this section, we'll talk about ways to choose effective tests and in
+what order to apply them; in the next two sections, we'll talk about how to
+mechanize (使机械化) the process so that it can be carried out efficiently.
+The first step, at least for small programs or individual functions, is an
+extension of the boundary condition testing that we described in the
+previous section: systematic testing of small cases.
+
+Suppose we have a function that performs binary search in an array of
+integers.  We would begin with these tests, arranged in order of increasing
+complexity:
+
