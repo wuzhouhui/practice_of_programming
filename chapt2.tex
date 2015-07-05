@@ -164,7 +164,7 @@ initialization. If not, it must be sorted when the program is run.
 
 One of the best all-round sorting algorithms is quicksort, which was
 invented in 1960 by C. A. R. Hoare. Quicksort is a fine example of how to
-avoid extra comput- ing. It works by partitioning an array into little and
+avoid extra computing. It works by partitioning an array into little and
 big elements:
 
 \indent pick one element of the array (the "pivot").
@@ -183,7 +183,7 @@ directly to all the others.
 
 Quicksort is practical and efficient; it has been extensively studied and
 myriad variations exist. The version that we present here is just about the
-simplest implemen- tation but it is certainly not the quickest.
+simplest implementation but it is certainly not the quickest.
 
 This \verb'quicksort' function sorts an array of integers:
 \begin{wellcode}
@@ -232,8 +232,18 @@ front, \verb'last = 0' and elements \verb'i = 1' through \verb'n-1'' are
 unexamined:
 
 \begin{tikzpicture}
-    \draw (0, 0) -- (10, 0);
-    \draw (0, 0.5) -- (10, 0.5);
-    \draw (0, 0) -- (0, 0.5);
-    \draw (0.8, 0) -- (0.8, 0.5);
-    \draw (10, 0) -- (10, 0.5);
+    \draw (0, 0) -- (6, 0);
+    \draw (0, 0.8) -- (6, 0.8);
+    \draw (0, 0) -- (0, 0.8);
+    \draw (1, 0) -- (1, 0.8);
+    \draw (6, 0) -- (6, 0.8);
+    \node at(0.5, 0.4) {P};
+    \node at(3.5, 0.4) {unexamined};
+    \draw[->] (0.5, -0.5) -- (0.5, 0);
+    \draw[->] (1.5, -0.5) -- (1.5, 0);
+    \draw[->] (5.5, -0.5) -- (5.5, 0);
+    \node at(0.5, -0.8) {\textbf{\texttt{last}}};
+    \node at(1.5, -0.8) {\textbf{\texttt{i}}};
+    \node at(5.5, -0.8) {\textbf{\texttt{n - 1}}};
+\end{tikzpicture}
+
