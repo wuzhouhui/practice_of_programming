@@ -764,7 +764,7 @@ Testing is based on a combination of exhaustive (彻底的) and
 boundary-condition checks at likely points of failure. For \texttt{memset},
 the boundaries include obvious values of \texttt{n} such as zero, one and
 two, but also values that are powers of two or nearby values. including
-both small ones and large ones like $2^16$, which corresponds to a natural
+both small ones and large ones like $2^{16}$, which corresponds to a natural
 boundary in many machines, a 16-bit word. Powers of two deserve attention
 because one way to make \texttt{memset} faster is to set multiple bytes at
 one time; this might be done by special instructions or by trying to store
@@ -914,4 +914,184 @@ exhaustive testing.
     tokenizers like \verb'strtok' and \verb'strcspn', are significantly
     more complicated than the \verb'mem...' family, so more sophiscated
     test will be called for.
+\end{exercise}
+
+\section{Stress Tests}
+\label{sec:stress_tests}
+
+High volumes of machine-generated input are another effective testing
+technique.  Machine-generated input stresses programs differently than
+input written by people does. Higher volume in itself tends to break things
+because very large inputs cause overflow of input buffers, arrays, and
+counters, and are effective at finding unchecked fixed-size storage within
+a program. People tend to avoid "impossible" cases like empty inputs or
+input that is out of order or out of range, and are unlikely to create very
+long names or huge data values. Computers, by contrast, produce output
+strictly according to their programs and have no idea of what to avoid.
+
+To illustrate, here is a single line of output produced by the Microsoft
+Visual C++ Version 5.0 compiler while compiling the C++ STL implementation
+of \texttt{markov}; we have edited the line so it fits:
+\begin{wellcode}
+    xtree(114) : warning C4786: 'std::_Tree<std::deque<std::
+    basic_string<char, std::char_traits<char>,std::allocator
+    <char>>,std::allocator<std::basic_string<char,std::
+    ... 1420 characters ommited
+    allocator<char>>>>>::iterator' : identifer was
+    truncated to '255' characters in the debug information
+\end{wellcode}
+The compiler is warning us that it has generated a variable name that is a
+remarkable 1594 characters long but that only 255 characters have been
+preserved as debugging information. Not all programs defend themselves
+against such unusually long strings.
+
+Random inputs (not necessarily legal) are another way to assault (攻击) a
+program in the hope of breaking something. This is a logical extension of
+"people don't do that" reasoning. For example, some commercial C compilers
+are tested with randomly-generated but syntactically valid programs. The
+trick is to use the specification of the problem -- in this case, the C
+standard -- to drive a program that produces valid but bizarre (奇异的)
+test data.
+
+Such tests rely on detection by built-in checks and defenses in the
+program, since it may not be possible to verify that the program is
+producing the right output; the goal is more to provoke (诱导) a crash or a
+"can't happen" than to uncover (揭开) straightforward errors. It's also a
+good way to test that error-handling code works. With sensible input, most
+errors don't happen and code to handle them doesn't get exercised: by
+nature, bugs tend to hide in such corners. At some point, though, this kind
+of testing reaches diminishing (逐渐减小的) returns: it finds problems that
+are so unlikely to happen in real life they may not be worth fixing.
+
+Some testing is based on explicitly malicious (恶意的) inputs. Security
+attacks often use big or illegal inputs that overwrite precious data; it is
+wise to look for such weak spots. A few standard library functions are
+vulnerable to this sort of attack. For instance, the standard library
+function \verb'gets' provides no way to limit the size of an input line, so
+it should \emph{never} be used; always use
+\verb'fgets(buf, sizeof(buf), stdin)'
+instead. A bare (无遮蔽的) \verb'scanf("%s", buf)' doesn't limit
+the length of an input line either; it should therefore usually be used
+with an explicit length, such as \verb'scanf("%20s", buf)'. In Section
+\ref{sec:building_the_data_structure_in_c} we showed how to address this
+problem for a general buffer size.
+
+Any routine that might receive values from outside the program, directly or
+indirectly, should validate its input values before using them. The
+following program from a textbook is supposed to read an integer typed by a
+user, and warn if the integer is too long. Its goal is to demonstrate how
+to overcome the \texttt{gets} problem, but the solution doesn't always
+work.
+\begin{badcode}
+    #define MAXNUM 10
+
+    int main(void)
+    {
+        char    num[MAXNUM];
+
+        memset(num, 0, sizeof(num));
+        printf("Type a number: ");
+        gets(num);
+        if (num[MAXNUM - 1] != 0)
+            printf("Number too bit.\n");
+        /* ... */
+    }
+\end{badcode}
+If the input number is ten digits long, it will overwrite the last zero in
+array num with a non-zero value, and in theory this will be detected after
+the return from gets. Unfortunately, this is not sufficient. A malicious
+attacker can provide an even longer input string that overwrites some
+critical value, perhaps the return address for the call, so the program
+never returns to the \verb'if' statement but instead executes something
+nefarious (恶毒的). Thus this kind of unchecked input is a potential
+security problem.
+
+Lest (免得) you think that this is an irrelevant textbook example, in July,
+1998 an error of this form was uncovered in several major electronic mail
+programs. As the \textit{New York Times} reported,
+\begin{quotation}
+    The security hole is caused by what is known as a "buffer overflow
+    error." Programmers are supposed to include code in their software to
+    check that incoming data are of a safe type and that the units are
+    arriving at the right length. If a unit of data is too long, it can
+    overrun the "buffer" -- the chunk of memory set aside to hold it. In
+    that case, the E-mail program will crash, and a hostile (怀有敌意的)
+    programmer can trick the computer into running a malicious program in
+    its place.
+\end{quotation}
+This was also one of the attacks in the famous "Internet Worm" incident of
+1988.
+
+Programs that parse HTML forms can also be vulnerable to attacks that store
+very long input strings in small arrays:
+\begin{badcode}
+    static char query[1024];
+
+    char *read_form(void)
+    {
+        int qsize;
+
+        qsize = atoi(getenv("CONTENT_LENGTH"));
+        fread(query, qsize, 1, stdin);
+        return query;
+    }
+\end{badcode}
+The code assumes that the input will never be more than 1024 bytes long so,
+like \verb'gets', it is open to an attack that overflows its buffer.
+
+More familiar kinds of overflow can cause trouble, too. If integers
+overflow
+silently, the result can be disastrous. Consider an allocation like
+\begin{badcode}
+    char *p;
+    p = (char *)malloc(x * y * z);
+\end{badcode}
+
+If the product of \verb'x', \verb'y', and \verb'z' overflows, the call to
+\verb'malloc' might produce a reasonable-sized array, but \verb'p[x]' might
+refer to memory outside the allocated region.  Suppose that \verb'int's are
+16 bits and \verb'x', \verb'y', and \verb'z' are each 41. Then \verb'x*y*z'
+is 68921, which is 3385 module $2^{16}$. So the call to \verb'malloc'
+allocates only 3385 bytes; any reference with a subscript beyond that value
+will be out of bounds.
+
+Conversion between types is another source of ovefflow, and catching the
+error may not be good enough. The Ariane 5 rocket exploded on its maiden
+(首次) flight in June, 1996 because the navigation package was inherited
+from the Ariane 4 without proper testing. The new rocket flew faster,
+resulting in larger values of some variables in the navigation software.
+Shortly after launch, an attempt to convert a 64-bit floating-point number
+into a 16-bit signed integer generated an overflow. The error was caught,
+but the code that caught it elected to shut down the subsystem. The rocket
+veered off course (冲出航线) and exploded. It was unfortunate that the code
+that failed generated inertial (惯性的) reference information useful only
+before lift-off (起飞); had it been turned off at the moment of launch,
+there would have been no trouble.
+
+On a more mundane (世俗的) level, binary inputs sometimes break programs
+that expect text inputs, especially if they assume that the input is in the
+7-bit ASCII character set.  It is instructive (有益的) and sometimes
+sobering (合理的) to pass binary input (such as a compiled program) to an
+unsuspecting program that expects text input.
+
+Good test cases can often be used on a variety of programs. For example,
+any program that reads files should be tested on an empty file. Any program
+that reads text should be tested on binary files. Any program that reads
+text lines should be tested on huge lines and empty lines and input with no
+newlines at all. It's a good idea to keep a collection of such test files
+handy, so you can test any program with them without having to recreate the
+tests. Or write a program to create test files upon demand.
+
+When Steve Bourne was writing his Unix shell (which came to be known as the
+Bourne shell), he made a directory of 254 files with one-character names,
+one for each byte value except \verb"'\0'" and slash, the two characters
+that cannot appear in Unix file names. He used that directory for all
+manner (方式) of tests of pattern-matching and tokenization. (The test
+directory was of course created by a program.) For years afterwards, that
+directory was the bane (祸根) of file-tree-walking programs; it tested them
+to destruction (破坏).
+
+\begin{exercise}
+    Try to create a file that will crash your favorite text editor,
+    compiler or other program.
 \end{exercise}
