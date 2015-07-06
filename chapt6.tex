@@ -706,3 +706,212 @@ repeatedly.
     Design a test suite for \texttt{printf}, using as many mechanical aids
     as possible.
 \end{exercise}
+
+\section{Test Scaffolds}
+\label{sec:test_scaffolds}
+
+Our discussion so far is based largely on testing a single stand-alone
+program in its completed form. This is not the only kind of test
+automation, however, nor is it the most likely way to test parts of a big
+program during construction, especially if you are part of a team. Nor is
+it the most effective way to test small components that are buried in
+something larger.
+
+To test a component in isolation, it's usually necessary to create some
+kind of framework or scaffold that provides enough support and interface to
+the rest of the system that the part under test will run. We showed a tiny
+example for testing binary search earlier in this chapter.
+
+It's easy to build scaffolds for testing mathematical functions, string
+functions, sort routines, and so on, since the scaffolding is likely to
+consist mostly of setting up input parameters, calling the functions to be
+tested, then checking the results. It's a bigger job to create scaffolding
+for testing a partly-completed program.
+
+To illustrate, we'll walk through building a test for \texttt{memset}, one
+of the \verb'mem...' functions in the C/C++ standard library. These
+functions are often written in assembly language for a specific machine,
+since their performance is important.  The more carefully tuned they are,
+however, the more likely they are to be wrong and thus the more thoroughly
+they should be tested.
+
+The first step is to provide the simplest possible C versions that are
+known to work; these provide a benchmark for performance and, more
+important, for correctness. To move to a new environment, one carries the
+simple versions and uses them until the tuned ones are working.
+
+The function \verb'memset(s, c, n)' sets \verb'n' bytes of memory to the
+byte \verb'c', starting at address \verb's', and returns \verb's'. This
+function is easy if speed is not an issue:
+\begin{wellcode}
+    /* memset: set first n bytes of s to c */
+    void *memset(void *s, int c, size_t n)
+    {
+        size_t  i;
+        char    *p;
+
+        p = (char *)s;
+        for (i = 0; i < n; i++)
+            p[i] = c;
+        return s;
+    }
+\end{wellcode}
+But when speed is an issue, tricks like writing full words of 32 or 64 bits
+at a time are used. These can lead to bugs, so extensive (广泛的) testing
+is mandatory.
+
+Testing is based on a combination of exhaustive (彻底的) and
+boundary-condition checks at likely points of failure. For \texttt{memset},
+the boundaries include obvious values of \texttt{n} such as zero, one and
+two, but also values that are powers of two or nearby values. including
+both small ones and large ones like $2^16$, which corresponds to a natural
+boundary in many machines, a 16-bit word. Powers of two deserve attention
+because one way to make \texttt{memset} faster is to set multiple bytes at
+one time; this might be done by special instructions or by trying to store
+a word at a time instead of a byte.  Similarly, we want to check array
+origins with a variety of alignments in case there is some error based on
+starting address or length. We will place the target array inside a larger
+array, thus creating a buffer zone or safety margin on each side and giving
+us an easy way to vary the alignment.
+
+We also want to check a variety of values for \texttt{c}, including zero,
+\texttt{0x7F} (the largest signed value, assuming 8-bit bytes),
+\texttt{0x80} and \texttt{0xFF} (probing at potential errors involving
+signed and unsigned characters), and some values much bigger than one byte
+(to be sure that only one byte is used). We should also initialize memory
+to some known pattern that is different from any of these character values
+so we can check whether \texttt{memset} wrote outside the valid area.
+
+We can use the simple implementation as a standard of comparison in a test
+that allocates two arrays, then compares behaviors on combinations of
+\texttt{n}, \texttt{c} and offset within the array:
+\\ \\
+\indent \texttt{big} = maximum left margin + maximum \texttt{n} + maximum
+right margin \\
+\indent \texttt{s0 = malloc(big)} \\
+\indent \texttt{s1 = malloc(big)} \\
+\indent for each combination of test parameters \texttt{n}, \texttt{c}, and
+\texttt{offset}: \\
+\indent \indent set all of \texttt{s0} and \texttt{s1} to knwon pattern \\
+\indent \indent run slow \texttt{memset(s0 + offset, c, n)} \\
+\indent \indent run fast \texttt{memset(s1 + offset, c, n)} \\
+\indent \indent check return values \\
+\indent \indent copare all of \texttt{s0} and \texttt{s1} byte by byte \\
+An error that causes \texttt{memset} to write outside the limits of its
+array is most likely to affect bytes near the beginning or the end of the
+array, so leaving a buffer zone makes it easier to see damaged bytes and
+makes it less likely that an error will overwrite some other part of the
+program. To check for writing out of bounds, we compare all the bytes of
+\texttt{s0} and \texttt{s1}, not just the \texttt{n} bytes that should be
+written.
+
+Thus a reasonalbe set of tests might include all combinations of:
+\begin{wellcode}
+    offset = 10, 11, ..., 20
+    c = 0, 1, 0x7F, 0x80, 0xFF, 0x11223344
+    n = 0, 1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17,
+        31, 32, 33, ..., 65535, 65536, 65537
+\end{wellcode}
+The values of \texttt{n} would include at least $2^i - 1$, $2^i$ and
+$2^i + 1$ for $i$ from 0 to 16.
+
+These values should not be wired into the main part of the test scaffold,
+but should appear in arrays that might be created by hand or by program.
+Generating them automatically is better; that makes it easy to specify more
+powers of two or to include more offsets and more characters.
+
+These tests will give \texttt{memset} a thorough workout (试验) yet cost
+very little time even to create, let alone run, since there are fewer than
+3500 cases for the values above. The tests are completely portable, so they
+can be carried to a new environment as necessary.
+
+As a warning, consider this story. We once gave a copy of a \texttt{memset}
+tester to someone developing an operating system and libraries for a new
+processor.  Months later, we (the authors of the original test) started
+using the machine and had a large application fail its test suite. We
+traced the problem to a subtle (微妙的) bug involving sign extension in the
+assembly language implementation of \texttt{memset}. For reasons unknown,
+the library implementer had changed the \texttt{memset} tester so it did
+not check values of \texttt{c} above \texttt{0x7F}. Of course, the bug was
+isolated by running the original, working tester, once we realized that
+\texttt{memset} was a suspect.
+
+Functions like \texttt{memset} are susceptible (容许...的) to exhaustive
+tests because they are simple enough that one can prove that the test cases
+exercise all possible execution paths through the code, thus giving
+complete coverage. For example, it is possible to test \texttt{memmove} for
+all combinations of overlap, direction, and alignment. This is not
+exhaustive in the sense of testing all possible copy operations, but it is
+an exhaustive test of representatives (代表) of each kind of distinct input
+situation.
+
+As in any testing method, test scaffolds need the correct answer to verify
+the operations they are testing. An important technique, which we used in
+testing \texttt{memset}, is to compare a simple version that is believed
+correct against a new version that may be incorrect. This can be done in
+stages, as the following example shows.
+
+One of the authors implemented a raster (光栅) graphics library involving
+an operator that copied blocks of pixels from one image to another.
+Depending on the parameters, the operation could be a simple memory copy,
+or it could require converting pixel values from one color space to
+another, or it could require "tiling" (盖瓦) where the input was copied
+repeatedly throughout a rectangular area, or combinations of these and
+other features. The specification of the operator was simple, but an
+efficient implementation would require lots of special code for the many
+cases. To make sure all that code was right demanded a sound (可靠的)
+testing strategy.
+
+First, simple code was written by hand to perform the correct operation for
+a single pixel. This was used to test the library version's handling of a
+single pixel. Once this stage was working, the library could be trusted for
+single-pixel operations.
+
+Next, hand-written code used the library a pixel at a time to build a very
+slow version of the operator that worked on a single horizontal row of
+pixels, and that was compared with the library's much more efficient
+handling of a row. With that working, the library could be trusted for
+horizontal lines.
+
+This sequence continued, using lines to build rectangles, rectangles to
+build tiles (瓦片), and so on. Along the way, many bugs were found,
+including some in the tester itself, but that's part of the effectiveness
+of the method: we were testing two independent implementations, building
+confidence in both as we went. If a test failed, the tester printed out a
+detailed analysis to aid understanding what went wrong, and also to verify
+that the tester was working properly itself.
+
+As the library was modified and ported over the years, the tester
+repeatedly proved invaluable for finding bugs.
+
+Because of its layer-by-layer approach, this tester needed to be run from
+scratch (擦除) each time, to verify its own trust of the library.
+Incidentally, the tester was not exhaustive, but probabilistic (概率性的):
+it generated random test cases which, for long enough runs, would
+eventually explore every cranny (缝隙) of the code. With the huge number of
+possible test cases, this strategy was more effective than trying to
+construct a thorough test set by hand, and much more efficient than
+exhaustive testing.
+
+\begin{exercise}
+    Create the test scaffold for \verb'memset' along the lines that we
+    indicated.
+\end{exercise}
+
+\begin{exercise}
+    Create tests for the rest of the \verb'mem...' family.
+\end{exercise}
+
+\begin{exercise}
+    Specify a testing regime (体制) for numerical routines like
+    \verb'sqrt', \verb'sin', and so on, as found in \verb'math.h'. What
+    input values make sense? What independent checks can be performed?
+\end{exercise}
+
+\begin{exercise}
+    Define mechanisms for testing the functions of the C \verb'str...'
+    family, like \verb'strcmp'. Some of these functions, especially
+    tokenizers like \verb'strtok' and \verb'strcspn', are significantly
+    more complicated than the \verb'mem...' family, so more sophiscated
+    test will be called for.
+\end{exercise}
