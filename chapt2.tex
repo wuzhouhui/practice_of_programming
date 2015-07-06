@@ -179,6 +179,7 @@ One of the best all-round sorting algorithms is quicksort, which was
 invented in 1960 by C. A. R. Hoare. Quicksort is a fine example of how to
 avoid extra computing. It works by partitioning an array into little and
 big elements:                                                           \\
+\\
 \indent pick one element of the array (the "pivot").                    \\
 \indent partition the other elements into two groups:                   \\
 \indent \indent "little ones" that are less than the pivot value, and   \\
@@ -239,8 +240,8 @@ Partitioning selects a random element as the pivot. swaps it temporarily to
 the front, then sweeps through the remaining elements, exchanging those
 smaller than the pivot ("little ones") towards the beginning (at location
 \verb'lastr') and big ones towards At the beginning of the process, just
-after the pivot has been the end (at location \verb'i').  swapped to the
-front, \verb'last = 0' and elements \verb'i = 1' through \verb'n-1' are
+after the pivot has been the end (at location \verb'i'),  swapped to the
+front, \verb'last=0' and elements \verb'i=1' through \verb'n-1' are
 unexamined:
 \begin{figure}[h]
     \centering
@@ -263,12 +264,11 @@ unexamined:
 \end{figure}
 
 At the top of the \verb'for' loop, elements \verb'1' through \verb'last'
-are strictly less than the pivot (中枢), elements \verb'last + l' through
-\verb'i - 1'
-are greater than or equal to the pivot, and elements \verb'i' through
-\verb'n - 1' have not been examined yet. Until \verb'v[i] >= v[0]', the
-algorithm may swap \verb'v[i]' with itself; this wastes some time but not
-enough to worry about.
+are strictly less than the pivot (中枢), elements \verb'last+1' through
+\verb'i-1' are greater than or equal to the pivot, and elements \verb'i'
+through \verb'n-1' have not been examined yet. Until \verb'v[i] >= v[0]',
+the algorithm may swap \verb'v[i]' with itself; this wastes some time but
+not enough to worry about.
 \begin{figure}[h]
     \centering
 \begin{tikzpicture}
@@ -282,7 +282,6 @@ enough to worry about.
     \node at(0.5, 0.4) {\verb'p'};
     \node at(2.5, 0.4) {\verb'< p'};
     \node at(5.5, 0.4) {\verb'>= p'};
-    %\node at(8.5, 0.4) {\verb'>= p'};
     \node at(8.5, 0.4) {unexamined};
     \draw[->] (0.5, -0.5) -- (0.5, 0);
     \draw[->] (1.5, -0.5) -- (1.5, 0);
