@@ -1095,3 +1095,127 @@ to destruction (破坏).
     Try to create a file that will crash your favorite text editor,
     compiler or other program.
 \end{exercise}
+
+\section{Tips for Testing}
+\label{sec:tips_for_testing}
+
+Experienced testers use many tricks and techniques to make their work more
+productive; this section includes some of our favorites.
+
+Programs should check array bounds (if the language doesn't do it for
+them), but the checking code might not be tested if the array sizes are
+large compared to typical input. To exercise the checks, temporarily make
+the array sizes very small, which is easier than creating large test cases.
+We used a related trick in the array-growing code in Chapter
+\ref{chap:alds} and in the CSV library in Chapter \ref{chap:interface}. In
+fact, we left the tiny initial values in place, since the additional
+startup cost is negligible (可以忽略的).
+
+Make the hash function return a constant, so every element gets installed
+in the same hash bucket. This will exercise the chaining mechanism; it also
+provides an indication (指示) of worst-case performance.
+
+Write a version of your storage allocator that intentionally fails early,
+to test your code for recovering from out-of-memory errors. This version
+returns \verb'NULL' after 10 calls:
+\begin{wellcode}
+    /* testmalloc: returns NULL after 10 calls */
+    void *testmalloc(size_t n)
+    {
+        static int count = 0;
+        if (++count > 10)
+            return NULL;
+        else
+            return malloc(n);
+    }
+\end{wellcode}
+
+Before you ship (发布) your code, disable testing limitations that will
+affect performance.  We once tracked down a performance problem in a
+production compiler to a hash function that always returned zero because
+testing code had been left installed.
+
+Initialize arrays and variables with some distinctive (有特色的) value,
+rather than the usual default of zero; then if you access out of bounds or
+pick up an uninitialized variable, you are more likely to notice it. The
+constant \verb'0xDEADBEEF' is easy to recognize in a debugger; allocators
+sometimes use such values to help catch uninitialized data.
+
+Vary your test cases, especially when making small tests by hand -- it's
+easy to get into a rut (车辙) by always testing the same thing, and you may
+not notice that something else has broken.
+
+Don't keep on implementing new features or even testing existing ones if
+there are known bugs; they could be affecting the test results.
+
+Test output should include all input parameter settings, so the tests can
+be reproduced exactly. If your program uses random numbers, have a way to
+set and print the starting seed, independent of whether the tests
+themselves are random. Make sure that test inputs and corresponding outputs
+are properly identified, so they can be understood and reproduced.
+
+It's also wise to provide ways to make the amount (总数) and type of output
+controllable when a program is run; extra output can help during testing.
+
+Test on multiple machines, compilers, and operating systems. Each
+combination potentially reveals errors that won't be seen on others, such
+as dependencies on byte-order, sizes of integers, treatment of null
+pointers, handling of carriage return and newline, and specific properties
+of libraries and header files. Testing on multiple machines also uncovers
+problems in gathering the components of a program for shipment and, as we
+will discuss in Chapter \ref{chap:portability}, may reveal unwitting
+(没有意识到的) dependencies on the development environment.
+
+We will discuss performance testing in Chapter \ref{chap:performance}.
+
+\section{Who Does the Testing?}
+\label{sec:who_does_the_testing}
+
+Testing that is done by the implementer or someone else with access to the
+source code is sometimes called white box testing. (The term is a weak
+analogy to black box testing, where the tester does not know how the
+component is implemented; "clear box" might be more evocative (恰当).) It
+is important to test your own code: don't assume that some testing
+organization or user will find things for you. But it's easy to delude
+(蛊惑) yourself about how carefully you are testing, so try to ignore the
+code and think of hard cases, not easy ones. To quote Don Knuth describing
+how he creates tests for the TEX formatter, "I get into the meanest
+(低劣的), nastiest (污秽的) frame of mind that I can manage, and I write
+the nastiest [testing] code I can think of; then I turn around and embed
+(嵌入) that in even nastier constructions that are almost obscene
+(可憎的)." The reason for testing is to find bugs, not to declare the
+program working. Therefore the tests should be tough, and when they find
+problems, that is a vindication (辩护) of your methods, not a cause for
+alarm.
+
+Black box testing means that the tester has no knowledge of or access to
+the innards (内脏) of the code. It finds different kinds of errors, because
+the tester has different assumptions about where to look. Boundary
+conditions are a good place to begin black box testing; high-volume,
+perverse (错误的), and illegal inputs are good follow-ons (后续). Of course
+you should also test the ordinary "middle of the road" or conventional uses
+of the program to verify basic functionality.
+
+Real users are the next step. New users find new bugs, because they probe
+the program in unexpected ways. It is important to do this kind of testing
+before the program is released to the world though, sadly, many programs
+are shipped without enough testing of any kind. Beta releases of software
+are an attempt to have numerous real users test a program before it is
+finalized, but beta releases should not be used as a substitute for
+thorough testing. As software systems get larger and more complex, and
+development schedules get shorter, however, the pressure to ship without
+adequate testing increases.
+
+It's hard to test interactive programs, especially if they involve mouse
+input.  Some testing can be done by scripts (whose properties depend on
+language, environment, and the like). Interactive programs should be
+controllable from scripts that simulate user behaviors so they can be
+tested by programs. One technique is to capture the actions of real users
+and replay them; another is to create a scripting language that describes
+sequences and timing of events.
+
+Finally, give some thought to how to test the tests themselves. We
+mentioned in Chapter \ref{chap:debug} the confusion caused by a faulty test
+program for a list package.  A regression suite infected by an error will
+cause trouble for the rest of time.  The results of a set of tests will not
+mean much if the tests themselves are flawed (有缺陷的).
