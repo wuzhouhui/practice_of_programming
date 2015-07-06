@@ -371,4 +371,182 @@ previous section: systematic testing of small cases.
 Suppose we have a function that performs binary search in an array of
 integers.  We would begin with these tests, arranged in order of increasing
 complexity:
+\begin{itemize}
+    \item search an array with noelements
+    \item search an array with one element and a trial (试验的) value this
+        is
+        \begin{itemize}
+            \item less than the single element in the array
+            \item equal to the single element
+            \item greater than the single element
+        \end{itemize}
+    \item search an array with two elements and trial values that
+        \begin{itemize}
+            \item check all five possible positions
+        \end{itemize}
+    \item check behavior with duplicate elements in the array and trial
+        values
+        \begin{itemize}
+            \item less than the value in the array
+            \item equal to the value
+            \item greater than the value
+        \end{itemize}
+    \item search an array with three elements as with two elements
+    \item search an array with four elements as with two and three
+\end{itemize}
+If the function gets past this unscathed (未受损伤的), it's likely to be in
+good shape, but it could still be tested further.
 
+This set of tests is small enough to perform by hand, but it is better to
+create a test scaffold (脚手架) to mechanize the process. The following
+driver program is about as simple as we can manage. It reads input lines
+that contain a key to search for and an array size; it creates an array of
+that size containing values \verb'1, 3, 5, ...', and it searches the array
+for the key.
+\begin{wellcode}
+    /* bintest main: scaffold for testing binsearch */
+    int main(void)
+    {
+        int i, key, nelem, arr[1000];
+
+        while (scanf("%d %d", &key, &nelem) != EOF) {
+            for (i = 0; i < nelem; i++)
+                arr[i] = 2 * i + 1;
+            printf("%d\n", binsearch(key, arr, nelem));
+        }
+        return 0;
+    }
+\end{wellcode}
+This is simpleminded but it shows that a useful test scaffold need not be
+big, and it is easily extended to perform more of these tests and require
+less manual intervention (介入).
+
+\emph{Know what output to expect.} For all tests, it's necessary to know
+what the right answer is; if you don't, you're wasting your time. This
+might seem obvious, since for many programs it's easy to tell whether the
+program is working. For example, either a copy of a tile (瓦片) is a copy
+or it isn't. The output from a sort is sorted or it isn't; it must also be
+a permutation (排列) of the original input.
+
+Most programs are more difficult to characterize (描绘特性) -- compilers
+(does the output properly translate the input?), numerical algorithms (is
+the answer within error tolerance?), graphics (are the pixels in the right
+places?), and so on. For these, it's especially important to validate the
+output by comparing it with known values.
+\begin{itemize}
+    \item To test a compiler, compile and run the test files. The test
+        programs should in turn generate output, and their results should
+        be compared to known ones.
+    \item To test a numerical program, generate test cases that explore the
+        edges of the algorithm, trivial (琐细的) cases as well as hard
+        ones. Where possible, write code that verifies that output
+        properties are sane (合理的). For example, the output of a
+        numerical integrator can be tested for continuity (连续性), and for
+        agreement with closed-form (封闭形式) solutions.
+    \item To test a graphics program, it's not enough to see if it can draw
+        a box; instead read the box back from the screen and check that its
+        edges are exactly where they should be.
+\end{itemize}
+
+If the program has an inverse (相反的), check that its application recovers
+the input.  Encryption and decryption are inverses, so if you encrypt
+something and can't decrypt it, something is wrong. Similarly, lossless
+compression and expansion algorithms should be inverses. Programs that
+bundle (打包) files together should extract them unchanged. Sometimes there
+are multiple methods for inversion: check all combinations.
+
+\emph{Verify conservation (保存) properties.} Many programs preserve some
+property of their inputs. Tools like \texttt{wc} (count lines, words, and
+characters) and \texttt{sum} (compute a checksum) can verify that outputs
+are of the same size, have the same number of words, contain the same bytes
+in some order, and the like. Other programs compare files for identity
+(\texttt{cmp}) or report differences (\texttt{diff}). These programs or
+similar ones are readily (轻易的) available for most environments, and are
+well worth acquiring.
+
+A byte-frequency program can be used to check for conservation of data and
+also to spot anomalies (反常) like non-text characters in supposedly
+text-only files; here's a version that we call \texttt{freq}:
+\begin{wellcode}
+    #include <stdio.h>
+    #include <ctype.h>
+    #include <limits.h>
+
+    unsigned long count[UCHAR_MAX+1];
+
+    /* freq main: display byte frequency counts */
+    int main(void)
+    {
+        int c;
+
+        while ((c = getchar()) != EOF)
+            count[c]++;
+        for (c = 0; c <= UCHAR_MAX; c++)
+            if (count[c] != 0)
+                printf("%.2x %c %lu\n",
+                        c, isprint(c) ? c : '-', count[c]);
+        return 0;
+    }
+\end{wellcode}
+
+Conservation properties can be verified within a program, too. A function
+that counts the elements in a data structure provides a trivial (平常的)
+consistency check. A hash table should have the property that every element
+inserted into it can be retrieved.  This condition is easy to check with a
+function that dumps the contents of the table into a file or an array. At
+any time, the number of insertions into a data structure minus the number
+of deletions must equal the number of elements contained, a condition that
+is easy to verify.
+
+\emph{Compare independent implementations.} Independent implementations of
+a library or program should produce the same answers. For example, two
+compilers should produce programs that behave the same way on the same
+machine, at least in most situations.
+
+Sometimes an answer can be computed in two different ways, or you might be
+able to write a trivial version of a program to use as a slow but
+independent comparison. If two unrelated programs get the same answers,
+there is a good chance that they are correct; if they get different
+answers, at least one is wrong.
+
+One of the authors once worked with another person on a compiler for a new
+machine. The work of debugging the code generated by the compiler was
+split: one person wrote the software that encoded instructions for the
+target machine, and the other wrote the disassembler for the debugger. This
+meant that any error of interpretation or implementation of the instruction
+set was unlikely to be duplicated between the two components. When the
+compiler miscoded an instruction, the disassembler was sure to notice. All
+the early output of the compiler was run through the disassembler and
+verified against the compiler's own debugging printouts. This strategy
+worked very well in practice, instantly catching mistakes in both pieces.
+The only difficult, protracted (拖延的) debugging occurred when both people
+interpreted an ambiguous phrase in the architecture description in the same
+incorrect way.
+
+\emph{Measure test coverage (覆盖范围).} One goal of testing is to make
+sure that every statement of a program has been executed sometime during
+the sequence of tests; testing cannot be considered complete unless every
+line of the program has been exercised by at least one test. Complete
+coverage is often quite difficult to achieve. Even leaving aside "can't
+happen" statements, it is hard to use normal inputs to force a program to
+go through particular statements.
+
+There are commercial tools for measuring coverage. Profilers (探查程序),
+often included as part of compiler suites, provide a way to compute a
+statement frequency count for each program statement that indicates the
+coverage achieved by specific tests.
+
+We tested the \texttt{Markov} program of Chapter \ref{chap:desipl} with a
+combination of these techniques. The last section of this chapter describes
+those tests in detail.
+
+\begin{exercise}
+    Describe how you would test \texttt{freq}.
+\end{exercise}
+
+\begin{exercise}
+    Design and implement a version of \texttt{freq} that measures the
+    frequencies of other types of data values, such as 32-bit integers or
+    floating-point numbers. Can you make one version of the program handle
+    a variety of types elegantly?
+\end{exercise}
