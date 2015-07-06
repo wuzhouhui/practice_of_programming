@@ -550,3 +550,159 @@ those tests in detail.
     floating-point numbers. Can you make one version of the program handle
     a variety of types elegantly?
 \end{exercise}
+
+\section{Test Automation}
+\label{sec:test_automation}
+
+It's tedious and unreliable to do much testing by hand; proper testing
+involves lots of tests, lots of inputs, and lots of comparisons of outputs.
+Testing should therefore be done by programs, which don't get tired or
+careless. It's worth taking the time to write a script or trivial program
+that encapsulates all the tests, so a complete test suite can be run by
+(literally (从字面上) or figuratively (比喻)) pushing a single button. The
+easier a test suite is to run, the more often you'll run it and the less
+likely you'll skip it when time is short. We wrote a test suite that
+verifies all the programs we wrote for this book, and ran it every time we
+made changes; parts of the suite ran automatically after each successful
+compilation.
+
+\emph{Automate regression testing.} The most basic form of automation is
+regression testing, which performs a sequence of tests that compare the new
+version of something with the previous version. When fixing problems,
+there's a natural tendency to check only that the fix works; it's easy to
+overlook the possibility that the fix broke something else. The intent of
+regression testing is to make sure that the behavior hasn't changed except
+in expected ways.
+
+Some systems are rich in tools that help with such automation; scripting
+languages allow us to write short scripts to run test sequences. On Unix,
+file comparators like \texttt{diff} and \texttt{cmp} compare outputs;
+\texttt{sort} brings common elements together; \texttt{grep} filters test
+outputs; \texttt{wc}, \texttt{sum}, and \texttt{freq} summarize outputs.
+Together, these make it easy to create ad hoc (特别定制地) test scaffolds,
+maybe not enough for large programs but entirely adequate for a program
+maintained by an individual or a small group.
+
+Here is a script for regression testing a killer application program called
+\texttt{ka}. It runs the old version (\verb'old_ka') and the new version
+(\verb'new_ka') for a large number of different test data files, and
+complains about each one for which the outputs are not identical. It is
+written for a Unix shell but could easily be transcribed to Perl or other
+scripting language:
+\begin{wellcode}
+    for i in ka_data.*              # loop over test data files
+    do
+        old_ka $i > out1            # run the old version
+        new_ka $i > out2            # run the new version
+        if ! cmp -s out1 out2       # compare output files
+        then
+            echo $BAD               # different: print error message
+        fi
+    done
+\end{wellcode}
+
+A test script should usually run silently, producing output only if
+something unexpected occurs, as this one does. We could instead choose to
+print each file name as it is being tested, and to follow it with an error
+message if something goes wrong. Such indications of progress help to
+identify problems like an infinite loop or a test script that is failing to
+run the right tests, but the extra chatter (喋喋不休) is annoying if the
+tests are running properly.
+
+The \texttt{-s} argument causes \texttt{cmp} to report status but produce
+no output. If the files compare equal, \texttt{cmp} returns a true status,
+\texttt{!cmp} is false, and nothing is printed. If the old and new outputs
+differ, however, \texttt{cmp} returns false and the file name and a warning
+are printed.
+
+There is an implicit assumption in regression testing that the previous
+version of the program computes the right answer. This must be carefully
+checked at the beginning of time, and the invariant (不变的) scrupulously
+(审慎地) maintained. If an erroneous answer ever sneaks (偷偷地) into a
+regression test, it's very hard to detect and everything that depends on it
+will be wrong thereafter (其后). It's good practice to check the regression
+test itself periodically to make sure it is still valid.
+
+\emph{Create self-contained tests.} Self-contained tests that carry their
+own inputs and expected outputs provide a complement (补充) to regression
+tests. Our experience testing Awk may be instructive (有益的). Many
+language constructions are tested by running specified inputs through tiny
+programs and checking that the right output is produced. The following part
+of a large collection of miscellaneous tests verifies one tricky (狡猾的)
+increment expression. This test runs the new version of Awk
+(\texttt{newawk}) on a short Awk program to produce output in one file,
+writes the correct output to another file with \texttt{echo}, compares the
+files, and reports an error if they differ.
+\begin{wellcode}
+    # field increment test: $i++ means ($i)++, not $(i++)
+
+    echo 3 5 | newawk '{i = 1; print $i++; print $1, i}' > out1
+    echo '3
+    4 1' > out2     # correct answer
+    if ! cmp -s out1 out2   # outputs are different
+    then
+        echo 'BAD: field increment test failed'
+    fi
+\end{wellcode}
+The first comment is part of the test input; it documents what the test if
+testing.
+
+Sometimes it is possible to construct a large number of tests with modest
+effort. For simple expressions, we created a small, specialized language
+for describing tests, input data, and expected outputs. Here is a short
+sequence that tests some of the ways that the numeric value \texttt{1} can
+be represented in Awk:
+\begin{wellcode}
+    try {if ($1 == 1) print "yes"; else print "no"}
+    1       yes
+    1.0     yes
+    1E0     yes
+    0.1E1   yes
+    10E-1   yes
+    01      yes
+    +1      yes
+    10E-2   no
+    10      no
+\end{wellcode}
+The first line is a program to be tested (everything after the word
+\texttt{try}).  Each subsequent line is a set of inputs and the expected
+output, separated by tabs.  The first test says that if the first input
+field is \texttt{1} the output should be yes. The first seven tests should
+all print yes and the last two tests should print no.
+
+An Awk program (what else?) converts each test into a complete Awk program,
+then runs each input through it, and compares actual output to expected
+output; it reports only those cases where the answer is wrong.
+
+Similar mechanisms are used to test the regular expression matching and
+substitution commands. A little language for writing tests makes it easy to
+create a lot of them; using a program to write a program to test a program
+has high leverage (杠杆效率). (Chapter \ref{chap:notation} has more to say
+about little languages and the use of programs that write programs.)
+
+Overall, there are about a thousand tests for Awk; the whole set can be run
+with a single command, and if everything goes well, no output is produced.
+Whenever a feature is added or a bug is fixed, new tests are added to
+verify correct operation. When ever the program is changed, even in a
+trivial (琐碎的) way, the whole test suite is run; it takes only a few
+minutes. It sometimes catches completely unexpected errors, and has saved
+the authors of Awk from public embarrassment many times.
+
+What should you do when you discover an error? If it was not found by an
+existing test, create a new test that does uncover the problem and verify
+the test by running it with the broken version of the code. The error may
+suggest further tests or a whole new class of things to check. Or perhaps
+it is possible to add defenses to the program that would catch the error
+internally.
+
+Never throw away a test. It can help you decide whether a bug report is
+valid or describes something already fixed. Keep a record of bugs, changes,
+and fixes; it will help you identify old problems and fix new ones. In most
+commercial programming shops (工作室), such records are mandatory. For your
+personal programming, they are a small investment that will pay off
+repeatedly.
+
+\begin{exercise}
+    Design a test suite for \texttt{printf}, using as many mechanical aids
+    as possible.
+\end{exercise}
