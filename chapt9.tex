@@ -431,3 +431,402 @@ mess enormously.
     \ to stand for blanks). For a full specification, look at the definition
     of \verb'DecimalFormat' or a spreadsheet program.
 \end{exercise}
+
+\section{Regular Expressions}
+\label{sec:regular_expressions}
+
+The format specifiers (说明) for \verb'pack' and \verb'unpack' are a very
+simple notation for defining the layout of packets. Our next topic is a
+slightly more complicated but much more expressive notation,
+\textbf{\textit{regular expressions}}, which specify patterns of text.
+We've used regular expressions occasionally throughout the book without
+defining them precisely; they are familiar enough to be understood without
+much explanation.  Although regular expressions are pervasive (无孔不入的)
+in the Unix programming environment, they are not as widely used in other
+systems, so in this section we'll demonstrate some of their power. In case
+you don't have a regular expression library handy, we'll also show a
+rudimentary (低级的) implementation.
+
+There are several flavors (滋味) of regular expressions, but in spirit they
+are all the same, a way to describe patterns of literal characters, along
+with repetitions, alternatives, and shorthands (简写) for classes of
+characters like digits or letters. One familiar example is the so-called
+"wildcards" used in command-line processors or shells to match patterns of
+file names. Typically a is taken to mean "any string of characters" so, for
+example, a command like
+\begin{wellcode}
+    C:\>del *.exe
+\end{wellcode}
+uses a pattern that matches all files whose names consist of any string
+ending in \verb'".exe"'. As in often the case, details differ from system
+to system, and even from program to program.
+
+Although the vagaries (奇特行为) of different programs may suggest that
+regular expressions are an ad hoc (特别设的) mechanism, in fact they are a
+language with a formal grammar and a precise meaning for each utterance
+(言辞) in the language. Furthermore, the right implementation can run very
+fast; a combination of theory and engineering practice makes a lot of
+difference (造成了很多差异), an example of the benefit of specialized
+algorithms that we alluded (提及) to in Chapter \ref{chap:alds}.
+
+A regular expression is a sequence of characters that defines a set of
+matching strings. Most characters simply match themselves, so the regular
+expression \verb'abc' will match that string of letters wherever it occurs.
+In addition a few metacharacters indicate repetition or grouping or
+positioning. In conventional Unix regular expressions, \verb'^' stands for
+the beginning of a string and \verb'$' for the end, so \verb'^x' matches an
+\verb'x' only at the beginning of a string. \verb'x$' matches an \verb'x'
+only at the end, \verb'^x$' matches \verb'x' only if it is the sole
+(仅有的) character of the string, and \verb'^$' matches the empty string.
+
+The character "\verb'.'" matches any character, so \verb'x.y' matches
+\verb'xay', \verb'x2y' and so on, but not \verb'xy' or \verb'xaby', and
+\verb'^.$' matches a string with a single arbitrary character.
+
+A set of characters inside brackets \verb'[]' matches any one of the
+enclosed characters, so \verb'[0123456789]' matches a single digit; it may
+be abbreviated \verb'[0-9]'.
+
+These building blocks are combined with parentheses for grouping, \verb'|'
+for alternatives, \verb'*' for zero or more occurrences, \verb'+' for one or
+more occurrences, and \verb'?' for zero or one occurrences. Finally, \verb'\'
+is used as a prefix to quote a metacharacter and turn off its special
+meaning; \verb'\*' is a literal \verb'*' and \verb'\\' is a literal
+backslash.
+
+The best-known regular expression tool is the program \verb'grep' that
+we've mentioned several times. The program is a marvelous (了不起的)
+example of the value of notation.  It applies a regular expression to each
+line of its input files and prints those lines that contain matching
+strings. This simple specification, plus the power of regular expressions,
+lets it solve many day-to-day (日复一日) tasks. In the following examples,
+note that the regular expression syntax used in the argument to \verb'grep'
+is different from the wildcards used to specify a set of file names; this
+difference reflects the different uses.
+
+Which source file uses class \verb'Regexp'?
+\begin{wellcode}
+    % grep Regexp *.java
+\end{wellcode}
+
+Which implements it?
+\begin{wellcode}
+    % grep 'class.*Regexp' *.java
+\end{wellcode}
+
+Where did I save that mail from Bob?
+\begin{wellcode}
+    grep '^From:.* bob@' mail/*
+\end{wellcode}
+
+How many non-blank source lines are there in this program?
+\begin{wellcode}
+    % grep '.' *.cpp | wc
+\end{wellcode}
+
+With flags to print line numbers of matched lines, count matches, do case-
+insensitive matching, invert the sense (select lines that don't match the
+pattern), and perform other variations of the basic idea, \verb'grep' is so
+widely used that it has become the classic example of tool-based
+programming.
+
+Unfortunately, not every system comes with \verb'grep' or an equivalent.
+Some systems include a regular expression library, usually called
+\verb'regex' or \verb'regexp', that you can use to write a version of
+\verb'grep'. If neither option is available, it's easy to implement a
+modest (适度的) subset of the full regular expression language. Here we
+present an implementation of regular expressions, and \verb'grep' to go
+along with it; for simplicity, the only metacharacters are \verb'^ $'. and
+\verb'*', with \verb'*' specifying a repetition of the single previous
+period (片段) or literal character. This subset provides a large fraction
+of the power with a tiny fraction of the programming complexity of general
+expressions.
+
+Let's start with the \verb'match' function itself, Its job is to determine
+whether a text string matches a regular expression:
+\begin{wellcode}
+    /* match: search for regexp anywhere in text */
+    int match(char *regexp, char *text)
+    {
+        if (regexp[0] == '^')
+            return matchhere(regexp+1, text);
+        do {    /* must look even if string is empty */
+            if (matchhere(regexp, text))
+                return 1;
+        } while (*text++ != '\0');
+        return 0;
+    }
+\end{wellcode}
+If the regular expression begins with \verb'^', the text must begin with a
+match of the remainder of the expression. Otherwise, we walk along the
+text, using \verb'matchhere' to see if the text matches at any position. As
+soon as we find a match, we're done. Note the use of a \verb'do-while':
+expressions can match the empty string (for example, \verb'$' matches the
+empty string at the end of a line and \verb'.*' matches any number of
+characters, including zero), so we must call matchhere even if the text is
+empty.
+
+The recursive function \verb'matchhere' does most of the work:
+\begin{wellcode}
+    /* matchhere: search for regexp at beginning of text */
+    int matchhere(char *regexp, char *text)
+    {
+        if (regexp[0] == '\0')
+            return 1;
+        if (regexp[1] == '*')
+            return matchstar(regexp[0], regexp+2, text);
+        if (regexp[0] == '$' && regexp[1] == '\0')
+            return *text == '\0';
+        if (*text != '\0' && (regexp[0] == '.' || regexp[0] == *text))
+            return matchhere(regexp+1, text+1);
+        return 0;
+    }
+\end{wellcode}
+If the regular expression is empty, we have reached the end and thus have
+found a match. If the expression ends with \verb'$', it matches only if the
+text is also at the end. If the expression begins with a period, that
+matches any character. Otherwise the expression begins with a plain
+character that matches itself in the text. A \verb'^' or \verb'$' that
+appears in the middle of a regular expression is thus taken as a literal
+character, not a metacharacter.
+
+Notice that matchhere calls itself after matching one character of pattern
+and string, so the depth of recursion can be as much as the length of the
+pattern.
+
+The one tricky case occurs when the expression begins with a starred
+character, for example \verb'x*'. Then we call \verb'matchstar', with first
+argument the operand of the star (\verb'x') and subsequent arguments the
+pattern after the star and the text.
+\begin{wellcode}
+    /* matchstar: search for c*regexp at beginning of text */
+    int matchstar(int c, char *regexp, char *text)
+    {
+        do {    /* a * matches zero or more instances */
+            if (matchhere(regexp, text))
+                return 1;
+        } while (*text != '\0' && (*text++ == c || c == '.'));
+        return 0;
+    }
+\end{wellcode}
+Here is another \verb'do-while', again triggered by the requirement that
+the regular expression \verb'x*' can match zero characters. The loop checks
+whether the text matches the remaining expression, trying at each position
+of the text as long as the first character matches the operand of the star.
+
+This is an admittedly (诚然地) unsophisticated implementation, but it
+works, and at fewer than 30 lines of code, it shows that regular
+expressions don't need advanced techniques to be put to use.
+
+We'll soon present some ideas for extending the code. For now, though,
+let's write a version of \verb'grep' that uses \verb'match'. Here is the
+main routine:
+\begin{wellcode}
+    /* grep main: search for regexp in files */
+    int main(int argc, char *argv[])
+    {
+        int     i, nmatch;
+        FILE    *f;
+
+        setprogname("grep");
+        if (argc < 2)
+            eprintf("usage: grep regexp [file ...]");
+        nmatch = 0;
+        if (argc == 2) {
+            if (grep(argv[1], stdin, NULL))
+                nmatch++;
+        } else {
+            for (i = 2; i < argc; i++) {
+                f = fopen(argv[i], "r");
+                if (f == NULL) {
+                    weprintf("can't open %s:", argv[i]);
+                    continue;
+                }
+                if (grep(argv[1], f, argc > 3 ? argv[i] : NULL) > 0)
+                    nmatch++;
+                fclose(f);
+            }
+        }
+        return nmatch == 0;
+    }
+\end{wellcode}
+It is conventional that C programs return 0 for success and non-zero values
+for various failures. Our \verb'grep', like the Unix version, defines
+success as finding a matching line, so it returns \verb'0' if there were
+any matches, \verb'1' if there were none, and \verb'2' (via \verb'eprintf')
+if an error occurred. These status values can be tested by other programs
+like a shell.
+
+The function \verb'grep' scans a single file, calling
+\verb'match' on each line:
+\begin{wellcode}
+    /* grep: search for regexp in file */
+    int grep(char *regexp, FILE *f, char *name)
+    {
+        int     n, nmatch;
+        char    buf[BUFSIZ];
+
+        nmatch = 0;
+        while (fgets(buf, sizeof(buf), f) != NULL) {
+            n = strlen(buf);
+            if (n > 0 && buf[n-1] == '\n')
+                buf[n-1] = '\0';
+            if (match(regexp, buf)) {
+                nmatch++;
+                if (name != NULL)
+                    printf("%s: ", name);
+                printf("%s\n", buf);
+            }
+        }
+        return nmatch;
+    }
+\end{wellcode}
+
+The main routine doesn't quit if it fails to open a file. This design was
+chose because it's common to say something like
+\begin{wellcode}
+    % grep herpolhode *.*
+\end{wellcode}
+and find that one of the files in the directory can't be read. It's better
+for \verb'grep' to keep going after reporting the problem, rather than to
+give up and force the user to type the file list manually to avoid the
+problem file. Also, notice that \verb'grep' prints the file name and the
+matching line, but suppresses the name if it is reading standard input or a
+single file. This may seem an odd (古怪的) design, but it reflects an
+idiomatic style of use based on experience. When given only one input,
+\verb'grep''s task is usually selection, and the file name would clutter
+(弄乱) the output. But if it is asked to search through many files, the
+task is most often to find all occurrences of something, and the names are
+informative. Compare
+\begin{wellcode}
+    % strings markov.exe | grep 'DOS mode'
+\end{wellcode}
+with
+\begin{wellcode}
+    % grep grammer chapter*.txt
+\end{wellcode}
+These touches are part of what makes \verb'grep' so popular, and
+demonstrate that notation must be packaged with human engineering to build
+a natural, effective tool.
+
+Our implementation of \verb'match' returns as soon as it finds a match. For
+\verb'grep', that is a fine default. But for implementing a substitution
+(search-and-replace) operator in a text editor the \textit{\textbf{leftmost
+longest}} match is more suitable. For example, given the text
+\verb'"aaaaa"' the pattern \verb'a*' matches the null string at the
+beginning of the text, but it seems more natural to match all five
+\verb'a''s. To cause \verb'match' to find the leftmost longest string,
+\verb'matchstar' must be rewritten to be greedy: rather than looking at
+each character of the text from left to right, it should skip over the
+longest string that matches the starred operand, then back up (倒退) if the
+rest of the string doesn't match the rest of the pattern. In other words,
+it should run from right to left. Here is a version of \verb'matchstar'
+that does leftmost longest matching:
+\begin{wellcode}
+    /* matchstar: leftmost longest search for c*regexp */
+    int matchstar(int c, char *regexp, char *text)
+    {
+        char    *t;
+
+        for (t = text; *t != '\0' && (*t == c || c == '.');
+                t++)
+            ;
+        do {    /* matches zero or more */
+            if (matchhere(regexp, t))
+                return 1;
+        } while (t-- > text);
+        return 0;
+    }
+\end{wellcode}
+It doesn't matter which match \verb'grep' finds, since it is just checking
+for the presence of any match and printing the whole line. So since
+leftmost longest matching does extra work, it's not necessary for
+\verb'grep', but for a substitution operator, it is essential.
+
+Our \verb'grep' is competitive with system-supplied versions, regardless of
+the regular expression. There are pathological (错误的) expressions that
+can cause exponential behavior, such as \verb'a*a*a*a*a*b' when given the
+input \verb'aaaaaaaaac', but the exponential behavior is present in some
+commercial implementations too. A \verb'grep' variant available on Unix,
+called \verb'egrep', uses a more sophisticated matching algorithm that
+guarantees linear performance by avoiding backtracking when a partial match
+fails.
+
+What about making \verb'match' handle full regular expressions? These would
+include character classes like \verb'[a-zA-Z]' to match an alphabetic
+character, the ability to quote a metacharacter (for example to search for
+a literal period), parentheses for grouping, and alternatives (\verb'abc'
+or \verb'def'). The first step is to help \verb'match' by compiling the
+pattern into a representation that is easier to scan. It is expensive to
+parse a character class every time we compare it against a character; a
+pre-computed representation based on bit vectors could make character
+classes much more efficient. For full regular expressions, with parentheses
+and alternatives, the implementation must be more sophisticated, but can
+use some of the techniques we'll talk about later in this chapter.
+
+\begin{exercise}
+    How does the performance of \verb'match' compare to \verb'strstr' when
+    searching for plain text?
+\end{exercise}
+
+\begin{exercise}
+    Write a non-recursive version of \verb'matchhere' and compare its
+    performance to the recursive version.
+\end{exercise}
+
+\begin{exercise}
+    Add some options to \verb'grep'. Popular ones include \verb'-v' to
+    invert the sense of the \verb'match'. \verb'-i' to do case-insensitive
+    matching of alphabetics, and \verb'-n' to include line numbers in the
+    output. How should the line numbers be printed? Should they be printed
+    on the same line as the matching text?
+\end{exercise}
+
+\begin{exercise}
+    Add the \verb'+' (one or more) and \verb'?' (zero or one) operators to
+    \verb'match'. The pattern \verb'a+bb?' matches one or more \verb'a''s
+    followed by one or two \verb'b''s.
+\end{exercise}
+
+\begin{exercise}
+    The current implementation of match turns off the special meaning of
+    \verb'^' and \verb'$' if they don't begin or end the expression, and of
+    \verb'*' if it doesn't immediately follow a literal character or a
+    period. A more conventional design is to quote a metacharacter by
+    preceding it with a backslash. Fix \verb'match' to handle backslashes
+    this way.
+\end{exercise}
+
+\begin{exercise}
+    Add character classes to \verb'match'. Character classes specify a
+    match for any one of the characters in the brackets. They can be made
+    more convenient by adding ranges, for example \verb'[a-z]' to match any
+    lower-case letter, and inverting the sense, for example \verb'[^O-9]'
+    to match any character except a digit.
+\end{exercise}
+
+\begin{exercise}
+    Change \verb'match' to use the leftmost-longest version of
+    \verb'matchstar', and modify it to return the character positions of
+    the beginning and end of the matched text. Use that to build a program
+    \verb'gres' that is like \verb'grep' but prints every input line after
+    substituting new text for text that matches the pattern, as in
+    \begin{wellcode}
+        % grep 'homoiousian' 'homoousian' mission.stmt
+    \end{wellcode}
+\end{exercise}
+
+\begin{exercise}
+    Modify \verb'match' and \verb'grep' to work with UTF-8 strings of
+    Unicode characters. Because UTF-8 and Unicode are a superset of ASCII,
+    this change is upwardly compatible. Regular expressions, as well as the
+    searched text, will also need to work properly with UTF-8. How should
+    character classes be implemented?
+\end{exercise}
+
+\begin{exercise}
+    Write an automatic tester for regular expressions that generates test
+    expressions and test strings to search. If you can, use an existing
+    library as a reference implementation; perhaps you will find bugs in it
+    too.
+\end{exercise}
