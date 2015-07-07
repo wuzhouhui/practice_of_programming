@@ -1,5 +1,137 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Design and Implementation}
 \label{chap:desipl}
-\begin{quotation}
-\end{quotation}
+\begin{quote}
+    Show me your flowcharts and conceal your tables, and I shall continue
+    to be mystijied. Show me your tables, and I won't usually need your
+    flowcharts; they'll be obvious.
+\end{quote}
+
+\begin{quotesrc}
+    Frederick P.Brooks, Jr.,\bookname{The Mythical Man Month}
+\end{quotesrc}
+
+As the quotation from Brooks's classic book suggests, the design of the
+data structures is the central decision in the creation of a program. Once
+the data structures are laid out, the algorithms tend to fall into place,
+and the coding is comparatively easy.
+
+This point of view is oversimplified but not misleading. In the previous
+chapter we examined the basic data structures that are the building blocks
+of most programs. In this chapter we will combine such structures as we
+work through the design and implementation of a modest-sized program. We
+will show how the problem influences the data structures, and how the code
+that follows is straightforward once we have the data structures mapped out.
+
+One aspect of this point of view is that the choice of programming Language
+is relatively unimportant to the overall design. We will design the
+program in the abstract and then write it in C, Java, C++, Awk, and perl.
+Comparing the implementations demonstrates how languages can help or
+hinder, and ways in which they are unimportant. Program design can
+certainly be colored by a language but is not usually dominated by it.
+
+The problem we have chosen is unusual, but in basic from it is typical of
+many programs: some data comes in, some data goes out, and the processing
+depends on a little ingenuity.
+
+Specifically, we're going to generate random English text that reads well.
+If we emit random letters or random words, the result will be nonsense. For
+example, a program that randomly selects letters(and blanks. to separate
+words)might produce this:
+\begin{wellcode}
+    xptmxgn xusaja afqnzgxl lhidwed rjdjuvpydrlwnjy
+\end{wellcode}
+which is not very convincing. If we weight the letters by their frequency
+of appearance in English text, we might get this:
+\begin{wellcode}
+    idtefoae tcs trder jcii ofdslnqetacp t ola
+\end{wellcode}
+which isn't a great deal better. Words chosen from the dictionary at random
+don't make much more sense:
+\begin{wellcode}
+    polydactyl equatorial splashily jowl verandah circumscribe
+\end{wellcode}
+For better results, we need a statistical model with more structure.Such as
+the frequency of appearance of whole phrases. But where can we find such
+statistics?
+
+We could grab a large body of English and study it in detail, but there is
+an easier and more entertaining approach. The key observation is that we
+can use any existing text to construct a statistical model of the language
+\textit{as used} in \textit{that text}, and from that generate random text
+that has similar statistics to the original.
+
+\section{The Markov Chain Algorithm}
+\label{sec:the_markov_chain_algorithm}
+
+An elegant way to do this sort of processing is a technique called a
+\textit{Markov chain algorithm}. If we imagine the input as a sequence of
+overlapping phrases, the algorithm divides each phrase into two parts, a
+multi-word \textit{prefix} and a single \textit{suffix} word that follows
+the prefix. A Markov chain algorithm emits output phrases by randomly
+choosing the suffix that follows the prefix, according to the statistics
+of(in our case)the original text. Three-word phrases work well a two-word
+prefix is used to select the suffix word:
+\\
+\indent set \textit{$w_1$} and \textit{$w_2$} to the first two words in the text 
+\\
+\indent print \textit{$w_1$} and \textit{$w_2$} 
+\\
+\indent loop:
+\\
+\indent\indent randomly choose \textit{$w_3$}, one of the successors of
+    prefix \textit{$w_1$} \textit{$w_2$} in the text
+\\
+\indent\indent print \textit{$w_{3}$}
+\\
+\indent\indent replace \textit{w} and \textit{$w_2$} by \textit{$w_2$} and
+        \textit{$w_3$}
+\\
+\indent\indent repeat loop
+\\
+To illustrate, suppose we want to generate random text base on a few
+sentences paraphrased from the epigraph above, using-word prefixes:
+\\
+\indent Show your flowcharts and conceal your tables and I will be
+mystified. Show your tables and you flowcharts will be obvious.\textit{(end)}
+\\
+These are some of the pairs of input words and the words that follow them:
+\\
+\indent \begin{tabular}{ll}
+    \textit{Input prefix:} & \textit{Suffix words that follow:}\\
+    Show your & flowcharts tables\\
+    your flowcharts & and will\\
+    flowcharts and & conceal\\
+    flowcharts will & be\\
+    your tables & and and\\
+    will be & mystified. obvious.\\
+    be mystified. & Show\\
+    be obvious. & \textit{(end)}
+\indent \end{tabular} \\
+A Markov algorithm processing this text will begin by printing \textit{Show
+    your} and will then randomly pick either \textit{flowcharts} or
+\textit{tables}. If it choose the former, the current prefix becomes
+\textit{your flowcharts} and next word will be \textit{and} or
+\textit{will}. If it chooses \textit{tables}, the next word will be
+\textit{and}. This continues until enough output has been generated or
+until the end-marker is encountered as a suffix.
+
+Our program will read a piece of English text and use a Markov chain
+algorithm to generate new text based on the frequency of appearance of
+phrases of a fixed length. The number of words in the prefix, which is two
+in our example, is a parameter. Making the prefix shorter tends to produce
+less coherent prose; making it longer tends to reproduce the input text
+varbatim. For English text, using two words to select a third is a good
+compromise; it seems to recreate the flavor of the input while adding its
+own whimsical touch.
+
+What is a word? The obvious answer is a sequence of alphabetic characters,
+but it is desirable to leave punctuation attached to the words so
+\textit{"words"} and \textit{"words."} are different. This helps to improve
+the quality of the generated prose by letting punctuation, and
+therefore(indirectly)grammar, influence the word choice, althought it also
+permits unbalanced quotes and parentheses to sneak in. We will therefore
+define a "word" as anything between white space, a decision that places no
+\textit{restriction} on input language and leaves punctuation attached to
+the words. Since most programming languages have facilities to split text
+into white-space-sepatated words, this is also e
