@@ -1326,3 +1326,39 @@ data, ran and timed the tests, and printed any anomalous output. The script
 was configurable so the same tests could be applied to any version of
 Markov, and every time we made a set of changes to one of the programs, we
 ran all the tests again to make sure that nothing was broken.
+
+\section{Summary}
+
+The better you write your code originally, the fewer bugs it will have and
+the more confident you can be that your testing has been thorough. Testing
+boundary conditions as you write is an effective way to eliminate a lot of
+silly little bugs. Systematic testing tries to probe at potential trouble
+spots in an orderly way; again, failures are most commonly found at
+boundaries, which can be explored by hand or by program.  As much as
+possible, it is desirable to automate testing, since machines don't make
+mistakes or get tired or fool themselves into thinking that something is
+working when it isn't. Regression tests check that the program still
+produces the same answers as it used to. Testing after each small change is
+a good technique for localizing the source of any problem because new bugs
+are most likely to occur in new code.
+
+The single most important rule of testing is to do it.
+
+\section*{Supplementary Reading}
+
+One way to learn about testing is to study examples from the best freely
+available software. Don Knuth's "The Errors of TEX," in
+\bookname{Software -- Practice and Experience}, 19, 7, pp. 607-685, 1989,
+describes every error found to that point in the TEX formatter, and
+includes a discussion of Knuth's testing methods. The TRIP test for TEX is
+an excellent example of a thorough test suite. Perl also comes with an
+extensive test suite that is meant to verify its correctness after
+compilation and installation on a new system, and includes modules such as
+\verb'MakeMaker' and \verb'TestHarness' that aid in the construction of
+tests for Perl extensions.
+
+Jon Bentley wrote a series of articles in \bookname{Communications of the
+    ACM} that were subsequently collected in \bookname{Programming Pearls}
+and \bookname{More Programming Pearls}, published by Addison-Wesley in 1986
+and 1988 respectively. They often touch on testing, especially frameworks
+for organizing and mechanizing extensive tests.
