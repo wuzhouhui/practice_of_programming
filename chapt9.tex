@@ -830,3 +830,162 @@ use some of the techniques we'll talk about later in this chapter.
     library as a reference implementation; perhaps you will find bugs in it
     too.
 \end{exercise}
+
+\section{Programmable Tools}
+\label{sec:programmable_tools}
+
+Many tools are structured around a special-purpose language. The
+\verb'grep' program is just one of a family of tools that use regular
+expressions or other languages to solve programming problems.
+
+One of the first examples was the command interpreter or job control
+language. It was realized early that common sequences of commands could be
+placed in a file, and an instance of the command interpreter or
+\textit{shell} could be executed with that file as input. From there it was
+a short step to adding parameters, conditionals, loops, variables, and all
+the other trappings of a conventional programming language.  The main
+difference was that there was only one data type -- strings -- and the
+operators in shell programs tended to be entire programs that did
+interesting computations.  Although shell programming has fallen out of
+favor (失宠), often giving ground to alternatives like Perl in command
+environments and to pushing buttons in graphical user interfaces, it is
+still an effective way to build up complex operations out of simpler
+pieces.
+
+Awk is another programmable tool, a small, specialized pattern-action
+language that focuses on selection and transformation of an input stream.
+As we saw in Chapter \ref{chap:desipl}, Awk automatically reads input files
+and splits each line into fields called \verb'$1' through \verb'$NF', where
+\verb'NF' is the number of fields on the line. By providing default
+behavior for many common tasks, it makes useful one-line programs possible.
+For example, this complete Awk program,
+\begin{wellcode}
+    # split.awk: split input into one word per line
+    { for (i = 1; i <= NF; i++) print $i }
+\end{wellcode}
+prints the "words" of each input line one word per line. To go in the other
+direction, here is an implementation of \verb'fmt', which fills each output
+line with words, up to at most 60 characters; a blank line causes a
+paragraph break.
+\begin{wellcode}
+    # fmt.awk: format into 60-character lines
+    /./  { for (i = 1; i <= NF; i++) addword($i) }  # non-blank line
+    /^$/ { printline(); print "" }                  # blank line
+    END  { printline() }
+
+    function addword(w) {
+        if (length(line) + 1 + length(w) > 60)
+            printline()
+        if (length(line) == 0)
+            line = w
+        else
+            line = line " " w
+    }
+
+    function printline() {
+        if (length(line) > 0) {
+            print line
+            line = ""
+        }
+    }
+\end{wellcode}
+We often use \verb'fmt' to re-paragraph mail messages and other short
+documents; we also use it to format the output of Chapter
+\ref{chap:desipl}'s Markov programs.
+
+Programmable tools often originate in little language designed for natural
+expression of solutions to problems within a narrow domain. One nice
+example is the Unix tool \verb'eqn', which typesets (排版) mathematical
+formulas. Its input language is close to what a mathematician might say
+when reading equations aloud: $\frac{\pi}{2}$ is written \verb'pi over 2'.
+TEX follows the same approach; its notation for this formula is
+\verb'\pi \over 2'. If there is a natural or familiar notation for the
+problem you're solving, use it or adapt it; don't start from scratch.
+
+Awk was inspired by a program that used regular expressions to identify
+anomalous (不规则的) data in telephone traffic records, but Awk includes
+variables, expressions, loops, and so on, to make it a real programming
+language. Perl and Tcl were designed from the beginning to combine the
+convenience and expressiveness of little languages with the power of big
+ones. They are true general-purpose languages, although they are most often
+used for processing text.
+
+The generic term for such tools is \textbf{\textit{scripting languages}}
+because they evolved from early command interpreters whose programmability
+was limited to executing canned (罐装) "scripts" of programs. Scripting
+languages permit creative use of regular expressions, not only for pattern
+matching -- recognizing that a particular pattern occurs -- but also for
+identifying regions of text to be transformed. This occurs in the two
+\verb'regsub' (regular expression substitution) commands in the following
+% FIXME: The hyperlink of footnote doesn't response when click.
+Tcl program\footnote{Contains some errors, maybe, untested.}.
+The program is a slight generalization of the program we
+showed in Chapter \ref{chap:interface} that retrieves stock quotes; this
+one fetches the URL given by its first argument. The first substitution
+removes the string \verb'http://' if it is present; the second replaces the
+first \verb'/' by a blank, thereby splitting the argument into two fields.
+The \verb'lindex' command retrieves fields from a string (starting with
+index 0). Text enclosed in \verb'[]' is executed as a Tcl command and
+replaced by the resulting text; \verb'$x' is replaced by the value of the
+variable \verb'x'.
+\begin{wellcode}
+    # geturl.tcl: retrieve document from URL
+    # input has form [http://labc.def.com[/whatever...]]
+    regsub "http://" $argv "" argv  ;# remove http:// if present
+    regsub "/" $argv " " argv       ;# replace leading / with blank
+    set so [socket [lindex $argv 0] 80];    ;# make network connection
+    set q "/[lindex $argv 1]
+
+    puts $so "GET $q HTTP/1.0\r\n"; ;# send request
+    flush $so
+    while {[gets Bso line] >= 0 && $line != ""} {} ;# skip header
+    puts [read $so]                 ;# read and print entire reply
+\end{wellcode}
+
+This script typically produces voluminous output, much of which is HTML
+tags bracketed by \verb'<' and \verb'>'. Perl is good at text substitution,
+% FIXME: The hyperlink of footnote doesn't response when click.
+so our next tool is a Perl script\footnote{Contains some errors, maybe,
+    untested.} that uses regular expressions and substitutions to discard
+the tags:
+\begin{wellcode}
+    # unhtml.pl: delete HTML tags
+    while (<>) {            # collect all input into single string
+        $str .= $_;         # by concatenation input lines
+    }
+    $str =~ s/<[^>]*//g;    # delete <...>
+    $str =~ s/&nbsp;/ /g;   # replace &nbsp; by blank
+    $str =~ s/\s+/\n/g;     # compress white space
+    print $str;
+\end{wellcode}
+This example is cryptic if one does not speak Perl. The construction
+\begin{wellcode}
+    $str =~ s/regexp/repl/g
+\end{wellcode}
+substitutes the string \verb'repl' for the text in \verb'str' that matches
+(leftmost longest) the regular expression \verb'regexp'; the trailing
+\verb'g', for "global," means to do so for all matches in the string rather
+than just the first. The metacharacter sequence \verb'\s' is shorthand for
+a white space character (blank, tab, newline, and the like); \verb'\n' is a
+newline.  The string \verb'"&nbsp;"' is an HTML character, like those in
+Chapter \ref{chap:alds}, that defines a non-breakable space character.
+
+Putting all this together, here is a moronic (迟钝的) but functional web
+browser, implemented as a one-line shell script:
+\begin{wellcode}
+    # web: retrieve web page and format its text, ignoring HTML
+    geturl.tcl $1 | unhtml.pl | fmt.awk
+\end{wellcode}
+This retrieves the web page, discards all the control and formatting
+information, and formats the text by its own rules. It's a fast way to grab
+a page of text from the web.
+
+Notice the variety of languages we cascade together, each suited to a
+particular task: Tcl, Perl, Awk and, within each of those, regular
+expressions. The power of notation comes from having a good one for each
+problem. Tcl is particularly good for grabbing text over the network; Perl
+and Awk are good at editing and formatting text; and of course regular
+expressions are good at specifying pieces of text for searching and
+modifying. These languages together are more powerful than any one of them
+in isolation. It's worth breaking the job into pieces if it enables you to
+profit from the right notation.
