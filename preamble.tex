@@ -16,6 +16,19 @@
 \usepackage{tikz}
 \usepackage{varwidth}
 \usepackage{xfrac}
+\usepackage[Bjornstrup]{fncychap}
+\usepackage{titlesec}
+
+\ChNumVar{\fontsize{76}{80}\usefont{OT1}{pzc}{m}{n}\selectfont}
+\ChTitleVar{\raggedleft\Huge\sffamily\bfseries}
+
+\titleformat{\section}
+{\bfseries%
+    \Large}
+{\thesection}
+{1em}
+{}
+[{\titlerule\vspace{1pt}\titlerule}]
 
 \geometry{bottom = 2cm, outer = 2cm}
 %\geometry{ left = 3cm, right = 3cm, bottom = 2cm }
