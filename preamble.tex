@@ -25,10 +25,9 @@
 \ChTitleVar{\raggedleft\Huge\sffamily\bfseries}
 
 % section style from titlesec
-\newcounter{exerflag}
 \titleformat{\section}
 {\bfseries\Large}
-{\setcounter{exerflag}{0}\thesection}
+{\thesection}
 {1em}
 {}
 [{\titlerule[1pt]\vspace{1pt}\titlerule[0.5pt]}]
@@ -84,17 +83,13 @@
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
 \renewcommand\proofname{%
     \stepcounter{exercnt}%
+        % \pencil from dingbat
+    {\Large\smallpencil}
+    \nopagebreak[0]
     \textup{\textbf{Exercise\ \theexercnt}}
 }
 \newenvironment{exercise}
 {
-    \ifnum \value{exerflag}=0 
-        \setcounter{exerflag}{1} 
-        % \pencil from dingbat
-        {\vspace{2em}\LARGE\smallpencil}
-        \vspace{-1em}
-        \nopagebreak[0]
-    \fi
     \begin{proof}
 }
 {\end{proof}}
