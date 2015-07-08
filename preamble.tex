@@ -20,9 +20,11 @@
 \usepackage{titlesec}
 \usepackage{dingbat}
 
+% chapter style from Bjornstrup of fncychap
 \ChNumVar{\fontsize{76}{80}\usefont{OT1}{pzc}{m}{n}\selectfont}
 \ChTitleVar{\raggedleft\Huge\sffamily\bfseries}
 
+% section style from titlesec
 \newcounter{exerflag}
 \titleformat{\section}
 {\bfseries\Large}
@@ -34,6 +36,7 @@
 \geometry{bottom = 2cm, outer = 2cm}
 %\geometry{ left = 3cm, right = 3cm, bottom = 2cm }
 
+% page style from fancyhdr
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[EL]{\thepage}
@@ -76,6 +79,7 @@
 \renewcommand\emph[1]{{\bfseries\textit{#1}}}
 
 
+% exercise environemnt
 \newcounter{exercnt}[chapter]
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
 \renewcommand\proofname{%
@@ -86,6 +90,7 @@
 {
     \ifnum \value{exerflag}=0 
         \setcounter{exerflag}{1} 
+        % \pencil from dingbat
         {\vspace{2em}\LARGE\smallpencil}
         \vspace{-1em}
         \nopagebreak[0]
