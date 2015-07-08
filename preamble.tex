@@ -84,10 +84,6 @@
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
 \renewcommand\proofname{%
     \stepcounter{exercnt}%
-    \textup{\textbf{Exercise\ \theexercnt}}
-}
-\newenvironment{exercise}
-{
     \ifnum \value{exerflag}=0 
         \setcounter{exerflag}{1} 
         % \pencil from dingbat
@@ -95,6 +91,10 @@
         \vspace{-1em}
         \nopagebreak[0]
     \fi
+    \textup{\textbf{Exercise\ \theexercnt}}
+}
+\newenvironment{exercise}
+{
     \begin{proof}
 }
 {\end{proof}}
