@@ -18,17 +18,18 @@
 \usepackage{xfrac}
 \usepackage[Bjornstrup]{fncychap}
 \usepackage{titlesec}
+\usepackage{dingbat}
 
 \ChNumVar{\fontsize{76}{80}\usefont{OT1}{pzc}{m}{n}\selectfont}
 \ChTitleVar{\raggedleft\Huge\sffamily\bfseries}
 
+\newcounter{exerflag}
 \titleformat{\section}
-{\bfseries%
-    \Large}
-{\thesection}
+{\bfseries\Large}
+{\setcounter{exerflag}{0}\thesection}
 {1em}
 {}
-[{\titlerule\vspace{1pt}\titlerule}]
+[{\titlerule[1pt]\vspace{1pt}\titlerule[0.5pt]}]
 
 \geometry{bottom = 2cm, outer = 2cm}
 %\geometry{ left = 3cm, right = 3cm, bottom = 2cm }
@@ -74,6 +75,7 @@
 
 \renewcommand\emph[1]{{\bfseries\textit{#1}}}
 
+
 \newcounter{exercnt}[chapter]
 \renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
 \renewcommand\proofname{%
@@ -82,6 +84,12 @@
 }
 \newenvironment{exercise}
 {
+    \ifnum \value{exerflag}=0 
+        \setcounter{exerflag}{1} 
+        {\vspace{2em}\LARGE\smallpencil}
+        \vspace{-1em}
+        \nopagebreak[0]
+    \fi
     \begin{proof}
 }
 {\end{proof}}
