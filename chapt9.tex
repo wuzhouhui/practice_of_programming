@@ -1543,3 +1543,264 @@ portable.
     another program, in whatever language (or languages) you choose, that
     writes the Java version and automates the timing runs.
 \end{exercise}
+
+\section{Compiling on the Fly}
+\label{sec:compiling_on_the_fly}
+
+In the previous section, we talked about programs that write programs. In
+each of the examples, the generated program was in source form; it still
+needed to be compiled or interpreted to run. But it is possible to generate
+code that is ready to run immediately by producing machine instructions
+rather than source. This is known as compiling "on the fly" or "just in
+time"; the first term is older but the latter. including its acronym
+(缩写), JIT, is more popular.
+
+Although compiled code is necessarily non-portable -- it will run only on a
+single type of processor -- it can be extremely fast. Consider the
+expression
+\begin{wellcode}
+    max(b, c/2)
+\end{wellcode}
+The calculation must evaluate \verb'c', divide it by two, compare the
+result to \verb'b', and choose the larger. If we evaluate the expression
+using the virtual machine we sketched (描绘) earlier in the chapter, we
+could eliminate the check for division by zero in \verb'divop'.  Since
+\verb'2' is never zero, the check is pointless. But given any of the
+designs we laid out for implementing the virtual machine, there is no way
+to eliminate the check; every implementation of the divide operation
+compares the divisor to zero.
+
+This is where generating code dynamically can help. If we build the code
+for the expression directly, rather than just by stringing out predefined
+operations, we can avoid the zero-divide check for divisors that are known
+to be non-zero. In fact, we can go even further; if the entire expression
+is constant. such as \verb'max(3*3, 4/2)', we can evaluate it once when we
+generate the code, and replace it by the constant value \verb'9'.  If the
+expression appears in a loop, we save time each trip around the loop, and
+if the loop runs enough times, we will win back the overhead it took to
+study the expression and generate code for it.
+
+The key idea is that the notation gives us a general way to express a
+problem, but the compiler for the notation can customize the code for the
+details of the specific calculation. For example, in a virtual machine for
+regular expressions, we would likely have an operator to match a
+\verb'literal' character:
+\begin{wellcode}
+    int matchchar(int literal, char *text)
+    {
+        return *text == literal;
+    }
+\end{wellcode}
+When we generate code for a particular pattern, however, the value of a
+given \verb'literal' is fixed, say \verb"'x'", so we could instead use an
+operator like this:
+\begin{wellcode}
+    int matchx(char *text)
+    {
+        return *text == 'x';
+    }
+\end{wellcode}
+And then, rather than predefining a special operator for each literal
+character value, we make things simpler by generating the code for the
+operators we really need for the current expression. Generalizing the idea
+for the full set of operations, we can write an on-the-fly compiler that
+translates the current regular expression into special code optimized for
+that expression.
+
+Ken Thompson did exactly this for an implementation of regular expressions
+on the IBM 7094 in 1967. His version generated little blocks of binary 7094
+instructions for the various operations in the expression, threaded them
+together, and then ran the resulting program by calling it, just like a
+regular function. Similar techniques can be applied to creating specific
+instruction sequences for screen updates in graphics systems, where there
+are so many special cases that it is more efficient to create dynamic code
+for each one that arises than to write them all out ahead of time or to
+include conditional tests in more general code.
+
+To demonstrate what is involved in building a real on-the-fly compiler
+would take us much too far into the details of a particular instruction
+set, but it is worth spending some time to show how such a system works.
+The rest of this section should be read for ideas and insight but not for
+implementation details.
+
+Recall that we left our virtual machine with a structure like this:
+\begin{wellcode}
+    Code code[NCODE];
+    int stack[NSTACK];
+    int stackp;
+    int pc; /* program counter */
+
+        ...
+        Tree    *t;
+        pc = generate(0,t );
+        code[pc].op = NULL;
+
+        stackp = 0;
+        pc = 0;
+        while (code[pc].op != NULL)
+            (*code[pc++].op)();
+        return stack[0];
+\end{wellcode}
+
+To adapt this code to on-the-fly compilation, we must make some changes.
+First, the code array is no longer an array of function pointers, but an
+array of executable instructions. Whether the instructions will be of type
+\verb'char', \verb'int', or \verb'long' will depend on the processor we're
+compiling for; we'll assume \verb'int'. After the code is generated, we
+call it as a function. There will be no virtual program counter because the
+processor's own execution cycle will walk along the code for us; once the
+calculation is done, it will return, like a regular function. Also, we can
+choose to maintain a separate operand stack for the machine or use the
+processor's own stack. Each approach has advantages, but we've chosen to
+stick with a separate stack and concentrate on the details of the code
+itself. The implementation now looks like this:
+\begin{wellcode}
+    typedef int Code;
+    Code    code[NCODE];
+    int codep;
+    int stack[NSTACK];
+    int stackp;
+        ...
+        Tree *t;
+        void (*fn)(void);
+        int pc;
+
+        t = parse();
+        pc = generate(0, t);
+        genreturn(pc);      /* generate function return sequence */
+        stackp = 0;
+        flushcaches();      /* synchronize memory with processor */
+        fn = (void (*)(void))code;  /* cast array to ptr to func */
+        (*fn)();
+        return stack[0];
+\end{wellcode}
+
+After generate finishes, \verb'genreturn' lays down (制定) the instructions
+that make the generated code return control to \verb'eval'.
+
+The function \verb'flushcaches' stands for the steps needed to prepare the
+processor for running freshly generated code. Modern machines run fast in
+part because they have caches for instructions and data, and internal
+pipelines that overlap the execution of many successive instructions. These
+caches and pipelines expect the instruction stream to be static; if we
+generate code just before execution, the processor can become confused. The
+CPU needs to drain (排空) its pipeline and flush its caches before it can
+execute newly generated instructions. These are highly machine-dependent
+operations; the implementation of \verb'flushcaches' will be different on
+each particular type of computer.
+
+The remarkable expression \verb'(void(*)(void))' code is a cast that
+converts the address of the array containing the generated instructions
+into a function pointer that can be used to call the code as a function.
+
+Technically, it's not too hard to generate the code itself, though there is
+a fair amount of engineering to do so efficiently. We start with some
+building blocks. As before, a code array and an index into it are
+maintained during compilation. For simplicity, we'll make them both global,
+as we did earlier. Then we can write a function to lay down instructions:
+\begin{wellcode}
+    /* emit (发射): append instruction to code stream */
+    void emit(Code inst)
+    {
+        code[codep++] = inst;
+    }
+\end{wellcode}
+
+The instructions themselves can be defined by processor-dependent macros or
+tiny functions that assemble the instructions by filling in the fields of
+the instruction word.  Hypothetically (假设), we might have a function
+called \verb'popreg' that generates code to pop a value off the stack and
+store it in a processor register, and another called \verb'pushreg' that
+generates code to take the value stored in a register and push it onto the
+stack. Our revised (修订的) \verb'addap' function would use them like this,
+given some defined constants that describe the instructions (like
+\verb'ADDINST') and their layout (the various (各自的) \verb'SHIFT'
+positions that define the format):
+\begin{wellcode}
+    /* addop: generate ADD instruction */
+    void addop(void)
+    {
+        Code    inst;
+
+        popreg(2);      /* pop stack into register 2 */
+        popreg(1);      /* pop stack into register 1 */
+        inst = ADDINST << INTSHIFT;
+        inst |= (R1) << OP1SHIFT;
+        inst |= (R2) << OP2SHIFT;
+        emit(inst);     /* emit ADD R1, R2 */
+        pushreg(2);     /* push val of register 2 onto stack */
+    }
+\end{wellcode}
+This is only a starting point. If we were writing an on-the-fly compiler
+for real, we would employ optimizations. If we're adding a constant, we
+don't need to push the constant on the stack, pop it off, and add it; we
+can just add it directly.  Similar thinking can eliminate more of the
+overhead. Even as written, however, \verb'addop' will run much faster than
+the versions we wrote earlier because the various operators are not
+threaded together (穿在一起) by function calls. Instead, the code to
+execute them is laid out in memory as a single block of instructions, with
+the real processor's program counter doing all the threading (穿线) for us.
+
+The \verb'generate' function looks pretty much as it did for the virtual
+machine implementation. But this time, it lays out real machine
+instructions instead of pointers to predefined functions. And to generate
+efficient code, it should spend some effort looking for constants to
+eliminate and other optimizations.
+
+Our whirlwind (旋风) tour of code generation has shown only glimpses (一瞥)
+of some of the techniques used by real compilers and entirely missed many
+more. It has also sidestepped (回避) many of the issues raised (带来) by
+the complexities of modern CPUs.  But it does illustrate how a program can
+analyze the description of a problem to produce special purpose code for
+solving it efficiently. You can use these ideas to write a blazing (强烈的)
+fast version of \verb'grep', to implement a little language of your own
+devising (发明), to design and build a virtual machine optimized for
+special-purpose calculation, or even, with a little help, to write a
+compiler for an interesting language.
+
+A regular expression is a long way from a C++ program, but both are just
+notations for solving problems. With the right notation, many problems
+become easier.  And designing and implementing the notation can be a lot of
+fun.
+
+\begin{exercise}
+    The on-the-fly compiler generates faster code if it can replace
+    expressions that contain only constants, such as \verb'max(3*3, 4/2)',
+    by their value. Once it has recognized such an expression, how should
+    it compute its value?
+\end{exercise}
+
+\begin{exercise}
+    How would you test an on-the-fly compiler?
+\end{exercise}
+
+\section*{Supplementary Reading}
+
+\bookname{The Unix Programming Environment}, by Brian Kemighan and Rob Pike
+(Prentice Hall, 1984), contains an extended discussion of the tool-based
+approach to computing that Unix supports so well. Chapter 8 of that book
+presents a complete implementation, from \verb'yacc' grammar to executable
+code, of a simple programming language.
+
+\bookname{TEX: The Program}, by Don Knuth (Addison-Wesley, 1986), describes
+a complex document formatter by presenting the entire program, about 13,000
+lines of Pascal, in a "literate programming" style that combines
+explanation with program text and uses programs to format documentation and
+extract compilable code. \bookname{A Retargetable C Compiler: Design and
+    Implementation} by Chris Fraser and David Hanson (Addison-Wesley, 1995)
+does the same for an ANSI C compiler.
+
+The Java virtual machine is described in \bookname{The Java Virtual Machine
+    Specification, 2nd Edition}, by Tim Lindholm and Frank Yellin
+(Addison-Wesley, 1999).
+
+Ken Thompson's algorithm (one of the earliest software patents(专利)) was
+described in "Regular Expression Search Algorithm,"
+\bookname{Communications of the ACM}, 11, 6, pp.  419-422, 1968. Jeffrey E.
+F. Friedl's \bookname{Mastering Regular Expressions} (O'Reilly, 1997) is an
+extensive treatment of the subject.
+
+An on-the-fly compiler for two-dimensional graphics operations is described
+in "HardwareISoftware Tradeoffs for Bitmap Graphics on the Blit," by Rob
+Pike, Bart Locanthi, and John Reiser, \bookname{Software-- Practice and
+    Experience}, 15, 2, pp.  131-152, February 1985.
