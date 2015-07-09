@@ -1307,3 +1307,173 @@ compiler that translates the language into the virtual machine. Virtual
 machines are a lovely old idea, recently made fashionable again by Java and
 the Java Virtual Machine (JVM); they give an easy way to produce portable,
 efficient representations of programs written in a high-level language.
+
+\section{Programs that Write Programs}
+\label{sec:programs_that_write_programs}
+
+Perhaps the most remarkable thing about the generate function is that it is
+a program that writes a program: its output is an executable instruction
+stream for another (virtual) machine. Compilers do this all the time,
+translating source code into machine instructions, so the idea is certainly
+familiar. In fact, programs that write programs appear in many forms.
+
+One common example is the dynamic generation of HTML for web pages. HTML is
+a language, however limited, and it can contain JavaScript code as well.
+Web pages are often generated on the fly by Perl or C programs, with
+specific contents (for example, search results and targeted advertising)
+determined by incoming requests. We used specialized languages for the
+graphs, pictures, tables, mathematical expressions, and index in this book.
+As another example, PostScript is a programming language that is generated
+by word processors, drawing programs, and a variety of other sources; at
+the final stage of processing, this whole book is represented as a 57,000
+line Postscript program.
+
+A document is a static program, but the idea of using a programming
+language as notation for any problem domain is extremely powerful. Many
+years ago, programmers dreamt of having computers write all their programs
+for them. That will probably never be more than a dream, but today
+computers routinely (例行性的) write programs for us, often to represent
+things we would not previously have considered programs at all.
+
+The most common program-writing program is a compiler that translates high-
+level language into machine code. It's often useful, though, to translate
+code into a mainstream programming language. In the previous section, we
+mentioned that parser generators convert a definition of a language's
+grammar into a C program that parses the language. C is often used in this
+way, as a kind of "high level assembly language." Modula-3 and C++ are
+among the general-purpose languages whose first compilers created C code,
+which was then compiled by a standard C compiler.  The approach has several
+advantages, including efficiency -- because programs can in principle run
+as fast as C programs -- and portability -- because compilers can be
+carried to any system that has a C compiler. This greatly helped the early
+spread of these languages.
+
+As another example, Visual Basic's graphical interface generates a set of
+Visual Basic assignment statements to initialize objects that the user has
+selected from menus and positioned on the screen with a mouse. A variety of
+other languages have "visual" development systems and "wizards" (魔力) that
+synthesize user-interface code out of mouse clicks.
+
+In spite of the power of program generators, and in spite of the existence
+of many good examples, the notion (概念) is not appreciated as much as it
+should be and is infrequently used by individual programmers. But there are
+plenty of small-scale opportunities for creating code by a program, so that
+you can get some of the advantages for yourself. Here are several examples
+that generate C or C++ code.
+
+The Plan 9 operating system generates error messages from a header file
+that contains names and comments; the comments are converted mechanically
+into quoted strings in an array that can be indexed by the enumerated
+value. This fragment shows the structure of the header file:
+\begin{wellcode}
+    /* errors.h: standard error message */
+    enum {
+        Eperm,      /* Permission denied */
+        Eio,        /* I/O error */
+        Efile,      /* File does not exist */
+        Emem,       /* Memory limit reached */
+        Espace,     /* Out of file space */
+        Egrep,      /* It's all Greg's fault */
+    };
+\end{wellcode}
+Given this input, a simple program can produce the following set of
+declarations for the error messages:
+\begin{wellcode}
+    /* machine generated; do not edit. */
+    char *errs[] = {
+        "Permission denied", /* Eperm */
+        "I/O error", /* Eio */
+        "File does not exist", /* Efile */
+        "Memory limit reached", /* Espace */
+        "Out of file space", /* Espace */
+        "It's all Greg's fault", /* Egrep */
+    };
+\end{wellcode}
+
+There are a couple of benefits to this approach. First, the relationship
+between the \verb'enum' values and the strings they represent is literally
+self-documenting and easy to make natural-language independent. Also, the
+information appears only once, a "single point of truth" (单点真相) from
+which other code is generated, so there is only one place to keep
+information up to date. If instead there are multiple places, it is
+inevitable that they will get out of sync sometime. Finally, it's easy to
+arrange that the \verb'.c' file will be recreated and recompiled whenever
+the header file is changed. When an error message must be changed, all that
+is needed is to modify the header file and compile the operating system.
+The messages are automatically updated.
+
+The generator program can be written in any language. A string processing
+language like Perl makes it easy:
+\begin{wellcode}
+    # enum.pl: generate error strings from enum+comments
+
+    print "/* machine generated; do not edit. */\n\n";
+    print "char *errs[] = {\n";
+    while (<>) {
+        chop;                       # remove new line
+        if (/^\s*(E[a-z0-9]+),?/) { # first word is E...
+            $name = $1;             # save name
+            s/.*\/\* *//;           # remove up to /*
+            s/ *\*\///;             # remove */
+            print "\t\"$_\",/* $name */\n";
+        }
+    }
+    print "};\n";
+\end{wellcode}
+Regular expressions are in action again. Lines whose first fields look like
+identifiers followed by a comma are selected. The first substitution
+deletes everything up to the first non-blank character of the comment,
+while the second removes the comment terminator and any blanks that precede
+it.
+
+As part of a compiler-testing effort, Andy Koenig developed a convenient
+way to write C++ code to check that the compiler caught program errors.
+Code fragments that should cause a compiler diagnostic are decorated with
+magic comments to describe the expected messages. Each line has a comment
+that begins with \verb'///' (to distinguish it from ordinary comments) and
+a regular expression that matches the diagnostics from that line. Thus, for
+example, the following two code fragments should generate diagnostics:
+\begin{wellcode}
+    int f() {}
+        /// warning.* non-void function .* should return a value
+
+    void g() { return 1; }
+        /// error.* void function may not return a value
+\end{wellcode}
+If we run the second test through our C++ compiler, it prints the expected
+message, which matches the regular expression:
+
+Each such code fragment is given to the compiler, and the output is
+compared against the expected diagnostics, a process that is managed by a
+combination of shell and Awk programs. Failures indicate a test where the
+compiler output differed from what was expected. Because the comments are
+regular expressions there is some latitude (余地) in the output; they can
+be made more or less forgiving, depending on what is needed.
+
+The idea of comments with semantics is not new. They appear in Postscript,
+where regular comments begin with \verb'%'. Comments that begin with
+\verb'%%' by convention may carry extra information about page numbers,
+bounding boxes, font names, and the like:
+\begin{wellcode}
+    %%PageBoundingBox: 126 307 492 768
+    %%Pages:14
+    %%DocumentFonts: Helvetica Times-Italic Times-Roman
+                LucidaSans-Typewriter
+\end{wellcode}
+In Java, comments that begin with \verb'/**' and end with \verb'*/' are
+used to create documentation for the class definition that follows. The
+large-scale version of self-documenting code is \term{literate
+    programming}, which integrates a program and its documentation so one
+process prints it in a natural order for reading, and another arranges it
+in the right order for compilation.
+
+In all of the examples above, it is important to observe the role of
+notation, the mixture of languages, and the use of tools. The combination
+magnifies the power of the individual components.
+
+\begin{exercise}
+    One of the old chestnuts (老办法) of computing is to write a program
+    that when executed will reproduce itself exactly, in source form. This
+    is a neat (灵巧的) special case of a program that writes a program.
+    Give it a try in some of your favorite languages.
+\end{exercise}
