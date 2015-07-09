@@ -1,5 +1,50 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 \chapter{Interfaces}
 \label{chap:interface}
-\begin{quotation}
-\end{quotation}
+\begin{quote}
+    Before I build a wall I'd ask to know \\
+    What I was walling in or walling out, \\
+    And to whom I was like to give offence. \\
+    Somthing there is that doesn't love a wall. \\
+    That wants it down.
+\end{quote}
+\begin{quotesrc}
+    Robert Frost, \bookname{Mending Wall}
+\end{quotesrc}
+
+The essence (精髓) of design is to balance competing goals and constraints.
+Although there may be many tradeoffs when one is writing a small
+self-contained system, the ramifications (分叉) of particular choices
+remain within the system and affect only the individual programmer. But
+when code is to be used by others, decisions have wider repercussions
+(反响).
+
+Among the issues to be worked out in a design are
+\begin{itemize}
+    \item Interfaces: what services and access are provided? The interface
+        is in effect a contract between supplier and customer. The desire
+        is to provide services that are uniform and convenient, with enough
+        functionality to be easy to use but not so much as to become
+        unwieldy (笨拙).
+    \item Information hiding: what information is visible and what is
+        private? An interface must provide straightforward access to the
+        components while hiding details of the implementation so they can
+        be changed without affecting users.
+    \item Resource management: who is responsible for managing memory and
+        other limited resources? Here, the main problems are allocating and
+        freeing storage, and managing shared copies of information.
+    \item Error handling: who detects errors, who reports them, and how?
+        When an error is detected, what recovery is attempted?
+\end{itemize}
+
+In Chapter \ref{chap:alds} we looked at the individual pieces -- the data
+structures -- from which a system is built. In Chapter \ref{chap:desipl},
+we looked at how to combine those into a small program. The topic now turns
+to the interfaces between components that might come from different
+sources. In this chapter we illustrate interface design by building a
+library of functions and data structures for a common task. Along the way,
+we will present some principles of design. Typically there are an enormous
+number of decisions to be made, but most are made almost unconsciously.
+Without these principles, the result is often the sort of haphazard
+(无计划的) interfaces that frustrate and impede (妨碍) programmers every
+day.
