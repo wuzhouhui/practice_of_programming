@@ -333,3 +333,139 @@ scenario (情节) is representative of the history of many bad interfaces. It
 is a sad fact that a lot of quick and dirty code ends up in widely-used
 software, where it remains dirty and often not as quick as it should have
 been anyway.
+
+\section{A Library for Others}
+\label{sec:a_library_for_others}
+
+Using what we learned from the prototype, we now want to build a library
+worthy of general use. The most obvious requirement is that we must make
+\verb'csvgetline' more robust so it will handle long lines or many fields;
+it must also be more careful in the parsing of fields.
+
+To create an interface that others can use, we must consider the issues
+listed at the beginning of this chapter: interfaces, information hiding,
+resource management, and error handling. The interplay (互相作用) among
+these strongly affects the design. Our separation of these issues is a bit
+arbitrary, since they are interrelated.
+
+\emph{Interface.}We decided on three basic operations: \\
+\indent\indent\texttt{char *csvgetline(FILE *)}: read a new CSV line \\
+\indent\indent\texttt{char *csvfield(int n)}: return the \verb'n'-th field
+of the current line \\
+\indent\indent\texttt{int csvnfield(void)}: return the number of fields on
+the current
+
+What function value should \verb'csvgetline' return? It is desirable to
+return as much useful information as convenient, which suggests returning
+the number of fields, as in the prototype. But then the number of fields
+must be computed even if the fields aren't being used. Another possible
+value is the input line length, which is affected by whether the trailing
+newline is preserved. After several experiments, we decided that
+\verb'csvgetline' will return a pointer to the original line of input, or
+\verb'NULL' if end of file has been reached.
+
+We will remove the newline at the end of the line returned by
+\verb'csvgetline', since it can easily be restored if necessary.
+
+The definition of a field is complicated; we have tried to match what we
+observe empirically (经验的) in spreadsheets and other programs. A field is
+a sequence of zero or more characters. Fields are separated by commas.
+Leading and trailing blanks are preserved. A field may be enclosed in
+double-quote characters, in which case it may contain commas. A quoted
+field may contain double-quote characters, which are represented by a
+doubled double-quote; the CSV field \verb'"x""y"' defines the string
+\verb'x"y'.  Fields may be empty; a field specified as "" is empty, and
+identical to one specified by adjacent commas.
+
+Fields are numbered from zero. What if the user asks for a non-existent
+field by calling \verb'csvfield(-1)' or \verb'csvfield(100000)'? We could
+return \verb'""' (the empty string) because this can be printed and
+compared; programs that process variable numbers of fields would not have
+to take special precautions to deal with non-existent ones. But that choice
+provides no way to distinguish empty from non-existent. A second choice
+would be to print an error message or even abort; we will discuss shortly
+why this is not desirable. We decided to return \verb'NULL', the
+conventional value for a non-existent string in C.
+
+\emph{Information hiding.} The library will impose no limits on input line
+length or number of fields. To achieve this, either the caller must provide
+the memory or the callee (the library) must allocate it. The caller of the
+library function \verb'fgets' passes in an array and a maximum size. If the
+line is longer than the buffer, it is broken into pieces.  This behavior is
+unsatisfactory for the CSV interface, so our library will allocate memory
+as it discovers that more is needed.
+
+Thus only \verb'csvgetline' knows about memory management; nothing about
+the way that it organizes memory is accessible from outside. The best way
+to provide that isolation is through a function interface:
+\verb'csvgetline' reads the next line, no matter how big,
+\verb'csvfield(n)' returns a pointer to the bytes of the \verb'n'-th field
+of the current line, and \verb'csvnfield' returns the number of fields on
+the current line.
+
+We will have to grow memory as longer lines or more fields arrive. Details
+of how that is done are hidden in the csv functions; no other part of the
+program knows how this works, for instance whether the library uses small
+arrays that grow, or very large arrays, or something completely different.
+Nor does the interface reveal when memory is freed.
+
+If the user calls only \verb'csvgetline', there's no need to split into
+fields; lines can be split on demand. Whether field-splitting is eager
+(done right away when the line is read) or lazy (done only when a field or
+count is needed) or very lazy (only the requested field is split) is
+another implementation detail hidden from the user.
+
+\emph{Resource management.} We must decide who is responsible for shared
+information.  Does \verb'csvgetline' return the original data or make a
+copy? We decided that the return value of \verb'csvgetline' is a pointer to
+the original input, which will be overwritten when the next line is read.
+Fields will be built in a copy of the input line, and \verb'csvfield' will
+return a pointer to the field within the copy. With this arrangement, the
+user must make another copy if a particular line or field is to be saved or
+changed, and it is the user's responsibility to release that storage when
+it is no longer needed.
+
+Who opens and closes the input file? Whoever opens an input file should do
+the corresponding close: matching tasks should be done at the same level or
+place. We will assume that \verb'csvgetline' is called with a \verb'FILE'
+pointer to an already-open file that the caller will close when processing
+is complete.
+
+Managing the resources shared or passed across the boundary between a
+library and its callers is a difficult task, and there are often sound
+(合理的) but conflicting reasons to prefer various design choices. Errors
+and misunderstandings about the shared responsibilities are a frequent
+source of bugs.
+
+\emph{Error handling.} Because \verb'csvgetline' returns \verb'NULL', there
+is no good way to distinguish end of file from an error like running out of
+memory; similarly, access to a non-existent field causes no error. By
+analogy with \verb'ferror', we could add another function
+\verb'csvgeterror' to the interface to report the most recent error, but
+for simplicity we will leave it out of this version.
+
+As a principle, library routines should not just die when an error occurs;
+error status should be returned to the caller for appropriate action. Nor
+should they print messages or pop up dialog boxes, since they may be
+running in an environment where a message would interfere with something
+else. Error handling is a topic worth a separate discussion of its own,
+later in this chapter.
+
+\emph{Specification.} The choices made above should be collected in one
+place as a specification of the services that \verb'csvgetline' provides
+and how it is to be used.  In a large project, the specification precedes
+the implementation, because specifiers and implementers are usually
+different people and may be in different organizations.  In practice,
+however, work often proceeds in parallel, with specification and code
+evolving together, although sometimes the "specification" is written only
+after the fact to describe approximately what the code does.
+
+The best approach is to write the specification early and revise it as we
+learn from the ongoing implementation. The more accurate and careful a
+specification is, the more likely that the resulting program will work
+well. Even for personal programs, it is valuable to prepare a reasonably
+thorough specification because it encourages consideration of alternatives
+and records the choices made.
+
+For our purposes, the specification would include function prototypes and a
+detailed prescription (命令) of behavior, responsibilities and assumptions:
