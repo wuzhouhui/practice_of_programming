@@ -4,8 +4,8 @@
 \begin{quote}
     Before I build a wall I'd ask to know \\
     What I was walling in or walling out, \\
-    And to whom I was like to give offence. \\
-    Somthing there is that doesn't love a wall. \\
+    And to whom I was like to give offense. \\
+    Something there is that doesn't love a wall. \\
     That wants it down.
 \end{quote}
 \begin{quotesrc}
@@ -112,7 +112,7 @@ automatically.  Here's a program in the language Tcl to access the stock
 quote web site and retrieve CSV data in the format above, preceded (开始)
 by a few header lines:
 \begin{wellcode}
-    # getquote.tcl: stock prices for Lucent, AT&T, Microsoft
+    # getquotes.tcl: stock prices for Lucent, AT&T, Microsoft
     set so [socket quote.yahoo.com 80]  ;# connect to server
     set q "/d/quotes.csv?s=LU+T+MSFT&f=sl1d1t1ohgv"
     puts $so "GET $q HTTP/1.0\r\n\r\n"  ;# send request
@@ -143,3 +143,193 @@ we'll talk about issues that arise when designing software that must work
 with other software. For example, there does not appear to be a standard
 definition of CSV, so the implementation cannot be based on a precise
 specification, a common situation in the design of interfaces.
+
+\section{A Prototype Library}
+\label{sec:a_prototype_library}
+
+We are unlikely to get the design of a library or interface right on the
+first attempt.  As Fred Brooks once wrote, "plan to throw one away; you
+will, anyhow." Brooks was writing about large systems but the idea is
+relevant for any substantial (有内容的) piece of software. It's not usually
+until you've built and used a version of the program that you understand
+the issues well enough to get the design right.
+
+In this spirit, we will approach (接近) the construction of a library for
+CSV by building one to throw away, a prototype. Our first version will
+ignore many of the difficulties of a thoroughly engineered library, but
+will be complete enough to be useful and to let us gain some familiarity
+with the problem.
+
+Our starting point is a function \verb'csvgetline' that reads one line of
+CSV data from a file into a buffer, splits it into fields in an array,
+removes quotes, and returns the number of fields. Over the years, we have
+written similar code in almost every language we know, so it's a familiar
+task. Here is a prototype version in C; we've marked it as questionable
+because it is just a prototype:
+\begin{badcode}
+    char    buf[200];   /* input line buffer */
+    char    *field[20]; /* fields */
+
+    /* csvgetline: read and parse line, return field count */
+    /* sample input: "LU",86.25,"11/4/1998","2:19PM",+4.0625 */
+    int csvgetline(FILE *fin)
+    {
+        int     nfield;
+        char    *p, *q;
+
+        if (fgets(buf, sizeof(buf), fin) == NULL)
+            return -1;
+        nfield = 0;
+        for (q = buf; (p=strtok(q, ",\n\r")) != NULL; q = NULL)
+            field[nfield++] = unquote(p);
+        return nfield;
+    }
+\end{badcode}
+The comment at the top of the function includes an example of the input
+format that the program accepts; such comments are helpful for programs
+that parse messy (散乱的) input.
+
+The CSV format is too complicated to be parsed easily by \verb'scanf' so we
+use the C standard library function \verb'strtok'. Each call of
+\verb'strtok(p, s)' returns a pointer to the first token within \verb'p'
+consisting of characters not in \verb's'; \verb'strtok' terminates the
+token by overwriting the following character of the original string with a
+null byte. On the first call, \verb'strtok''s first argument is the string
+to scan; subsequent calls use \verb'NULL' to indicate that scanning should
+resume where it left off (停止) in the previous call.  This is a poor
+interface. Because \verb'strtok' stores a variable in a secret place
+between calls, only one sequence of calls may be active at one time;
+unrelated interleaved (交错的) calls will interfere with each other.
+
+Our function \verb'unquote' removes the leading and trailing quotes that
+appear in the sample input above. It does not handle nested quotes,
+however, so although sufficient for a prototype, it's not general.
+\begin{badcode}
+    /* unquote: remove leading and trailing quote */
+    char *unquote(char *p)
+    {
+        if (p[0] == '"') {
+            if (p[strlen(p)-1] == '"')
+                p[strlen(p)-1] = '\0';
+            p++;
+        }
+        return p;
+    }
+\end{badcode}
+
+A simple test program helps verify that \verb'csvgetline' works:
+\begin{badcode}
+    /* csvtest main: test csvgetline function */
+    int main(void)
+    {
+        int i, nf;
+
+        while ((nf = csvgetline(stdin)) != -1)
+            for (i = 0; i < nf; i++)
+                printf("field[%d] = '%s'\n", i, field[i]);;
+            return 0;
+    }
+\end{badcode}
+The \verb'printf' encloses the fields in matching single quotes, which
+demarcate (区分) them and
+help to reveal bugs that handle white space incorrectly.
+
+We can now run this on the output produced by \verb'getquotes.tcl':
+\begin{wellcode}
+    % getquotes.tcl | csvtest
+    ...
+    field[0] = 'LU'
+    field[1] = '86.375'
+    field[2] = '11/5/1998'
+    field[3] = '1:01PM'
+    field[4] = '-0.125'
+    field[5] = '86'
+    field[6] = '86.375'
+    field[7] = '85.0625'
+    field[8] = '2888600'
+    field[0] = 'T'
+    field[1] = '61.0625'
+    ...
+\end{wellcode}
+(We have edited out the HTTP header lines.)
+
+Now we have a prototype that seems to work on data of the sort we showed
+above.  But it might be prudent (谨慎的) to try it on something else as
+well, especially if we plan to let others use it. We found another web site
+that downloads stock quotes and obtained a file of similar information but
+in a different form: carriage returns (\verb'\r') rather than newlines to
+separate records, and no terminating carriage return at the end of the
+file.  We've edited and formatted it to fit on the page:
+\begin{wellcode}
+    "Ticker","Price","Change","Open","Prev Close","Day High",
+        "Day Low","52 Week High","52 Week Low","Dividend",
+        "Yield","Volume","Average Volume","P/E"
+    "LU",86.313,-0.188,86.000,86.500,86.438,85.063,108.50,
+        36.18,0.16,0.1,2946700,9675000,N/A
+    "T",61,125,0.938,60.375,60.188,61.125,60.000,68.50,
+        46.50,1.32,2.1,3061000,4777000,17.0
+    "MSFT",107.000,1.500,105.313,105.500,107.188,105.250,
+        119.62,59.00,N/A,N/A,7977300,16965000,51.0
+\end{wellcode}
+With this input, our prototype failed miserably (非常不幸地).
+
+We designed our prototype after examining one data source, and we tested it
+originally only on data from that same source. Thus we shouldn't be
+surprised when the first encounter with a different source reveals gross
+(恶劣的) failings. Long input lines, many fields, and unexpected or missing
+separators all cause trouble. This fragile prototype might serve for
+personal use or to demonstrate the feasibility of an approach, but no more
+than that. It's time to rethink the design before we try another
+implementation.
+
+We made a large number of decisions, both implicit and explicit, in the
+prototype. Here are some of the choices that were made, not always in the
+best way for a general-purpose library. Each raises an issue that needs
+more careful attention.
+\begin{itemize}
+    \item The prototype doesn't handle long input lines or lots of fields.
+        It can give wrong answers or crash because it doesn't even check
+        for overflows, let alone return sensible values in case of errors.
+    \item The input is assumed to consist of lines terminated by newlines.
+    \item Fields are separated by commas and surrounding quotes are
+        removed. There is no provision (准备) for embedded quotes or
+        commas.  The input line is not preserved; it is overwritten by the
+        process of creating fields.
+    \item No data is saved from one input line to the next: if something is
+        to be remembered, a copy must be made.
+    \item Access to the fields is through a global variable, the
+        \verb'field' array, which is shared by \verb'csvgetline' and
+        functions that call it; there is no control over access to the
+        \verb'field' contents or the pointers. There is also no attempt to
+        prevent access beyond the last field.
+    \item The global variables make the design unsuitable for a
+        multi-threaded environment or even for two sequences of interleaved
+        calls.
+    \item The caller must open and close files explicitly;
+        \verb'csvgetline' reads only from open files.
+    \item Input and splitting are inextricably (无法避免地) linked: each
+        call reads a line and splits it into fields, regardless of whether
+        the application needs that service.
+    \item The return value is the number of fields on the line; each line
+        must be split to compute this value. There is also no way to
+        distinguish errors from end of file.
+    \item There is no way to change any of these properties without
+        changing the code.
+\end{itemize}
+
+This long yet incomplete list illustrates some of the possible design
+tradeoffs.  Each decision is woven through the code. That's fine for a
+quick job, like parsing one fixed format from a known source. But what if
+the format changes, or a comma appears within a quoted string, or the
+server produces a long line or a lot of fields?
+
+It may seem easy to cope (应付), since the "library" is small and only a
+prototype anyway. Imagine, however, that after sitting on the shelf
+(被搁置的) for a few months or years the code becomes part of a larger
+program whose specification changes over time. How will \verb'csvgetline'
+adapt? If that program is used by others, the quick choices made in the
+original design may spell (招致) trouble that surfaces years later. This
+scenario (情节) is representative of the history of many bad interfaces. It
+is a sad fact that a lot of quick and dirty code ends up in widely-used
+software, where it remains dirty and often not as quick as it should have
+been anyway.
