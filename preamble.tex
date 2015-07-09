@@ -4,7 +4,6 @@
 \documentclass[nofonts]{book}
 
 \usepackage{geometry}
-\usepackage{amsthm}
 \usepackage{fontspec}
 \usepackage{upquote}
 \usepackage{hyperref}
@@ -19,6 +18,7 @@
 \usepackage[Bjornstrup]{fncychap}
 \usepackage{titlesec}
 \usepackage{dingbat}
+\usepackage{theorem}
 
 % chapter style from Bjornstrup of fncychap
 \ChNumVar{\fontsize{76}{80}\usefont{OT1}{pzc}{m}{n}\selectfont}
@@ -79,22 +79,11 @@
 
 \renewcommand\emph[1]{{\bfseries\textit{#1}}}
 
-
-% exercise environemnt
-\newcounter{exercnt}[chapter]
-\renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
-\renewcommand\proofname{%
-    \stepcounter{exercnt}%
-        % \pencil from dingbat
-    {\Large\smallpencil}
-    \nopagebreak[0]
-    \textup{\textbf{Exercise\ \theexercnt}}
-}
-\newenvironment{exercise}
-{
-    \begin{proof}
-}
-{\end{proof}}
+% exercise environemnt based theorem
+\theoremstyle{plain}
+\theoremheaderfont{\bfseries}
+\theorembodyfont{\normalfont}
+\newtheorem{exercise}{{\Large\smallpencil}Exercise}[chapter]
 
 \renewcommand\theenumi{\alph{enumi}}
 
