@@ -469,3 +469,42 @@ and records the choices made.
 
 For our purposes, the specification would include function prototypes and a
 detailed prescription (命令) of behavior, responsibilities and assumptions:
+\begin{myitemize}
+\item Fields are separated by commas. \\
+    A field may be enclosed in double-quote characters "...". \\
+    A quoted field may contain commas but not newlines. \\
+    A quoted field may contain double-quote characters ", represented by
+    "".   \\
+    Fields may be empty; "" and an empty string both represent an empty
+    field. \\
+    Leading and trailing white space is preserved.
+\item \verb'char *csvgetline(FILE *f)';
+    \begin{myitemize}
+\item reads one line from open input file; assumes that input lines
+    are terminated by \verb'\r', \verb'\n', \verb'\r\n', or \verb'EOF'.
+\item returns pointer to line, with terminator removed, or \verb'NULL' if
+    \verb'EOF' occurred.
+\item line may be of arbitrary length; returns \verb'NULL' if memory
+    limit exceeded.
+\item line must be treated as read-only storage; caller must make a copy
+    to preserve or change contents.
+\end{myitemize}
+\item \verb'char *csvfield(int n)';
+\begin{myitemize}
+        \item fields are numbered from 0.
+        \item returns \verb'n'-th field from last line read by
+            \verb'csvgetline'; returns \verb'NULL' if \verb'n < 0' or
+            beyond last field.
+        \item fields are separated by commas.
+        \item fields may be surrounded by \verb'"..."'; such quotes are
+            removed; within \verb'"..."', \verb'""' is replaced by \verb'"'
+            and comma is not a separated.
+        \item in unquoted fields, quotes are regular characters.
+        \item there can be an arbitrary number of fields of any length;
+            returns \verb'NULL' if memory limit exceeded.
+        \item field must be treated as read-only storage; caller must make
+            a copy to preserve or change contents.
+        \item behavior undefined if called before \verb'csvgetline' is
+            called.
+\end{myitemize}
+\end{myitemize}

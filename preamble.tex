@@ -85,6 +85,12 @@
 \theorembodyfont{\normalfont}
 \newtheorem{exercise}{{\Large\smallpencil}Exercise}[chapter]
 
+% my itemize environemnt
+\newenvironment{myitemize}{%
+    \begin{list}{}{}
+}
+{\end{list}}
+
 \renewcommand\theenumi{\alph{enumi}}
 
 \title{The Practice of Programming}
