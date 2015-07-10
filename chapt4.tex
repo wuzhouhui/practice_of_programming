@@ -898,3 +898,228 @@ result of moving from prototype to production.
     string analogous to \verb'printf'.  Look at Chapter \ref{chap:notation}
     for some suggestions on notation.
 \end{exercise}
+
+\section{A C++ Implementation}
+\label{sec:a_c++_implementation}
+
+In this section we will write a C++ version of the CSV library to address
+some of the remaining limitations of the C version. This will entail (需要)
+some changes to the specification, of which the most important is that the
+functions will handle C++ strings instead of C character arrays. The use of
+C++ strings will automatically resolve some of the storage management
+issues, since the library functions will manage the memory for us. In
+particular, the field routines will return strings that can be modified by
+the caller, a more flexible design than the previous version.
+
+A class \verb'Csv' defines the public face, while neatly hiding the
+variables and functions of the implementation. Since a class object
+contains all the state for an instance, we can instantiate multiple
+\verb'Csv' variables; each is independent of the others so multiple CSV
+input streams can operate at the same time.
+\begin{wellcode}
+    class Csv { // read and parse Comma-separated values
+        // sample input: "LU",86.25,"11/4/1998","2:19PM",+4.0625
+        public:
+            Csv(istream& fin = cin, string sep = ","):
+                fin(fin), fieldsep(sep) {}
+
+            int getline(string&);
+            string getfield(int n);
+            int getnfield() const { return nfield; }
+
+        private:
+            istream& fin;           // input file pointer
+            string line;            // input line
+            vector<string> field;   // field strings
+            int nfield;             // number of fields
+            string fieldsep;        // separator characters
+
+            int split();
+            int endofline(char);
+            int advplain(const string& line, string& fld, int);
+            int advquoted(const string& line, string& fld, int);
+    };
+\end{wellcode}
+Default parameters for the constructor are defined so a default \verb'Csv'
+object will read from the standard input stream and use the normal field
+separator; either can be replaced with explicit values.
+
+To manage strings, the class uses the standard C++ \verb'string' and
+\verb'vector' classes rather than C-style strings. There is no non-existent
+state for a \verb'string: "empty"' means only that the length is zero, and
+there is no equivalent of \verb'NULL', so we can't use that as an end of
+file signal. Thus \verb'Csv::getline' returns the input line through an
+argument by reference, reserving the function value itself for end of file
+and error reports.
+\begin{wellcode}
+    // getline: get one line, grow as needed
+    int Csv::getline(string& str)
+    {
+        char    c;
+
+        for (line = ""; fin.get(c) && !endofline(c); )
+            line += c;
+        split();
+        str = line;
+        return !fin.eof();
+    }
+\end{wellcode}
+The \verb'+=' operator is overloaded to append a character to a string.
+
+Minor changes are needed in \verb'endofline'. Again, we have to read the
+input a character at a time, since none of the standard input routines can
+handle the variety of inputs.
+\begin{wellcode}
+    // endofline: check for and consume \r, \n, \r\n, or EOF
+    int Csv::endofline(char c)
+    {
+        int eol;
+
+        eol = (c == '\r' || c == '\n');
+        if (c == '\r') {
+            fin.get(c);
+            if (!fin.eof() && c != '\n')
+                fin.putback(c); // read too far
+        }
+        return eol;
+    }
+\end{wellcode}
+Here is the new version of \verb'split':
+\begin{wellcode}
+    // split: split line into fields
+    int Csv::split()
+    {
+        string  fld;
+        int     i, j;
+
+        nfield = 0;
+        if (line.length() == 0)
+            return 0;
+        i = 0;
+
+        do {
+            if (i < line.length() && line[i] == '"')
+                j = advquoted(line, fld, ++i);  // skip quote
+            else
+                j = advplain(line, fld, i);
+            if (nfield >= field.size())
+                field.push_back(fld);
+            else
+                field[nfield] = fld;
+            nfield++;
+            i = j + 1;
+        } while (j < line.length());
+        return nfield;
+    }
+\end{wellcode}
+
+Since \verb'strcspn' doesn't work on C++ strings, we must change both
+\verb'split' and \verb'advquoted'. The new version of \verb'advquoted' uses
+the C++ standard function \verb'find_first_of' to locate the next
+occurrence of a separator character. The call
+\verb's.find_first_of(fieldsep, j)' searches the string \verb's' for the
+first instance of any character in \verb'fieldsep' that occurs at or after
+position \verb'j'. If it fails to find an instance, it returns an index
+beyond the end of the string, so we must bring it back within range.  The
+inner \verb'for' loop that follows appends characters up to the separator
+to the field being accumulated in \verb'fld'.
+\begin{wellcode}
+    // advquoted: quoted field; return index of next separator
+    int Csv::advquoted(const string& s, string& fld, int i)
+    {
+        int j;
+
+        fld = "";
+        for (j = i; j < s.length(); j++) {
+            if (s[j] == '"' && s[++j] != '"') {
+                int k = s.find_first_of(fieldsep, j);
+                if (k > s.length()) // no separator found
+                    k = s.length();
+                for (k -= j; k-- > 0; )
+                    fld += s[j++];
+                break;
+            }
+            fld += s[j];
+        }
+        return j;
+    }
+\end{wellcode}
+
+The function \verb'find_first_of' is also used i n a new function
+\verb'advplain', which advances over a plain unquoted field. Again, this
+change is required because C string functions like \verb'strcspn' cannot be
+applied to C++ strings, which are an entirely different data type.
+\begin{wellcode}
+    // advplain: unquoted field; return index of next separator
+    int Csv::advplain(const string& s, string& fld, int i)
+    {
+        int j;
+
+        j = s.find_first_of(fieldsep, i);   // book for separator
+        if (j > s.length())
+            j = s.length();
+        fld = string(s, i, j-i);
+        return j;
+    }
+\end{wellcode}
+
+As before, \verb'Csv::getfield' is trivial, while \verb'Csv::getnfield' is
+so short that it is implemented in the class definition.
+\begin{wellcode}
+    // getfield: return n-th field
+    string Csv::getfield(int n)
+    {
+        if (n < 0 || n >= nfield)
+            return "";
+        else
+            return field[n];
+    }
+\end{wellcode}
+
+Our test program is a simple variant of the earlier one:
+\begin{wellcode}
+    // Csvtest main: test Csv class
+    int main(void)
+    {
+        string  line;
+        Csv     csv;
+
+        while (csv.getline(line) != 0) {
+            cout << "line = '" << line << "'\n";
+            for (int i = 0; i < csv.getnfield(); i++)
+                cout << "field[" << i << "] = '"
+                    << csv.getfield(i) << "'\n";
+        }
+        return 0;
+    }
+\end{wellcode}
+
+The usage is different than with the C version, though only in a minor way.
+Depending on the compiler, the C++ version is anywhere from 40 percent to
+four times slower than the C version on a large input file of 30,000 lines
+with about 25 fields per line. As we saw when comparing versions of
+\verb'markov', this variability is a reflection on library maturity
+(成熟度). The C++ source program is about 20 percent shorter.
+
+\begin{exercise}
+    Enhance the C++ implementation to overload subscripting with operator
+    \verb'[]' so that fields can be accessed as \verb'csv[i]'.
+\end{exercise}
+
+\begin{exercise}
+    Write a Java version of the CSV library, then compare the three
+    implementations for clarity, robustness, and speed.
+\end{exercise}
+
+\begin{exercise}
+    Repackage the C++ version of the CSV code as an STL iterator.
+\end{exercise}
+
+\begin{exercise}
+    The C++ version permits multiple independent \verb'Csv' instances to
+    operate concurrently without interfering, a benefit of encapsulating
+    all the state in an object that can be instantiated multiple times.
+    Modify the C version to achieve the same effect by replacing the global
+    data structures with structures that are allocated and initialized by
+    an explicit \verb'csvnew' function.
+\end{exercise}
