@@ -507,4 +507,394 @@ detailed prescription (命令) of behavior, responsibilities and assumptions:
         \item behavior undefined if called before \verb'csvgetline' is
             called.
 \end{myitemize}
+\item \verb'int csvnfield(void)';
+\begin{myitemize}
+        \item returns number of fields on last line read by
+        \verb'csvgetlien'.
+        \item behavior undefined if called before \verb'csvgetline' is
+            called.
 \end{myitemize}
+\end{myitemize}
+
+This specification still leaves open questions. For example, what values
+should be returned by \verb'csvfield' and \verb'csvnfield' if they are
+called after \verb'csvgetline' has encountered \verb'EOF'? How should
+ill-formed fields be handled? Nailing down all such puzzles is difficult
+even for a tiny system, and very challenging for a large one, though it is
+important to try. One often doesn't discover oversights (失察) and
+omissions (遗漏) until implementation is underway.
+
+The rest of this section contains a new implementation of \verb'csvgetline'
+that matches the specification. The library is broken into two files, a
+header \verb'csv.h' that contains the function declarations that represent
+the public part of the interface, and an implementation file \verb'csv.c'
+that contains the code. Users include \verb'csv.h' in their source code and
+link their compiled code with the compiled version of \verb'csv.c'; the
+source need never be visible.
+
+Here is the header file:
+\begin{wellcode}
+    /* csv.h: interface for csv library */
+    extern char *csvgetline(FILE *f);   /* read next input line */
+    extern char *csvfield(int n);       /* return field n */
+    extern int  csvnfield(void);        /* return number of fields */
+\end{wellcode}
+
+The internal variables that store text and the internal functions like
+\verb'split' are declared \verb'static' so they are visible only within the
+file that contains them.  This is the simplest way to hide information in a
+C program.
+\begin{wellcode}
+    enum { NOMEM = -2 };            /* out of memory signal */
+
+    static char *line       = NULL; /* input chars */
+    static char *sline      = NULL; /* line copy used by split */
+    static int  maxline     = 0;    /* size of line[] and sline[] */
+    static char **field     = NULL; /* field pointers */
+    static int  maxfield    = 0;    /* size of field[] */
+    static int  nfield      = 0;    /* number of fields in field[] */
+
+    static char fieldsep[]  = ",";  /* field separator chars */
+\end{wellcode}
+The variables are initialized statically as well. These initial values are
+used to test whether to create or grow arrays.
+
+These declarations describe a simple data structure. The \verb'line' array
+holds the input line; the \verb'sline' array is created by copying
+characters from \verb'line' and terminating each field. The \verb'field'
+array points to entries in \verb'sline'. This diagram shows the state of
+these three arrays after the input line \verb'ab,"cd","e""f",,"g,h"' has
+been processed. Shaded elements in \verb'sline' are not part of any field.
+\\
+% TODO: "shaded elements" mentioned in above.
+\begin{center}
+    \begin{tikzpicture}
+        \pgfmathsetmacro\width{0.5};
+        \pgfmathsetmacro\height{1.0};
+        \pgfmathsetmacro\dist{1.5};
+
+        \node at (0, \height/2) {\texttt{field}};
+        \node at (0, \height/2 + \dist) {\texttt{sline}};
+        \node at (0, \height/2 + 2*\dist) {\texttt{line}};
+
+        \draw (\dist, \dist) -- (\dist + 21*\width, \dist);
+        \draw (\dist, \dist + \height) -- (\dist + 21*\width,
+        \dist + \height);
+        \draw (\dist, 2*\dist) -- (\dist + 21*\width, 2*\dist);
+        \draw (\dist, 2*\dist + \height) -- (\dist + 21*\width,
+        2*\dist + \height);
+
+        \newcounter{i};
+        \setcounter{i}{0};
+        \foreach \ind/\data in { 0/\texttt{a}, 1/\texttt{b},
+            2/\texttt{,}, 3/\texttt{"}, 4/\texttt{c},
+            5/\texttt{d}, 6/\texttt{"}, 7/\texttt{,}, 8/\texttt{"},
+            9/\texttt{e}, 10/\texttt{"}, 11/\texttt{"}, 12/\texttt{f},
+            13/\texttt{"}, 14/\texttt{,}, 15/\texttt{,}, 16/\texttt{"},
+            17/\texttt{g}, 18/\texttt{,}, 19/\texttt{h}, 20/\texttt{"}
+        } {
+
+            \node at (\arabic{i} * \width + \dist + \width / 2, 2 * \dist +
+            \height / 2) {\data};
+            \draw (\arabic{i} * \width + \dist, 2*\dist) --
+            (\arabic{i} * \width + \dist, 2 * \dist + \height);
+            \addtocounter{i}{1};
+        }
+        \draw (\arabic{i} * \width + \dist, 2*\dist) --
+        (\arabic{i} * \width + \dist, 2 * \dist + \height);
+
+        \setcounter{i}{0};
+        \foreach \ind/\data in { 0/\texttt{a}, 1/\texttt{b},
+            2/\texttt{\textbackslash0}, 3/\texttt{"}, 4/\texttt{c},
+            5/\texttt{d}, 6/\texttt{\textbackslash0},
+            7/\texttt{\textbackslash0}, 8/\texttt{"}, 9/\texttt{e},
+            10/\texttt{"}, 11/\texttt{f}, 12/\texttt{\textbackslash0},
+            13/\texttt{"}, 14/\texttt{\textbackslash0},
+            15/\texttt{\textbackslash0}, 16/\texttt{"}, 17/\texttt{g},
+            18/\texttt{,}, 19/\texttt{h}, 20/\texttt{\textbackslash0}
+        } {
+
+            \node at (\arabic{i} * \width + \dist + \width / 2, \dist +
+            \height / 2) {\data};
+            \draw (\arabic{i} * \width + \dist, \dist) --
+            (\arabic{i} * \width + \dist, \dist + \height);
+            \addtocounter{i}{1};
+        }
+        \draw (\arabic{i} * \width + \dist, \dist) --
+        (\arabic{i} * \width + \dist, \dist + \height);
+
+        \node at (\width / 2 + \dist, \height / 2) {\texttt{0}};
+        \node at (4 * \width + \width / 2 + \dist, \height / 2)
+        {\texttt{1}};
+        \node at (9 * \width + \width / 2 + \dist, \height / 2)
+        {\texttt{2}};
+        \node at (15 * \width + \width / 2 + \dist, \height / 2)
+        {\texttt{3}};
+        \node at (17 * \width + \width / 2 + \dist, \height / 2)
+        {\texttt{4}};
+
+        \draw[thick, ->] (\width / 2 + \dist, \height / 2 + 0.3) -- (\width
+        / 2 + \dist, \dist);
+
+        \draw[thick, ->] (4 * \width + \width / 2 + \dist, \height / 2 +
+        0.3) -- (4 * \width + \width / 2 + \dist, \dist);
+
+        \draw[thick, ->] (9 * \width + \width / 2 + \dist, \height / 2 +
+        0.3) -- (9 * \width + \width / 2 + \dist, \dist);
+
+        \draw[thick, ->] (15 * \width + \width / 2 + \dist, \height / 2 +
+        0.3) -- (15 * \width + \width / 2 + \dist, \dist);
+
+        \draw[thick, ->] (17 * \width + \width / 2 + \dist, \height / 2 +
+        0.3) -- (17 * \width + \width / 2 + \dist, \dist);
+
+    \end{tikzpicture}
+\end{center}
+
+Here is the function \verb'csvgetline' itself:
+\begin{wellcode}
+    /* csvgetline: get one line, grow as needed */
+    /* sample input: "LU",86,25,"11/4/1998","2:19PM",+4.0625 */
+    char *csvgetline(FILE *fin)
+    {
+        int     i, c;
+        char    *newl, *news;
+
+        if (line == NULL) {     /* allocate on first call */
+            maxline = maxfield = 1;
+            line = (char *)malloc(maxline);
+            sline = (char *)malloc(maxline);
+            field = (char **)malloc(maxfield * sizeof(field[0]));
+            if (line == NULL || sline == NULL || field == NULL) {
+                reset();
+                return NULL;    /* out of memory */
+            }
+        }
+        for (i = 0; (c=getc(fin)) != EOF && !endofline(fin, c); i++) {
+            if (i >= maxline - 1) { /* grow line */
+                maxline *= 2;       /* double current size */
+                newl = (char *)realloc(line, maxline);
+                news = (char *)realloc(sline, maxline);
+                if (newl == NULL || news == NULL) {
+                    reset();
+                    return NULL;    /* out of memory */
+                }
+                line = newl;
+                sline = news;
+            }
+            line[i] = c;
+        }
+        line[i] = '\0';
+        if (split() == NOMEM) {
+            reset();
+            return NULL;    /* out of memory */
+        }
+        return (c == EOF && i == 0) ? NULL : line;
+    }
+\end{wellcode}
+An incoming line is accumulated in \verb'line', which is grown as necessary
+by a call to \verb'realloc'; the size is doubled on each growth, as in
+Section \ref{sec:growing_arrays}. The \verb'sline' array is kept the same
+size as \verb'line'; \verb'csvgetline' calls \verb'split' to create the
+field pointers in a separated array \verb'field', which is also grown as
+needed.
+
+As is our custom, we start the arrays very small and grow them on demand,
+to guarantee that the array-growing code is exercised. If allocation fails,
+we call \verb'reset' to restore the globals to their starting state, so a
+subsequent call to \verb'csvgetline' has a chance of succeeding:
+\begin{wellcode}
+    static void reset(void)
+    {
+        free(line); /* free(NULL) permitted by ANSI C */
+        free(sline);
+        free(field);
+        line = NULL;
+        sline = NULL;
+        field = NULL;
+        maxline = maxfield = nfield = 0;
+    }
+\end{wellcode}
+
+The \verb'endofline' function handles the problem that an input line may be
+terminated by a carriage return, a newline, both, or even \verb'EOF':
+\begin{wellcode}
+    /* endofline: check for and consume \r, \n, \r\n, or EOF */
+    static int endofline(FILE *fin, int c)
+    {
+        int eol;
+
+        eol = (c == '\r' || c == '\n');
+        if (c == '\r') {
+            c = getc(fin);
+            if (c != '\n' && c != EOF)
+                ungetc(c, fin); /* read too far; put c back */
+        }
+        return eol;
+    }
+\end{wellcode}
+A separate function is necessary, since the standard input functions do not
+handle the rich variety of perverse formats encountered in real inputs.
+
+Our prototype used \verb'strtok' to find the next token by searching for a
+separator character, normally a comma, but this made it impossible to
+handle quoted commas.  A major change in the implementation of \verb'split'
+is necessary, though its interface need not change. Consider these input
+lines:
+\begin{wellcode}
+    "",,""
+    ,"",
+    ,,
+\end{wellcode}
+
+Each line has three empty fields. Making sure that \verb'split' parses them
+and other odd (古怪的) inputs correctly complicates it significantly, an
+example of how special cases and boundary conditions can come to dominate a
+program.
+\begin{wellcode}
+    /* split: split line into fields */
+    static int split(void)
+    {
+        char    *p, **newf;
+        char    *sepp;  /* pointer to temporary separator character */
+        int     sepc;   /* temporary separator character */
+
+        nfield = 0;
+        if (line[0] == '\0')
+            return 0;
+        strcpy(sline, line);
+        p = sline;
+
+        do {
+            if (nfield >= maxfield) {
+                maxfield *= 2;  /* double current size */
+                newf = (char **)realloc(field,
+                        maxfield * sizeof(field[0]));
+                if (newf == NULL)
+                    return NOMEM;
+                field = newf;
+            }
+            if (*p == '"')
+                sepp = advquoted(++p);  /* skip initial quote */
+            else
+                sepp = p + strcspn(p, fieldsep);
+            sepc = sepp[0];
+            sepp[0] = '\0'; /* terminate field */
+            field[nfield++] = p;
+            p = sepp + 1;
+        } while (sepc == ',');
+
+        return nfield;
+    }
+\end{wellcode}
+The loop grows the array of field pointers if necessary, then calls one of
+two other functions to locate and process the next field. If the field
+begins with a quote, \verb'advquoted' finds the field and returns a pointer
+to the separator that ends the field.  Otherwise, to find the next comma we
+use the library function \verb'strcspn(p, s)', which searches a string
+\verb'p' for the next occurrence of any character in string \verb's'; it
+returns the number of characters skipped over.
+
+Quotes within a field are represented by two adjacent quotes, so
+\verb'advquoted' squeezes those into a single one; it also removes the
+quotes that surround the field.  Some complexity is added by an attempt to
+cope with plausible (貌似合理的) inputs that don't match the specification,
+such as \verb'"abc"def'. In such cases, we append whatever follows the
+second quote until the next separator as part of this field.  Microsoft
+Excel appears to use a similar algorithm.
+\begin{wellcode}
+    /* advquoted: quoted field; return pointer to next separator */
+    static char *advquoted(char *p)
+    {
+        int i, j;
+
+        for (i = j = 0; p[j] != '\0'; i++, j++) {
+            if (p[j] == '"' && p[++j] != '"') {
+                /* copy up to next separator or \0 */
+                int k = strcspn(p+j, fieldsep);
+                memmove(p+i, p+j, k);
+                i += k;
+                j += k;
+                break;
+            }
+            p[i] = p[j];
+        }
+        p[i] = '\0';
+        return p + j;
+    }
+\end{wellcode}
+
+Since the input line is already split, \verb'csvfield' and \verb'csvnfield'
+are trivial (琐细的).
+\begin{wellcode}
+    /* csvfield: return pointer to n-th field */
+    char *csvfield(int n)
+    {
+        if (n < 0 || n >= nfield)
+            return NULL;
+        return field[n];
+    }
+
+    /* csvnfield: return number of fields */
+    int csvnfield(void)
+    {
+        return nfield;
+    }
+\end{wellcode}
+
+Finally, we can modify the test driver to exercise this version of the
+library; since it keeps a copy of the input line, which the prototype does
+not, it can print the original line before printing the fields:
+\begin{wellcode}
+    /* csvtest main: test CSV library */
+    int main(void)
+    {
+        int     i;
+        char    *line;
+
+        while ((line = csvgetline(stdin)) != NULL) {
+            printf("line = '%s'\n", line);
+            for (i = 0; i < csvnfield(); i++)
+                printf("field[%d] = '%s'\n", i, csvfield(i));
+        }
+        return 0;
+    }
+\end{wellcode}
+
+This completes our C version. It handles arbitrarily large inputs and does
+something sensible even with perverse (歪曲的) data. The price is that it
+is more than four times as long as the first prototype and some of the code
+is intricate (复杂的). Such expansion of size and complexity is a typical
+result of moving from prototype to production.
+
+\begin{exercise}
+    There are several degrees of laziness for field-splitting; among the
+    possibilities are to split all at once but only when some field is
+    requested, to split only the field requested, or to split up to the
+    field requested. Enumerate possibilities, assess their potential
+    difficulty and benefits, then write them and measure their speeds.
+\end{exercise}
+
+\begin{exercise}
+    Add a facility so separators can be changed (a) to an arbitrary class
+    of characters; (b) to different separators for different fields; (c) to
+    a regular expression (see Chapter \ref{chap:notation}). What should the
+    interface look like?
+\end{exercise}
+
+\begin{exercise}
+    We chose to use the static initialization provided by C as the basis of
+    a one-time switch: if a pointer is \verb'NULL' on entry, initialization
+    is performed. Another possibility is to require the user to call an
+    explicit initialization function, which could include suggested initial
+    sizes for arrays. Implement a version that combines the best of both.
+    What is the role of \verb'reset' in your implementation ?
+\end{exercise}
+
+\begin{exercise}
+    Design and implement a library for creating CSV-formatted data. The
+    simplest version might take an array of strings and print them with
+    quotes and commas. A more sophisticated version might use a format
+    string analogous to \verb'printf'.  Look at Chapter \ref{chap:notation}
+    for some suggestions on notation.
+\end{exercise}
