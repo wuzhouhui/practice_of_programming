@@ -3,7 +3,7 @@
 \label{chap:desipl}
 \begin{quote}
     Show me your flowcharts and conceal your tables, and I shall continue
-    to be mystijied. Show me your tables, and I won't usually need your
+    to be mystified. Show me your tables, and I won't usually need your
     flowcharts; they'll be obvious.
 \end{quote}
 
@@ -25,7 +25,7 @@ that follows is straightforward once we have the data structures mapped out.
 
 One aspect of this point of view is that the choice of programming Language
 is relatively unimportant to the overall design. We will design the
-program in the abstract and then write it in C, Java, C++, Awk, and perl.
+program in the abstract and then write it in C, Java, C++, Awk, and Perl.
 Comparing the implementations demonstrates how languages can help or
 hinder, and ways in which they are unimportant. Program design can
 certainly be colored by a language but is not usually dominated by it.
@@ -121,7 +121,7 @@ algorithm to generate new text based on the frequency of appearance of
 phrases of a fixed length. The number of words in the prefix, which is two
 in our example, is a parameter. Making the prefix shorter tends to produce
 less coherent prose; making it longer tends to reproduce the input text
-varbatim. For English text, using two words to select a third is a good
+verbatim. For English text, using two words to select a third is a good
 compromise; it seems to recreate the flavor of the input while adding its
 own whimsical touch.
 
@@ -129,9 +129,28 @@ What is a word? The obvious answer is a sequence of alphabetic characters,
 but it is desirable to leave punctuation attached to the words so
 \textit{"words"} and \textit{"words."} are different. This helps to improve
 the quality of the generated prose by letting punctuation, and
-therefore(indirectly)grammar, influence the word choice, althought it also
+therefore(indirectly)grammar, influence the word choice, although it also
 permits unbalanced quotes and parentheses to sneak in. We will therefore
 define a "word" as anything between white space, a decision that places no
 \textit{restriction} on input language and leaves punctuation attached to
 the words. Since most programming languages have facilities to split text
-into white-space-sepatated words, this is also e
+into white-space-separated words, this is also easy to impelement.
+
+Because of the method, all words, all two-word phrases, and all three-word
+phrases in the output must have appeared in the input, but there should be
+many four-word and longer phrases that are synthesized. Here are a few sentences
+produced by
+the program we will develop in this chapter, when given the text of Chapter
+VII of
+\bookname{The Sun Also Rises} by Ernest Hemingway:
+\begin{oldquote}
+    As I started up the undershirt onto his chest black, and big stomach
+    muscles bulging under the light. "You see them?" Below the line where
+    his ribs stopped were two raised white welts. "See on the forehead."
+    "Oh, Brett, I love you." "Let's not talk. Talking's all bilge. I'm
+    going away tomorrow." "Tomorrow?" "Yes. Didn't I say so? I am." "Let's
+    have a drink, then."
+\end{oldquote}
+
+We were lucky here that punctuation (标点符号) came out correctly; that
+need not happen.
