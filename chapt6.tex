@@ -3,14 +3,12 @@
 \label{chap:testing}
 \begin{quote}
     In ordinary computational practice by hand or by desk
-% XXX The hyperlink of footnote doesn't response when click.
     mtichines\footnote{Unrecognized word}, it is the custom to check every
     step of the computation and, when an error is found, to localize it by
     a backward process starting from the first point where the error is
     noted.
 \end{quote}
 \begin{quotesrc}
-% XXX The hyperlink of footnote doesn't response when click.
     Norbert Wiener, \bookname{Cybernetics}\footnote{控制论.}
 \end{quotesrc}
 
@@ -329,3 +327,1035 @@ fragile because your refreshed understanding is likely to be incomplete.
             correctly?
     \end{enumerate}
 \end{exercise}
+
+\section{Systematic Testing}
+\label{sec:systematic_testing}
+
+It's important to test a program systematically so you know at each step
+what you are testing and what results you expect. You need to be orderly so
+you don't overlook (忽略) anything, and you must keep records so you know
+how much you have done.
+
+\emph{Test incrementally.} Testing should go hand in hand (联合) with
+program construction. A "big bang" (大撞击) where one writes the whole
+program, then tests it all at once, is much harder and more time-consuming
+than an incremental approach. Write part of a program, test it, add some
+more code, test that, and so on. If you have two packages that have been
+written and tested independently, test that they work together when you
+finally connect them.
+
+For instance, when we were testing the CSV programs in Chapter
+\ref{chap:interface}, the first step was to write just enough code to read
+the input; this let us validate input processing.  The next step was to
+split input lines at commas. Once these parts were working, we moved on to
+fields with quotes, and then gradually worked up to testing everything.
+
+\emph{Test simple parts first.} The incremental approach also applies to
+how you test features. Tests should focus first on the simplest and most
+commonly executed features of a program; only when those are working
+properly should you move on. This way, at each stage, you expose more to
+testing and build confidence that basic mechanisms are working correctly.
+Easy tests find the easy bugs. Each test does the minimum to ferret out
+(查获) the next potential problem. Although each bug is harder to trigger
+than its predecessor, it is not necessarily harder to fix.
+
+In this section, we'll talk about ways to choose effective tests and in
+what order to apply them; in the next two sections, we'll talk about how to
+mechanize (使机械化) the process so that it can be carried out efficiently.
+The first step, at least for small programs or individual functions, is an
+extension of the boundary condition testing that we described in the
+previous section: systematic testing of small cases.
+
+Suppose we have a function that performs binary search in an array of
+integers.  We would begin with these tests, arranged in order of increasing
+complexity:
+\begin{itemize}
+    \item search an array with noelements
+    \item search an array with one element and a trial (试验的) value this
+        is
+        \begin{itemize}
+            \item less than the single element in the array
+            \item equal to the single element
+            \item greater than the single element
+        \end{itemize}
+    \item search an array with two elements and trial values that
+        \begin{itemize}
+            \item check all five possible positions
+        \end{itemize}
+    \item check behavior with duplicate elements in the array and trial
+        values
+        \begin{itemize}
+            \item less than the value in the array
+            \item equal to the value
+            \item greater than the value
+        \end{itemize}
+    \item search an array with three elements as with two elements
+    \item search an array with four elements as with two and three
+\end{itemize}
+If the function gets past this unscathed (未受损伤的), it's likely to be in
+good shape, but it could still be tested further.
+
+This set of tests is small enough to perform by hand, but it is better to
+create a test scaffold (脚手架) to mechanize the process. The following
+driver program is about as simple as we can manage. It reads input lines
+that contain a key to search for and an array size; it creates an array of
+that size containing values \verb'1, 3, 5, ...', and it searches the array
+for the key.
+\begin{wellcode}
+    /* bintest main: scaffold for testing binsearch */
+    int main(void)
+    {
+        int i, key, nelem, arr[1000];
+
+        while (scanf("%d %d", &key, &nelem) != EOF) {
+            for (i = 0; i < nelem; i++)
+                arr[i] = 2 * i + 1;
+            printf("%d\n", binsearch(key, arr, nelem));
+        }
+        return 0;
+    }
+\end{wellcode}
+This is simpleminded but it shows that a useful test scaffold need not be
+big, and it is easily extended to perform more of these tests and require
+less manual intervention (介入).
+
+\emph{Know what output to expect.} For all tests, it's necessary to know
+what the right answer is; if you don't, you're wasting your time. This
+might seem obvious, since for many programs it's easy to tell whether the
+program is working. For example, either a copy of a tile (瓦片) is a copy
+or it isn't. The output from a sort is sorted or it isn't; it must also be
+a permutation (排列) of the original input.
+
+Most programs are more difficult to characterize (描绘特性) -- compilers
+(does the output properly translate the input?), numerical algorithms (is
+the answer within error tolerance?), graphics (are the pixels in the right
+places?), and so on. For these, it's especially important to validate the
+output by comparing it with known values.
+\begin{itemize}
+    \item To test a compiler, compile and run the test files. The test
+        programs should in turn generate output, and their results should
+        be compared to known ones.
+    \item To test a numerical program, generate test cases that explore the
+        edges of the algorithm, trivial (琐细的) cases as well as hard
+        ones. Where possible, write code that verifies that output
+        properties are sane (合理的). For example, the output of a
+        numerical integrator can be tested for continuity (连续性), and for
+        agreement with closed-form (封闭形式) solutions.
+    \item To test a graphics program, it's not enough to see if it can draw
+        a box; instead read the box back from the screen and check that its
+        edges are exactly where they should be.
+\end{itemize}
+
+If the program has an inverse (相反的), check that its application recovers
+the input.  Encryption and decryption are inverses, so if you encrypt
+something and can't decrypt it, something is wrong. Similarly, lossless
+compression and expansion algorithms should be inverses. Programs that
+bundle (打包) files together should extract them unchanged. Sometimes there
+are multiple methods for inversion: check all combinations.
+
+\emph{Verify conservation (保存) properties.} Many programs preserve some
+property of their inputs. Tools like \texttt{wc} (count lines, words, and
+characters) and \texttt{sum} (compute a checksum) can verify that outputs
+are of the same size, have the same number of words, contain the same bytes
+in some order, and the like. Other programs compare files for identity
+(\texttt{cmp}) or report differences (\texttt{diff}). These programs or
+similar ones are readily (轻易的) available for most environments, and are
+well worth acquiring.
+
+A byte-frequency program can be used to check for conservation of data and
+also to spot anomalies (反常) like non-text characters in supposedly
+text-only files; here's a version that we call \texttt{freq}:
+\begin{wellcode}
+    #include <stdio.h>
+    #include <ctype.h>
+    #include <limits.h>
+
+    unsigned long count[UCHAR_MAX+1];
+
+    /* freq main: display byte frequency counts */
+    int main(void)
+    {
+        int c;
+
+        while ((c = getchar()) != EOF)
+            count[c]++;
+        for (c = 0; c <= UCHAR_MAX; c++)
+            if (count[c] != 0)
+                printf("%.2x %c %lu\n",
+                        c, isprint(c) ? c : '-', count[c]);
+        return 0;
+    }
+\end{wellcode}
+
+Conservation properties can be verified within a program, too. A function
+that counts the elements in a data structure provides a trivial (平常的)
+consistency check. A hash table should have the property that every element
+inserted into it can be retrieved.  This condition is easy to check with a
+function that dumps the contents of the table into a file or an array. At
+any time, the number of insertions into a data structure minus the number
+of deletions must equal the number of elements contained, a condition that
+is easy to verify.
+
+\emph{Compare independent implementations.} Independent implementations of
+a library or program should produce the same answers. For example, two
+compilers should produce programs that behave the same way on the same
+machine, at least in most situations.
+
+Sometimes an answer can be computed in two different ways, or you might be
+able to write a trivial version of a program to use as a slow but
+independent comparison. If two unrelated programs get the same answers,
+there is a good chance that they are correct; if they get different
+answers, at least one is wrong.
+
+One of the authors once worked with another person on a compiler for a new
+machine. The work of debugging the code generated by the compiler was
+split: one person wrote the software that encoded instructions for the
+target machine, and the other wrote the disassembler for the debugger. This
+meant that any error of interpretation or implementation of the instruction
+set was unlikely to be duplicated between the two components. When the
+compiler miscoded an instruction, the disassembler was sure to notice. All
+the early output of the compiler was run through the disassembler and
+verified against the compiler's own debugging printouts. This strategy
+worked very well in practice, instantly catching mistakes in both pieces.
+The only difficult, protracted (拖延的) debugging occurred when both people
+interpreted an ambiguous phrase in the architecture description in the same
+incorrect way.
+
+\emph{Measure test coverage (覆盖范围).} One goal of testing is to make
+sure that every statement of a program has been executed sometime during
+the sequence of tests; testing cannot be considered complete unless every
+line of the program has been exercised by at least one test. Complete
+coverage is often quite difficult to achieve. Even leaving aside "can't
+happen" statements, it is hard to use normal inputs to force a program to
+go through particular statements.
+
+There are commercial tools for measuring coverage. Profilers (探查程序),
+often included as part of compiler suites, provide a way to compute a
+statement frequency count for each program statement that indicates the
+coverage achieved by specific tests.
+
+We tested the \texttt{Markov} program of Chapter \ref{chap:desipl} with a
+combination of these techniques. The last section of this chapter describes
+those tests in detail.
+
+\begin{exercise}
+    Describe how you would test \texttt{freq}.
+\end{exercise}
+
+\begin{exercise}
+    Design and implement a version of \texttt{freq} that measures the
+    frequencies of other types of data values, such as 32-bit integers or
+    floating-point numbers. Can you make one version of the program handle
+    a variety of types elegantly?
+\end{exercise}
+
+\section{Test Automation}
+\label{sec:test_automation}
+
+It's tedious and unreliable to do much testing by hand; proper testing
+involves lots of tests, lots of inputs, and lots of comparisons of outputs.
+Testing should therefore be done by programs, which don't get tired or
+careless. It's worth taking the time to write a script or trivial program
+that encapsulates all the tests, so a complete test suite can be run by
+(literally (从字面上) or figuratively (比喻)) pushing a single button. The
+easier a test suite is to run, the more often you'll run it and the less
+likely you'll skip it when time is short. We wrote a test suite that
+verifies all the programs we wrote for this book, and ran it every time we
+made changes; parts of the suite ran automatically after each successful
+compilation.
+
+\emph{Automate regression testing.} The most basic form of automation is
+regression testing, which performs a sequence of tests that compare the new
+version of something with the previous version. When fixing problems,
+there's a natural tendency to check only that the fix works; it's easy to
+overlook the possibility that the fix broke something else. The intent of
+regression testing is to make sure that the behavior hasn't changed except
+in expected ways.
+
+Some systems are rich in tools that help with such automation; scripting
+languages allow us to write short scripts to run test sequences. On Unix,
+file comparators like \texttt{diff} and \texttt{cmp} compare outputs;
+\texttt{sort} brings common elements together; \texttt{grep} filters test
+outputs; \texttt{wc}, \texttt{sum}, and \texttt{freq} summarize outputs.
+Together, these make it easy to create ad hoc (特别定制地) test scaffolds,
+maybe not enough for large programs but entirely adequate for a program
+maintained by an individual or a small group.
+
+Here is a script for regression testing a killer application program called
+\texttt{ka}. It runs the old version (\verb'old_ka') and the new version
+(\verb'new_ka') for a large number of different test data files, and
+complains about each one for which the outputs are not identical. It is
+written for a Unix shell but could easily be transcribed to Perl or other
+scripting language:
+\begin{wellcode}
+    for i in ka_data.*              # loop over test data files
+    do
+        old_ka $i > out1            # run the old version
+        new_ka $i > out2            # run the new version
+        if ! cmp -s out1 out2       # compare output files
+        then
+            echo $BAD               # different: print error message
+        fi
+    done
+\end{wellcode}
+
+A test script should usually run silently, producing output only if
+something unexpected occurs, as this one does. We could instead choose to
+print each file name as it is being tested, and to follow it with an error
+message if something goes wrong. Such indications of progress help to
+identify problems like an infinite loop or a test script that is failing to
+run the right tests, but the extra chatter (喋喋不休) is annoying if the
+tests are running properly.
+
+The \texttt{-s} argument causes \texttt{cmp} to report status but produce
+no output. If the files compare equal, \texttt{cmp} returns a true status,
+\texttt{!cmp} is false, and nothing is printed. If the old and new outputs
+differ, however, \texttt{cmp} returns false and the file name and a warning
+are printed.
+
+There is an implicit assumption in regression testing that the previous
+version of the program computes the right answer. This must be carefully
+checked at the beginning of time, and the invariant (不变的) scrupulously
+(审慎地) maintained. If an erroneous answer ever sneaks (偷偷地) into a
+regression test, it's very hard to detect and everything that depends on it
+will be wrong thereafter (其后). It's good practice to check the regression
+test itself periodically to make sure it is still valid.
+
+\emph{Create self-contained tests.} Self-contained tests that carry their
+own inputs and expected outputs provide a complement (补充) to regression
+tests. Our experience testing Awk may be instructive (有益的). Many
+language constructions are tested by running specified inputs through tiny
+programs and checking that the right output is produced. The following part
+of a large collection of miscellaneous tests verifies one tricky (狡猾的)
+increment expression. This test runs the new version of Awk
+(\texttt{newawk}) on a short Awk program to produce output in one file,
+writes the correct output to another file with \texttt{echo}, compares the
+files, and reports an error if they differ.
+\begin{wellcode}
+    # field increment test: $i++ means ($i)++, not $(i++)
+
+    echo 3 5 | newawk '{i = 1; print $i++; print $1, i}' > out1
+    echo '3
+    4 1' > out2     # correct answer
+    if ! cmp -s out1 out2   # outputs are different
+    then
+        echo 'BAD: field increment test failed'
+    fi
+\end{wellcode}
+The first comment is part of the test input; it documents what the test if
+testing.
+
+Sometimes it is possible to construct a large number of tests with modest
+effort. For simple expressions, we created a small, specialized language
+for describing tests, input data, and expected outputs. Here is a short
+sequence that tests some of the ways that the numeric value \texttt{1} can
+be represented in Awk:
+\begin{wellcode}
+    try {if ($1 == 1) print "yes"; else print "no"}
+    1       yes
+    1.0     yes
+    1E0     yes
+    0.1E1   yes
+    10E-1   yes
+    01      yes
+    +1      yes
+    10E-2   no
+    10      no
+\end{wellcode}
+The first line is a program to be tested (everything after the word
+\texttt{try}).  Each subsequent line is a set of inputs and the expected
+output, separated by tabs.  The first test says that if the first input
+field is \texttt{1} the output should be yes. The first seven tests should
+all print yes and the last two tests should print no.
+
+An Awk program (what else?) converts each test into a complete Awk program,
+then runs each input through it, and compares actual output to expected
+output; it reports only those cases where the answer is wrong.
+
+Similar mechanisms are used to test the regular expression matching and
+substitution commands. A little language for writing tests makes it easy to
+create a lot of them; using a program to write a program to test a program
+has high leverage (杠杆效率). (Chapter \ref{chap:notation} has more to say
+about little languages and the use of programs that write programs.)
+
+Overall, there are about a thousand tests for Awk; the whole set can be run
+with a single command, and if everything goes well, no output is produced.
+Whenever a feature is added or a bug is fixed, new tests are added to
+verify correct operation. When ever the program is changed, even in a
+trivial (琐碎的) way, the whole test suite is run; it takes only a few
+minutes. It sometimes catches completely unexpected errors, and has saved
+the authors of Awk from public embarrassment many times.
+
+What should you do when you discover an error? If it was not found by an
+existing test, create a new test that does uncover the problem and verify
+the test by running it with the broken version of the code. The error may
+suggest further tests or a whole new class of things to check. Or perhaps
+it is possible to add defenses to the program that would catch the error
+internally.
+
+Never throw away a test. It can help you decide whether a bug report is
+valid or describes something already fixed. Keep a record of bugs, changes,
+and fixes; it will help you identify old problems and fix new ones. In most
+commercial programming shops (工作室), such records are mandatory. For your
+personal programming, they are a small investment that will pay off
+repeatedly.
+
+\begin{exercise}
+    Design a test suite for \texttt{printf}, using as many mechanical aids
+    as possible.
+\end{exercise}
+
+\section{Test Scaffolds}
+\label{sec:test_scaffolds}
+
+Our discussion so far is based largely on testing a single stand-alone
+program in its completed form. This is not the only kind of test
+automation, however, nor is it the most likely way to test parts of a big
+program during construction, especially if you are part of a team. Nor is
+it the most effective way to test small components that are buried in
+something larger.
+
+To test a component in isolation, it's usually necessary to create some
+kind of framework or scaffold that provides enough support and interface to
+the rest of the system that the part under test will run. We showed a tiny
+example for testing binary search earlier in this chapter.
+
+It's easy to build scaffolds for testing mathematical functions, string
+functions, sort routines, and so on, since the scaffolding is likely to
+consist mostly of setting up input parameters, calling the functions to be
+tested, then checking the results. It's a bigger job to create scaffolding
+for testing a partly-completed program.
+
+To illustrate, we'll walk through building a test for \texttt{memset}, one
+of the \verb'mem...' functions in the C/C++ standard library. These
+functions are often written in assembly language for a specific machine,
+since their performance is important.  The more carefully tuned they are,
+however, the more likely they are to be wrong and thus the more thoroughly
+they should be tested.
+
+The first step is to provide the simplest possible C versions that are
+known to work; these provide a benchmark for performance and, more
+important, for correctness. To move to a new environment, one carries the
+simple versions and uses them until the tuned ones are working.
+
+The function \verb'memset(s, c, n)' sets \verb'n' bytes of memory to the
+byte \verb'c', starting at address \verb's', and returns \verb's'. This
+function is easy if speed is not an issue:
+\begin{wellcode}
+    /* memset: set first n bytes of s to c */
+    void *memset(void *s, int c, size_t n)
+    {
+        size_t  i;
+        char    *p;
+
+        p = (char *)s;
+        for (i = 0; i < n; i++)
+            p[i] = c;
+        return s;
+    }
+\end{wellcode}
+But when speed is an issue, tricks like writing full words of 32 or 64 bits
+at a time are used. These can lead to bugs, so extensive (广泛的) testing
+is mandatory.
+
+Testing is based on a combination of exhaustive (彻底的) and
+boundary-condition checks at likely points of failure. For \texttt{memset},
+the boundaries include obvious values of \texttt{n} such as zero, one and
+two, but also values that are powers of two or nearby values. including
+both small ones and large ones like $2^{16}$, which corresponds to a natural
+boundary in many machines, a 16-bit word. Powers of two deserve attention
+because one way to make \texttt{memset} faster is to set multiple bytes at
+one time; this might be done by special instructions or by trying to store
+a word at a time instead of a byte.  Similarly, we want to check array
+origins with a variety of alignments in case there is some error based on
+starting address or length. We will place the target array inside a larger
+array, thus creating a buffer zone or safety margin on each side and giving
+us an easy way to vary the alignment.
+
+We also want to check a variety of values for \texttt{c}, including zero,
+\texttt{0x7F} (the largest signed value, assuming 8-bit bytes),
+\texttt{0x80} and \texttt{0xFF} (probing at potential errors involving
+signed and unsigned characters), and some values much bigger than one byte
+(to be sure that only one byte is used). We should also initialize memory
+to some known pattern that is different from any of these character values
+so we can check whether \texttt{memset} wrote outside the valid area.
+
+We can use the simple implementation as a standard of comparison in a test
+that allocates two arrays, then compares behaviors on combinations of
+\texttt{n}, \texttt{c} and offset within the array:
+\\ \\
+\indent \texttt{big} = maximum left margin + maximum \texttt{n} + maximum
+right margin \\
+\indent \texttt{s0 = malloc(big)} \\
+\indent \texttt{s1 = malloc(big)} \\
+\indent for each combination of test parameters \texttt{n}, \texttt{c}, and
+\texttt{offset}: \\
+\indent \indent set all of \texttt{s0} and \texttt{s1} to knwon pattern \\
+\indent \indent run slow \texttt{memset(s0 + offset, c, n)} \\
+\indent \indent run fast \texttt{memset(s1 + offset, c, n)} \\
+\indent \indent check return values \\
+\indent \indent copare all of \texttt{s0} and \texttt{s1} byte by byte \\
+An error that causes \texttt{memset} to write outside the limits of its
+array is most likely to affect bytes near the beginning or the end of the
+array, so leaving a buffer zone makes it easier to see damaged bytes and
+makes it less likely that an error will overwrite some other part of the
+program. To check for writing out of bounds, we compare all the bytes of
+\texttt{s0} and \texttt{s1}, not just the \texttt{n} bytes that should be
+written.
+
+Thus a reasonalbe set of tests might include all combinations of:
+\begin{wellcode}
+    offset = 10, 11, ..., 20
+    c = 0, 1, 0x7F, 0x80, 0xFF, 0x11223344
+    n = 0, 1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17,
+        31, 32, 33, ..., 65535, 65536, 65537
+\end{wellcode}
+The values of \texttt{n} would include at least $2^i - 1$, $2^i$ and
+$2^i + 1$ for $i$ from 0 to 16.
+
+These values should not be wired into the main part of the test scaffold,
+but should appear in arrays that might be created by hand or by program.
+Generating them automatically is better; that makes it easy to specify more
+powers of two or to include more offsets and more characters.
+
+These tests will give \texttt{memset} a thorough workout (试验) yet cost
+very little time even to create, let alone run, since there are fewer than
+3500 cases for the values above. The tests are completely portable, so they
+can be carried to a new environment as necessary.
+
+As a warning, consider this story. We once gave a copy of a \texttt{memset}
+tester to someone developing an operating system and libraries for a new
+processor.  Months later, we (the authors of the original test) started
+using the machine and had a large application fail its test suite. We
+traced the problem to a subtle (微妙的) bug involving sign extension in the
+assembly language implementation of \texttt{memset}. For reasons unknown,
+the library implementer had changed the \texttt{memset} tester so it did
+not check values of \texttt{c} above \texttt{0x7F}. Of course, the bug was
+isolated by running the original, working tester, once we realized that
+\texttt{memset} was a suspect.
+
+Functions like \texttt{memset} are susceptible (容许...的) to exhaustive
+tests because they are simple enough that one can prove that the test cases
+exercise all possible execution paths through the code, thus giving
+complete coverage. For example, it is possible to test \texttt{memmove} for
+all combinations of overlap, direction, and alignment. This is not
+exhaustive in the sense of testing all possible copy operations, but it is
+an exhaustive test of representatives (代表) of each kind of distinct input
+situation.
+
+As in any testing method, test scaffolds need the correct answer to verify
+the operations they are testing. An important technique, which we used in
+testing \texttt{memset}, is to compare a simple version that is believed
+correct against a new version that may be incorrect. This can be done in
+stages, as the following example shows.
+
+One of the authors implemented a raster (光栅) graphics library involving
+an operator that copied blocks of pixels from one image to another.
+Depending on the parameters, the operation could be a simple memory copy,
+or it could require converting pixel values from one color space to
+another, or it could require "tiling" (盖瓦) where the input was copied
+repeatedly throughout a rectangular area, or combinations of these and
+other features. The specification of the operator was simple, but an
+efficient implementation would require lots of special code for the many
+cases. To make sure all that code was right demanded a sound (可靠的)
+testing strategy.
+
+First, simple code was written by hand to perform the correct operation for
+a single pixel. This was used to test the library version's handling of a
+single pixel. Once this stage was working, the library could be trusted for
+single-pixel operations.
+
+Next, hand-written code used the library a pixel at a time to build a very
+slow version of the operator that worked on a single horizontal row of
+pixels, and that was compared with the library's much more efficient
+handling of a row. With that working, the library could be trusted for
+horizontal lines.
+
+This sequence continued, using lines to build rectangles, rectangles to
+build tiles (瓦片), and so on. Along the way, many bugs were found,
+including some in the tester itself, but that's part of the effectiveness
+of the method: we were testing two independent implementations, building
+confidence in both as we went. If a test failed, the tester printed out a
+detailed analysis to aid understanding what went wrong, and also to verify
+that the tester was working properly itself.
+
+As the library was modified and ported over the years, the tester
+repeatedly proved invaluable for finding bugs.
+
+Because of its layer-by-layer approach, this tester needed to be run from
+scratch (擦除) each time, to verify its own trust of the library.
+Incidentally, the tester was not exhaustive, but probabilistic (概率性的):
+it generated random test cases which, for long enough runs, would
+eventually explore every cranny (缝隙) of the code. With the huge number of
+possible test cases, this strategy was more effective than trying to
+construct a thorough test set by hand, and much more efficient than
+exhaustive testing.
+
+\begin{exercise}
+    Create the test scaffold for \verb'memset' along the lines that we
+    indicated.
+\end{exercise}
+
+\begin{exercise}
+    Create tests for the rest of the \verb'mem...' family.
+\end{exercise}
+
+\begin{exercise}
+    Specify a testing regime (体制) for numerical routines like
+    \verb'sqrt', \verb'sin', and so on, as found in \verb'math.h'. What
+    input values make sense? What independent checks can be performed?
+\end{exercise}
+
+\begin{exercise}
+    Define mechanisms for testing the functions of the C \verb'str...'
+    family, like \verb'strcmp'. Some of these functions, especially
+    tokenizers like \verb'strtok' and \verb'strcspn', are significantly
+    more complicated than the \verb'mem...' family, so more sophiscated
+    test will be called for.
+\end{exercise}
+
+\section{Stress Tests}
+\label{sec:stress_tests}
+
+High volumes of machine-generated input are another effective testing
+technique.  Machine-generated input stresses programs differently than
+input written by people does. Higher volume in itself tends to break things
+because very large inputs cause overflow of input buffers, arrays, and
+counters, and are effective at finding unchecked fixed-size storage within
+a program. People tend to avoid "impossible" cases like empty inputs or
+input that is out of order or out of range, and are unlikely to create very
+long names or huge data values. Computers, by contrast, produce output
+strictly according to their programs and have no idea of what to avoid.
+
+To illustrate, here is a single line of output produced by the Microsoft
+Visual C++ Version 5.0 compiler while compiling the C++ STL implementation
+of \texttt{markov}; we have edited the line so it fits:
+\begin{wellcode}
+    xtree(114) : warning C4786: 'std::_Tree<std::deque<std::
+    basic_string<char, std::char_traits<char>,std::allocator
+    <char>>,std::allocator<std::basic_string<char,std::
+    ... 1420 characters ommited
+    allocator<char>>>>>::iterator' : identifer was
+    truncated to '255' characters in the debug information
+\end{wellcode}
+The compiler is warning us that it has generated a variable name that is a
+remarkable 1594 characters long but that only 255 characters have been
+preserved as debugging information. Not all programs defend themselves
+against such unusually long strings.
+
+Random inputs (not necessarily legal) are another way to assault (攻击) a
+program in the hope of breaking something. This is a logical extension of
+"people don't do that" reasoning. For example, some commercial C compilers
+are tested with randomly-generated but syntactically valid programs. The
+trick is to use the specification of the problem -- in this case, the C
+standard -- to drive a program that produces valid but bizarre (奇异的)
+test data.
+
+Such tests rely on detection by built-in checks and defenses in the
+program, since it may not be possible to verify that the program is
+producing the right output; the goal is more to provoke (诱导) a crash or a
+"can't happen" than to uncover (揭开) straightforward errors. It's also a
+good way to test that error-handling code works. With sensible input, most
+errors don't happen and code to handle them doesn't get exercised: by
+nature, bugs tend to hide in such corners. At some point, though, this kind
+of testing reaches diminishing (逐渐减小的) returns: it finds problems that
+are so unlikely to happen in real life they may not be worth fixing.
+
+Some testing is based on explicitly malicious (恶意的) inputs. Security
+attacks often use big or illegal inputs that overwrite precious data; it is
+wise to look for such weak spots. A few standard library functions are
+vulnerable to this sort of attack. For instance, the standard library
+function \verb'gets' provides no way to limit the size of an input line, so
+it should \emph{never} be used; always use
+\verb'fgets(buf, sizeof(buf), stdin)'
+instead. A bare (无遮蔽的) \verb'scanf("%s", buf)' doesn't limit
+the length of an input line either; it should therefore usually be used
+with an explicit length, such as \verb'scanf("%20s", buf)'. In Section
+\ref{sec:building_the_data_structure_in_c} we showed how to address this
+problem for a general buffer size.
+
+Any routine that might receive values from outside the program, directly or
+indirectly, should validate its input values before using them. The
+following program from a textbook is supposed to read an integer typed by a
+user, and warn if the integer is too long. Its goal is to demonstrate how
+to overcome the \texttt{gets} problem, but the solution doesn't always
+work.
+\begin{badcode}
+    #define MAXNUM 10
+
+    int main(void)
+    {
+        char    num[MAXNUM];
+
+        memset(num, 0, sizeof(num));
+        printf("Type a number: ");
+        gets(num);
+        if (num[MAXNUM - 1] != 0)
+            printf("Number too bit.\n");
+        /* ... */
+    }
+\end{badcode}
+If the input number is ten digits long, it will overwrite the last zero in
+array num with a non-zero value, and in theory this will be detected after
+the return from gets. Unfortunately, this is not sufficient. A malicious
+attacker can provide an even longer input string that overwrites some
+critical value, perhaps the return address for the call, so the program
+never returns to the \verb'if' statement but instead executes something
+nefarious (恶毒的). Thus this kind of unchecked input is a potential
+security problem.
+
+Lest (免得) you think that this is an irrelevant textbook example, in July,
+1998 an error of this form was uncovered in several major electronic mail
+programs. As the \textit{New York Times} reported,
+\begin{quotation}
+    The security hole is caused by what is known as a "buffer overflow
+    error." Programmers are supposed to include code in their software to
+    check that incoming data are of a safe type and that the units are
+    arriving at the right length. If a unit of data is too long, it can
+    overrun the "buffer" -- the chunk of memory set aside to hold it. In
+    that case, the E-mail program will crash, and a hostile (怀有敌意的)
+    programmer can trick the computer into running a malicious program in
+    its place.
+\end{quotation}
+This was also one of the attacks in the famous "Internet Worm" incident of
+1988.
+
+Programs that parse HTML forms can also be vulnerable to attacks that store
+very long input strings in small arrays:
+\begin{badcode}
+    static char query[1024];
+
+    char *read_form(void)
+    {
+        int qsize;
+
+        qsize = atoi(getenv("CONTENT_LENGTH"));
+        fread(query, qsize, 1, stdin);
+        return query;
+    }
+\end{badcode}
+The code assumes that the input will never be more than 1024 bytes long so,
+like \verb'gets', it is open to an attack that overflows its buffer.
+
+More familiar kinds of overflow can cause trouble, too. If integers
+overflow
+silently, the result can be disastrous. Consider an allocation like
+\begin{badcode}
+    char *p;
+    p = (char *)malloc(x * y * z);
+\end{badcode}
+
+If the product of \verb'x', \verb'y', and \verb'z' overflows, the call to
+\verb'malloc' might produce a reasonable-sized array, but \verb'p[x]' might
+refer to memory outside the allocated region.  Suppose that \verb'int's are
+16 bits and \verb'x', \verb'y', and \verb'z' are each 41. Then \verb'x*y*z'
+is 68921, which is 3385 module $2^{16}$. So the call to \verb'malloc'
+allocates only 3385 bytes; any reference with a subscript beyond that value
+will be out of bounds.
+
+Conversion between types is another source of ovefflow, and catching the
+error may not be good enough. The Ariane 5 rocket exploded on its maiden
+(首次) flight in June, 1996 because the navigation package was inherited
+from the Ariane 4 without proper testing. The new rocket flew faster,
+resulting in larger values of some variables in the navigation software.
+Shortly after launch, an attempt to convert a 64-bit floating-point number
+into a 16-bit signed integer generated an overflow. The error was caught,
+but the code that caught it elected to shut down the subsystem. The rocket
+veered off course (冲出航线) and exploded. It was unfortunate that the code
+that failed generated inertial (惯性的) reference information useful only
+before lift-off (起飞); had it been turned off at the moment of launch,
+there would have been no trouble.
+
+On a more mundane (世俗的) level, binary inputs sometimes break programs
+that expect text inputs, especially if they assume that the input is in the
+7-bit ASCII character set.  It is instructive (有益的) and sometimes
+sobering (合理的) to pass binary input (such as a compiled program) to an
+unsuspecting program that expects text input.
+
+Good test cases can often be used on a variety of programs. For example,
+any program that reads files should be tested on an empty file. Any program
+that reads text should be tested on binary files. Any program that reads
+text lines should be tested on huge lines and empty lines and input with no
+newlines at all. It's a good idea to keep a collection of such test files
+handy, so you can test any program with them without having to recreate the
+tests. Or write a program to create test files upon demand.
+
+When Steve Bourne was writing his Unix shell (which came to be known as the
+Bourne shell), he made a directory of 254 files with one-character names,
+one for each byte value except \verb"'\0'" and slash, the two characters
+that cannot appear in Unix file names. He used that directory for all
+manner (方式) of tests of pattern-matching and tokenization. (The test
+directory was of course created by a program.) For years afterwards, that
+directory was the bane (祸根) of file-tree-walking programs; it tested them
+to destruction (破坏).
+
+\begin{exercise}
+    Try to create a file that will crash your favorite text editor,
+    compiler or other program.
+\end{exercise}
+
+\section{Tips for Testing}
+\label{sec:tips_for_testing}
+
+Experienced testers use many tricks and techniques to make their work more
+productive; this section includes some of our favorites.
+
+Programs should check array bounds (if the language doesn't do it for
+them), but the checking code might not be tested if the array sizes are
+large compared to typical input. To exercise the checks, temporarily make
+the array sizes very small, which is easier than creating large test cases.
+We used a related trick in the array-growing code in Chapter
+\ref{chap:alds} and in the CSV library in Chapter \ref{chap:interface}. In
+fact, we left the tiny initial values in place, since the additional
+startup cost is negligible (可以忽略的).
+
+Make the hash function return a constant, so every element gets installed
+in the same hash bucket. This will exercise the chaining mechanism; it also
+provides an indication (指示) of worst-case performance.
+
+Write a version of your storage allocator that intentionally fails early,
+to test your code for recovering from out-of-memory errors. This version
+returns \verb'NULL' after 10 calls:
+\begin{wellcode}
+    /* testmalloc: returns NULL after 10 calls */
+    void *testmalloc(size_t n)
+    {
+        static int count = 0;
+        if (++count > 10)
+            return NULL;
+        else
+            return malloc(n);
+    }
+\end{wellcode}
+
+Before you ship (发布) your code, disable testing limitations that will
+affect performance.  We once tracked down a performance problem in a
+production compiler to a hash function that always returned zero because
+testing code had been left installed.
+
+Initialize arrays and variables with some distinctive (有特色的) value,
+rather than the usual default of zero; then if you access out of bounds or
+pick up an uninitialized variable, you are more likely to notice it. The
+constant \verb'0xDEADBEEF' is easy to recognize in a debugger; allocators
+sometimes use such values to help catch uninitialized data.
+
+Vary your test cases, especially when making small tests by hand -- it's
+easy to get into a rut (车辙) by always testing the same thing, and you may
+not notice that something else has broken.
+
+Don't keep on implementing new features or even testing existing ones if
+there are known bugs; they could be affecting the test results.
+
+Test output should include all input parameter settings, so the tests can
+be reproduced exactly. If your program uses random numbers, have a way to
+set and print the starting seed, independent of whether the tests
+themselves are random. Make sure that test inputs and corresponding outputs
+are properly identified, so they can be understood and reproduced.
+
+It's also wise to provide ways to make the amount (总数) and type of output
+controllable when a program is run; extra output can help during testing.
+
+Test on multiple machines, compilers, and operating systems. Each
+combination potentially reveals errors that won't be seen on others, such
+as dependencies on byte-order, sizes of integers, treatment of null
+pointers, handling of carriage return and newline, and specific properties
+of libraries and header files. Testing on multiple machines also uncovers
+problems in gathering the components of a program for shipment and, as we
+will discuss in Chapter \ref{chap:portability}, may reveal unwitting
+(没有意识到的) dependencies on the development environment.
+
+We will discuss performance testing in Chapter \ref{chap:performance}.
+
+\section{Who Does the Testing?}
+\label{sec:who_does_the_testing}
+
+Testing that is done by the implementer or someone else with access to the
+source code is sometimes called white box testing. (The term is a weak
+analogy to black box testing, where the tester does not know how the
+component is implemented; "clear box" might be more evocative (恰当).) It
+is important to test your own code: don't assume that some testing
+organization or user will find things for you. But it's easy to delude
+(蛊惑) yourself about how carefully you are testing, so try to ignore the
+code and think of hard cases, not easy ones. To quote Don Knuth describing
+how he creates tests for the TEX formatter, "I get into the meanest
+(低劣的), nastiest (污秽的) frame of mind that I can manage, and I write
+the nastiest [testing] code I can think of; then I turn around and embed
+(嵌入) that in even nastier constructions that are almost obscene
+(可憎的)." The reason for testing is to find bugs, not to declare the
+program working. Therefore the tests should be tough, and when they find
+problems, that is a vindication (辩护) of your methods, not a cause for
+alarm.
+
+Black box testing means that the tester has no knowledge of or access to
+the innards (内脏) of the code. It finds different kinds of errors, because
+the tester has different assumptions about where to look. Boundary
+conditions are a good place to begin black box testing; high-volume,
+perverse (错误的), and illegal inputs are good follow-ons (后续). Of course
+you should also test the ordinary "middle of the road" or conventional uses
+of the program to verify basic functionality.
+
+Real users are the next step. New users find new bugs, because they probe
+the program in unexpected ways. It is important to do this kind of testing
+before the program is released to the world though, sadly, many programs
+are shipped without enough testing of any kind. Beta releases of software
+are an attempt to have numerous real users test a program before it is
+finalized, but beta releases should not be used as a substitute for
+thorough testing. As software systems get larger and more complex, and
+development schedules get shorter, however, the pressure to ship without
+adequate testing increases.
+
+It's hard to test interactive programs, especially if they involve mouse
+input.  Some testing can be done by scripts (whose properties depend on
+language, environment, and the like). Interactive programs should be
+controllable from scripts that simulate user behaviors so they can be
+tested by programs. One technique is to capture the actions of real users
+and replay them; another is to create a scripting language that describes
+sequences and timing of events.
+
+Finally, give some thought to how to test the tests themselves. We
+mentioned in Chapter \ref{chap:debug} the confusion caused by a faulty test
+program for a list package.  A regression suite infected by an error will
+cause trouble for the rest of time.  The results of a set of tests will not
+mean much if the tests themselves are flawed (有缺陷的).
+
+\section{Testing the Markov Program}
+\label{sec:testing_the_markov_program}
+
+The Markov program of Chapter \ref{chap:desipl} is sufficiently intricate
+(复杂) that it needs careful testing. It produces nonsense, which is hard
+to analyze for validity, and we wrote multiple versions in several
+languages. As a final complication, its output is random and different each
+time. How can we apply some of the lessons of this chapter to testing this
+program?
+
+The first set of tests consists of a handful of tiny files that check
+boundary conditions, to make sure the program produces the right output for
+inputs that contain only a few words. For prefixes of length two, we use
+five files that contain respectively (with one word per line)
+% TODO: The "(empty file)" should be italic.
+\begin{wellcode}
+    (empty file)
+    a
+    a b
+    a b c
+    a b c d
+\end{wellcode}
+For each file, the output should be identical to the input. These checks
+uncovered several off-by-one (单一断接) errors in initializing the table
+and starting and stopping the generator.
+
+A second test verified conservation (保存) properties. For two-word
+prefixes, every word, every pair, and every triple that appears in the
+output of a run must occur in the input as well. We wrote an Awk program
+that reads the original input into a giant array, builds arrays of all
+pairs and triples, then reads the Markov output into another array and
+compares the two:
+\begin{wellcode}
+    # markov test: check that all words, pairs, triples in
+    # output ARGV[2] are in original input ARGV[1]
+    BEGIN {
+        while (getline <ARGV[1] > 0)
+            for (i = 1; i <= NF; i++) {
+                wd[++nw] = $i   # input words
+                single[$i]++
+            }
+        for (i = 1; i < nw; i++)
+            pair[wd[i],wd[i+1]]++
+        for (i = 1; i < nw-1; i++)
+            triple[wd[i],wd[i+1],wd[i+2]]++
+
+        while (getline <ARGV[2] > 0) {
+            outwd[++ow] = $0    # output words
+            if (!($0 in single))
+                print "unexpected word", $0
+        }
+        for (i = 1; i < ow; i++)
+            if (!((outwd[i],outwd[i+1]) in pair))
+                print "unexpected pair", outwd[i], outwd[i+1]
+        for (i = 1; i < ow-1; i++)
+            if (!((outwd[i],outwd[i+1],outwd[i+2]) in triple))
+                print "unexpected triple",
+                    outwd[i], outwd[i+1], outwd[i+2]
+    }
+\end{wellcode}
+We made no attempt to build an efficient test, just to make the test
+program as simple as possible. It takes six or seven seconds to check a
+10,000 word output file against a 42,685 word input file, not much longer
+than some versions of Markov take to generate it. Checking conservation
+caught a major error in our Java implementation: the program sometimes
+overwrote (重写) hash table entries because it used references instead of
+making copies of prefixes.
+
+This test illustrates the principle that it can be much easier to verify a
+property of the output than to create the output itself. For instance it is
+easier to check that a file is sorted than to sort it in the first place.
+
+A third test is statistical in nature. The input consists of the sequence
+\begin{wellcode}
+    a b a b c ... a b d ...
+\end{wellcode}
+with ten occurrences of \verb'abc' for each \verb'abd'. The output should
+have about 10 times as many \texttt{c}'s as \texttt{d}'s if the random
+selection is working properly. We confirm this with \verb'freq', of course.
+
+The statistical test showed that an early version of the Java program,
+which associated counters with each suffix, produced 20 \texttt{c}'s for
+every \texttt{d}, twice as many as it should have. After some head
+scratching, we realized that Java's random number generator returns
+negative as well as positive integers; the factor of two occurred because
+the range of values was twice as large as expected, so twice as many values
+would be zero modulo the counter; this favored the first element in the
+list, which happened to be \verb'c'.  The fix was to take the absolute
+value before the modulus\footnote{Unrecognized word.}. Without this test,
+we would never have discovered the error; to the eye, the output looked
+fine.
+
+Finally, we gave the Markov program plain English text to see that it
+produced beautiful nonsense. Of course, we also ran this test early in the
+development of the program. But we didn't stop testing when the program
+handled regular input, because nasty cases will come up in practice.
+Getting the easy cases right is seductive (富有魅力的); hard cases must be
+tested too. Automated, systematic testing is the best way to avoid this
+trap.
+
+All of the testing was mechanized. A shell script generated necessary input
+data, ran and timed the tests, and printed any anomalous output. The script
+was configurable so the same tests could be applied to any version of
+Markov, and every time we made a set of changes to one of the programs, we
+ran all the tests again to make sure that nothing was broken.
+
+\section{Summary}
+
+The better you write your code originally, the fewer bugs it will have and
+the more confident you can be that your testing has been thorough. Testing
+boundary conditions as you write is an effective way to eliminate a lot of
+silly little bugs. Systematic testing tries to probe at potential trouble
+spots in an orderly way; again, failures are most commonly found at
+boundaries, which can be explored by hand or by program.  As much as
+possible, it is desirable to automate testing, since machines don't make
+mistakes or get tired or fool themselves into thinking that something is
+working when it isn't. Regression tests check that the program still
+produces the same answers as it used to. Testing after each small change is
+a good technique for localizing the source of any problem because new bugs
+are most likely to occur in new code.
+
+The single most important rule of testing is to do it.
+
+\section*{Supplementary Reading}
+
+One way to learn about testing is to study examples from the best freely
+available software. Don Knuth's "The Errors of TEX," in
+\bookname{Software -- Practice and Experience}, 19, 7, pp. 607-685, 1989,
+describes every error found to that point in the TEX formatter, and
+includes a discussion of Knuth's testing methods. The TRIP test for TEX is
+an excellent example of a thorough test suite. Perl also comes with an
+extensive test suite that is meant to verify its correctness after
+compilation and installation on a new system, and includes modules such as
+\verb'MakeMaker' and \verb'TestHarness' that aid in the construction of
+tests for Perl extensions.
+
+Jon Bentley wrote a series of articles in \bookname{Communications of the
+    ACM} that were subsequently collected in \bookname{Programming Pearls}
+and \bookname{More Programming Pearls}, published by Addison-Wesley in 1986
+and 1988 respectively. They often touch on testing, especially frameworks
+for organizing and mechanizing extensive tests.

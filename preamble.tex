@@ -4,10 +4,8 @@
 \documentclass[nofonts]{book}
 
 \usepackage{geometry}
-\usepackage{amsthm}
 \usepackage{fontspec}
 \usepackage{upquote}
-\usepackage{hyperref}
 \usepackage{xeCJK}
 \usepackage{setspace}
 \usepackage{verbatim}
@@ -16,10 +14,28 @@
 \usepackage{tikz}
 \usepackage{varwidth}
 \usepackage{xfrac}
+\usepackage[Bjornstrup]{fncychap}
+\usepackage{titlesec}
+\usepackage{dingbat}
+\usepackage{theorem}
+\usepackage{hyperref}
+
+% chapter style from Bjornstrup of fncychap
+\ChNumVar{\fontsize{76}{80}\usefont{OT1}{pzc}{m}{n}\selectfont}
+\ChTitleVar{\raggedleft\Huge\sffamily\bfseries}
+
+% section style from titlesec
+\titleformat{\section}
+{\bfseries\Large}
+{\thesection}
+{1em}
+{}
+[{\titlerule[1pt]\vspace{1pt}\titlerule[0.5pt]}]
 
 \geometry{bottom = 2cm, outer = 2cm}
 %\geometry{ left = 3cm, right = 3cm, bottom = 2cm }
 
+% page style from fancyhdr
 \pagestyle{fancy}
 \fancyhf{}
 \fancyhead[EL]{\thepage}
@@ -31,9 +47,11 @@
     bookmarksnumbered = true
 }
 
-\setCJKmainfont[Scale=0.9, BoldFont=AR PL UKai CN]
+\newcommand\term[1]{\textbf{\textit{#1}}}
+
+\setCJKmainfont[Scale=0.9, BoldFont=WenQuanYi Zen Hei]
 {AR PL UKai CN}
-\setCJKsansfont[Scale=0.9]{AR PL UMing CN}
+\setCJKsansfont[Scale=0.9]{WenQuanYi Zen Hei}
 \setCJKmonofont[Scale=0.9]{AR PL UMing CN}
 \setmainfont{Century Schoolbook L}
 \setsansfont{FreeSans}
@@ -61,19 +79,19 @@
 
 \renewcommand\emph[1]{{\bfseries\textit{#1}}}
 
-\renewcommand\theenumi{\alph{enumi}}
+% exercise environemnt based theorem
+\theoremstyle{plain}
+\theoremheaderfont{\bfseries}
+\theorembodyfont{\normalfont}
+\newtheorem{exercise}{{\Large\smallpencil}Exercise}[chapter]
 
-\newcounter{exercnt}[chapter]
-\renewcommand\theexercnt{\thechapter-\arabic{exercnt}}
-\renewcommand\proofname{%
-    \stepcounter{exercnt}%
-    \textup{\textbf{Exercise\ \theexercnt}}
+% my itemize environemnt
+\newenvironment{myitemize}{%
+    \begin{list}{}{}
 }
-\newenvironment{exercise}
-{
-    \begin{proof}
-}
-{\end{proof}}
+{\end{list}}
+
+\renewcommand\theenumi{\alph{enumi}}
 
 \title{The Practice of Programming}
 \author{Brian W.Kernighan \and Rob Pike \and

@@ -62,6 +62,7 @@ can use any existing text to construct a statistical model of the language
 that has similar statistics to the original.
 
 \section{The Markov Chain Algorithm}
+\label{sec:the_markov_chain_algorithm}
 
 An elegant way to do this sort of processing is a technique called a
 \textit{Markov chain algorithm}. If we imagine the input as a sequence of
@@ -106,7 +107,7 @@ These are some of the pairs of input words and the words that follow them:
     will be & mystified. obvious.\\
     be mystified. & Show\\
     be obvious. & \textit{(end)}
-\indent \end{tabular}
+\indent \end{tabular} \\
 A Markov algorithm processing this text will begin by printing \textit{Show
     your} and will then randomly pick either \textit{flowcharts} or
 \textit{tables}. If it choose the former, the current prefix becomes
@@ -134,4 +135,3 @@ define a "word" as anything between white space, a decision that places no
 \textit{restriction} on input language and leaves punctuation attached to
 the words. Since most programming languages have facilities to split text
 into white-space-sepatated words, this is also e
-
