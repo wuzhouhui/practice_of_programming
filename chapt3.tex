@@ -138,10 +138,9 @@ into white-space-separated words, this is also easy to impelement.
 
 Because of the method, all words, all two-word phrases, and all three-word
 phrases in the output must have appeared in the input, but there should be
-many four-word and longer phrases that are synthesized. Here are a few sentences
-produced by
-the program we will develop in this chapter, when given the text of Chapter
-VII of
+many four-word and longer phrases that are synthesized. Here are a few
+sentences produced by the program we will develop in this chapter, when
+given the text of Chapter VII of
 \bookname{The Sun Also Rises} by Ernest Hemingway:
 \begin{oldquote}
     As I started up the undershirt onto his chest black, and big stomach
@@ -154,3 +153,78 @@ VII of
 
 We were lucky here that punctuation (标点符号) came out correctly; that
 need not happen.
+
+\section{Data Structure Alternatives}
+\label{sec:data_structure_alternatives}
+
+How much input do we intend to deal with? How fast must the program run? It
+seems reasonable to ask our program to read in a whole book, so we should
+be prepared for input sizes of $n = 100,000$ words or more. The output will
+be hundreds or perhaps thousands of words, and the program should run in a
+few seconds instead of minutes. With 100,000 words of input text, $n$ is
+fairly large so the algorithms can't be too simplistic if we want the
+program to be fast.
+
+The Markov algorithm must see all the input before it can begin to generate
+output, so it must store the entire input in some form. One possibility is
+to read the whole input and store it in a long string, but we clearly want
+the input broken down into words. If we store it as an array of pointers to
+words, output generation is simple: to produce each word, scan the input
+text to see what possible suffix words follow the prefix that was just
+emitted, and then choose one at random. However, that means scanning all
+100,000 input words for each word we generate; 1,000 words of output means
+hundreds of millions of string comparisons, which will not be fast.
+
+Another possibility is to store only unique input words, together with a
+list of where they appear in the input so that we can locate successor
+words more quickly.  We could use a hash table like the one in Chapter
+\ref{chap:alds}, but that version doesn't directly address the needs of the
+Markov algorithm, which must quickly locate all the suffixes of a given
+prefix.
+
+We need a data structure that better represents a prefix and its associated
+suffixes.  The program will have two passes, an input pass that builds the
+data structure representing the phrases, and an output pass that uses the
+data structure to generate the random output. In both passes, we need to
+look up a prefix (quickly): in the input pass to update its suffixes, and
+in the output pass to select at random from the possible suffixes. This
+suggests a hash table whose keys are prefixes and whose values are the sets
+of suffixes for the corresponding prefixes.
+
+For purposes of description, we'll assume a two-word prefix, so each output
+word is based on the pair of words that precede it. The number of words in
+the prefix doesn't affect the design and the programs should handle any
+prefix length, but selecting a number makes the discussion concrete. The
+prefix and the set of all its possible suffixes we'll call a state, which
+is standard terminology for Markov algorithms.
+
+Given a prefix, we need to store all the suffixes that follow it so we can
+access them later. The suffixes are unordered and added one at a time. We
+don't know how many there will be, so we need a data structure that grows
+easily and efficiently, such as a list or a dynamic array. When we are
+generating output, we need to be able to choose one suffix at random from
+the set of suffixes associated with a particular prefix. Items are never
+deleted.
+
+What happens if a phrase appears more than once? For example, 'might appear
+twice' might appear twice but 'might appear once' only once. This could be
+represented by putting 'twice' twice in the suffix list for 'might appear'
+or by putting it in once, with an associated counter set to 2. We've tried
+it with and without counters; without is easier, since adding a suffix
+doesn't require checking whether it's there already, and experiments showed
+that the difference in run-time was negligible (可以忽略的).
+
+In summary, each state comprises (包含) a prefix and a list of suffixes.
+This information is stored in a hash table, with prefix as key. Each prefix
+is a fixed-size set of words.  If a suffix occurs more than once for a
+given prefix, each occurrence will be included separately (单独地) in the
+list.
+
+The next decision is how to represent the words themselves. The easy way is
+to store them as individual strings. Since most text has many words
+appearing multiple times, it would probably save storage if we kept a
+second hash table of single words, so the text of each word was stored only
+once. This would also speed up hashing of prefixes, since we could compare
+pointers rather than individual characters: unique strings have unique
+addresses. We'll leave that design as an exercise; for now, strings will be
+stored individually.
