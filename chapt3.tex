@@ -724,7 +724,7 @@ copies of \verb'NONWORD' when initializing:
 \end{wellcode}
 
 \verb'Prefix' also has two methods, \verb'hashCode' and \verb'equals', that
-are called implicitly by the implementation of \vebr'Hashtable' to index
+are called implicitly by the implementation of \verb'Hashtable' to index
 and search the table. It is the need to have an explicit class for these
 two methods for \verb'Hashtable' that forced us to make \verb'Prefix' a
 full-fledged (发育完全的) class, rather than just a \verb'Vector' like the
@@ -789,3 +789,162 @@ structures, and everyone knows the size of the \verb'prefix' array.
     Revise the Java version of \verb'markov' to use an array instead of a
     \verb'Vector' for the prefix in the \verb'State' class.
 \end{wellcode}
+
+\section{C++}
+\label{sec:c++}
+
+Our third implementation is in C++. Since C++ is almost a superset of C, it
+can be used as if it were C with a few notational conveniences, and our
+original C version of \verb'markov' is also a legal C++ program. A more
+appropriate use of C++, however, would be to define classes for the objects
+in the program, more or less as we did in Java; this would let us hide
+implementation details. We decided to go even further by using the Standard
+Template Library or STL, since the STL has built-in mechanisms that will do
+much of what we need. The IS0 standard for C++ includes the STL as part of
+the language definition.
+
+The STL provides containers such as vectors, lists, and sets, and a family
+of fundamental algorithms for searching, sorting, inserting, and deleting.
+Using the template features of C++, every STL algorithm works on a variety
+of containers, including both user-defined types and built-in types like
+integers. Containers are expressed as C++ templates that are instantiated
+for specific data types; for example, there is a \verb'vector' container
+that can be used to make particular types like \verb'vector<int>' or
+\verb'vector<string>'. All \verb'vector' operations, including standard
+algorithms for sorting, can be used on such data types.
+
+In addition to a \verb'vector' container that is similar to Java's
+\verb'Vector', the STL provides a \verb'deque' container. A \verb'deque'
+(pronounced "deck") is a double-ended queue that matches what we do with
+prefixes: it holds \verb'NPREF' elements, and lets us pop the first element
+and add a new one to the end, in $O(1)$ time for both. The STL \verb'deque'
+is more general than we need, since it permits push and pop at either end,
+but the performance guarantees make it an obvious choice.
+
+The STL also provides an explicit \verb'map' container, based on balanced
+trees, that stores key-value pairs and provides $O(\log n)$ retrieval of
+the value associated with any key. Maps might not be as efficient as $O(1)$
+hash tables, but it's nice not to have to write any code whatsoever
+(无论什么) to use them. (Some non-standard C++ libraries include a
+\verb'hash' or \verb'hash_map' container whose performance may be better.)
+
+We also use the built-in comparison functions, which in this case will do
+string comparisons using the individual strings in the prefix.
+
+With these components in hand, the code goes together smoothly. Here are
+the declarations:
+\begin{wellcode}
+    typedef deque<string> Prefix;
+    map<Prefix, vector<string>> statetab; // prefix -> suffixes
+\end{wellcode}
+
+The STL provides a template for deques; the notation \verb'deque<string>'
+specializes it to a deque whose elements are strings. Since this type
+appears several times in the program, we used a \verb'typedef' to give it
+the name \verb'Prefix'.  The \verb'map' type that stores prefixes and
+suffixes occurs only once, however, so we did not give it a separate name;
+the \verb'map' declaration declares a variable \verb'statetab' that is a
+map from prefixes to vectors of strings. This is more convenient than
+either C or Java, because we don't need to provide a \verb'hash' function
+or \verb'equals' method.
+
+The \verb'main' routine initializes the \verb'prefix', reads the input
+(from standard input, called \verb'cin' in the C++ \verb'iostream'
+library), adds a tail, and generates the output, exactly as in the earlier
+versions:
+\begin{wellcode}
+    // markov main: markov-chain random text generation
+    int main(void)
+    {
+        int nwords = MAXGEN;
+        Prefix prefix;  // current input prefix
+
+        for (int i = 0; i < NPREF; i++) // set up initial prefix
+            add(prefix, NONWORD);
+        build(prefix, cin);
+        add(prefix, NONWORD);
+        generate(nwords);
+        return 0;
+    }
+\end{wellcode}
+
+The function \verb'build' uses the \verb'iostream' library to read the
+input one word at a time:
+\begin{wellcode}
+    // build: read input words, build state table
+    void build(Prefix& prefix, istream& in)
+    {
+        string buf;
+
+        while (in >> buf)
+        add(prefix, buf);
+    }
+\end{wellcode}
+The string \verb'buf' will grow as necessary to handle input words of
+arbitrary length.
+
+The \verb'add' function shows more of the advantages of using the STL:
+\begin{wellcode}
+    // add: add word to suffix list, update prefix
+    void add(Prefix& prefix, const string& s)
+    {
+        if (prefix.size() == NPREF) {
+            statetab[prefix].push_back(s);
+            prefix.pop_front();
+        }
+        prefix.push_back(s);
+    }
+\end{wellcode}
+
+Quite a bit (相当数量) is going on under these apparently simple
+statements. The \verb'map' container overloads subscripting (the \verb'[]'
+operator) to behave as a lookup operation.  The expression
+\verb'statetab[prefix]' does a lookup in \verb'statetab' with \verb'prefix'
+as key and returns a reference to the desired entry; the \verb'vector' is
+created if it does not exist already. The \verb'push_back' member functions
+of \verb'vector' and \verb'deque' push a new string onto the back end of
+the \verb'vector' or \verb'deque'; \verb'pop_front' pops the first element
+off the \verb'deque'.
+
+Generation is similar to the previous versions:
+\begin{wellcode}
+    // generate: produce output, one word per line
+    void generate(int nwords)
+    {
+        Prefix prefix;
+        int i;
+
+        for (i = 0; i < NPREF; i++) // reset initial prefix
+            add(prefix, NONWORD);
+
+        for (i = 0; i < nwords; i++) {
+            vector<string>& suf = statetab[prefix];
+            const string& w = suf[rand() % suf.size()];
+            if (w == NONWORD)
+                break;
+            cout << w << "\n";
+            prefix.pop_front(); // advance
+            prefix.push_back(w);
+        }
+    }
+\end{wellcode}
+
+Overall, this version seems especially clear and elegant -- the code is
+compact, the data structure is visible and the algorithm is completely
+transparent.  Sadly, there is a price to pay: this version runs much slower
+than the original C version, though it is not the slowest. We'll come back
+to performance measurements shortly.
+
+\begin{exercise}
+    The great strength of the STL is the ease (轻松) with which one can
+    experiment with different data structures. Modify the C++ version of
+    Markov to use various structures to represent the prefix, suffix list,
+    and state table. How does performance change for the different
+    structures?
+\end{exercise}
+
+\begin{exercise}
+    Write a C++ version that uses only classes and the \verb'string' data
+    type but no other advanced library facilities. Compare it in style and
+    speed to the STL versions.
+\end{exercise}
