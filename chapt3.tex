@@ -134,7 +134,7 @@ permits unbalanced quotes and parentheses to sneak in. We will therefore
 define a "word" as anything between white space, a decision that places no
 \textit{restriction} on input language and leaves punctuation attached to
 the words. Since most programming languages have facilities to split text
-into white-space-separated words, this is also easy to impelement.
+into white-space-separated words, this is also easy to implement.
 
 Because of the method, all words, all two-word phrases, and all three-word
 phrases in the output must have appeared in the input, but there should be
@@ -228,3 +228,179 @@ once. This would also speed up hashing of prefixes, since we could compare
 pointers rather than individual characters: unique strings have unique
 addresses. We'll leave that design as an exercise; for now, strings will be
 stored individually.
+
+\section{Building the Data structure in C}
+\label{sec:building_the_data_structure_in_c}
+
+Let's begin with a C implementation. The first step is to define some
+constants.
+\begin{wellcode}
+    enum {
+        NPREF   = 2,        /* number of prefix words */
+        NHASH   = 4093,     /* size of state hash table array */
+        MAXGEN  = 10000     /* maximum words generated */
+    };
+\end{wellcode}
+This declaration defines the number of words (\verb'NPREF') for the prefix,
+the size of the hash table array (\verb'NHASH'), and an upper limit on the
+number of words to generate (\verb'MAXGEN'). If \verb'NPREF' is a
+compile-time constant rather than a run-time variable, storage management
+is simpler. The array size is set fairly large because we expect to give
+the program large input documents, perhaps a whole book. We chose
+\verb'NHASH = 4093' so that if the input has 10,000 distinct prefixes (word
+pairs), the average chain will be very short, two or three prefixes. The
+larger the size, the shorter the expected length of the chains and thus the
+faster the lookup. This program is really a toy, so the performance isn't
+critical, but if we make the array too small the program will not handle
+our expected input in reasonable time; on the other hand, if we make it too
+big it might not fit in the available memory.
+
+The prefix can be stored as an array of words. The elements of the hash
+table will be represented as a \verb'State' data type, associating the
+\verb'Suffix' list with the prefix:
+\begin{wellcode}
+    typedef struct State State;
+    typedef struct Suffix Suffix;
+    struct State {  /* prefix + suffix list */
+        char    *pref[NPREF];   /* prefix words */
+        Suffix  *suf;           /* list of suffixes */
+        State   *next;          /* next in hash table */
+    };
+
+    struct Suffix { /* list of suffixes */
+        char    *word;  /* suffix */
+        Suffix  *next;  /* next in list of suffixes */
+    };
+
+    State   *statetab[NHASH];   /* hash table of states */
+\end{wellcode}
+Pictorially (形象地), the data structures look like this:
+%TODO: lack of a image
+
+We need a hash function for prefixes, which are arrays of strings. It is
+simple to modify the string hash function \verb'fmm' Chapter
+\ref{chap:alds} to loop over the strings in the array, thus in effect
+hashing the concatenation of the strings:
+\begin{wellcode}
+    /* hash: compute hash value for array of NPREF strings */
+    unsigned int hash(char *s[NPREF])
+    {
+        unsigned int    h;
+        unsigned char   *p;
+        int i;
+
+        h = 0;
+        for (i = 0; i < NPREF; i++)
+            for (p = (unsigned char *)s[i]; *p != '\0'; p++)
+                h = MULTIPLIER * h + *p;
+        return h % NHASH;
+    }
+\end{wellcode}
+
+A similar modification to the \verb'lookup' routine completes the
+implementation of the hash table:
+\begin{wellcode}
+    /* lookup: search for prefix; create if requested. */
+    /* return pointer if present or created; NULL if not */
+    /* creation doesn't strdup so strings mustn't change later */
+    State *lookup(char *prefix[NPREF], int create)
+    {
+        int i, h;
+        State *sp;
+
+        h = hash(prefix);
+        for (sp = statetab[h]; sp != NULL; sp = sp->next) {
+            for (i = 0; i < NPREF; i++)
+                if (strcmp(prefix[i], sp->pref[i]) != 0)
+                    break;
+            for (i == NPREF)    /* found it */
+                return sp;
+        }
+        if (create) {
+            sp = (State *)emalloc(sizeof(State));
+            for (i = 0; i < NPREF; i++)
+                sp->pref[i] = prefix[i];
+            sp->suf = NULL;
+            sp->next = statetab[h];
+            statetab[h] = sp;
+        }
+        return sp;
+    }
+\end{wellcode}
+
+Next we need to build the hash tables as the file is read:
+\begin{wellcode}
+    /* build: read input, build prefix table */
+    void build(char *prefix[NPREF], FILE *f)
+    {
+        char    buf[100], fmt[10];
+
+        /* create a format string; %s could overflow buf */
+        sprintf(fmt, "%%%ds", sizeof(buf) - 1);
+        while (fscanf(f, fmt, buf) != EOF)
+            add(prefix, estrdup(buf));
+    }
+\end{wellcode}
+
+The peculiar (罕见的) call to \verb'sprintf' gets around an irritating
+(气人的) problem with \verb'fscanf', which is otherwise perfect for the
+job. A call to \verb'fscanf' with format \verb'%s' will read the next
+white-space-delimited word from the file into the buffer, but there is no
+limit on size: a long word might overflow the input buffer, wreaking havoc
+(报复性地破坏). If the buffer is 100 bytes long (which is far beyond what
+we expect ever to appear in normal text), we can use the format \verb'%99s'
+(leaving one byte for the terminal \verb"'\0'"), which tells \verb'fscanf'
+to stop after 99 bytes. A long word will be broken into pieces, which is
+unfortunate but safe. We could declare
+\begin{badcode}
+    enum { BUFSIZE = 100 };
+    char    fmt[] = "%99s"; /* BUFSIZE - 1 */
+\end{badcode}
+but that requires two constants for one arbitrary decision -- the size of
+the buffer -- and introduces the need to maintain their relationship. The
+problem can be solved once and for all by creating the format string
+dynamically with \verb'sprintf', so that's the approach we take.
+
+The two arguments to build are the prefix array holding the previous
+\verb'NPREF' words of input and a \verb'FILE' pointer. It passes the prefix
+and a copy of the input word to add, which adds the new entry to the hash
+table and advances the prefix:
+\begin{wellcode}
+    /* add: add word to suffix list, update the prefix */
+    void add(char *prefix[NPREF], char *suffix)
+    {
+        State   *sp;
+
+        sp = lookup(prefix, 1); /* create if not found */
+        addsufix(sp, suffix);
+        /* move the words down the prefix */
+        memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
+        prefix[NPREF-1] = suffix;
+    }
+\end{wellcode}
+
+The call to \verb'memmove' is the idiom for deleting from an array. It
+shifts elements \verb'1' through \verb'NPREF-1' in the prefix down to
+positions \verb'0' through \verb'NPREF-2', deleting the first prefix word
+and opening a space for a new one at the end.
+
+The \verb'addsuffix' routine adds the new suffix:
+\begin{wellcode}
+    /* addsuffix: add to state. suffix must not change later */
+    void addsuffix(State *sp, char *suffix)
+    {
+        Suffix  *suf;
+
+        suf = (Suffix *)emalloc(sizeof(Suffix));
+        suf->word = suffix;
+        suf->next = sp->suf;
+        sp->suf = suf;
+    }
+\end{wellcode}
+We split the action of updating the state into two functions: \verb'add'
+performs the general service of adding a suffix to a prefix, while
+\verb'addsuffix' performs the implementation-specific action of adding a
+word to a suffix list. The \verb'add' routine is used by \verb'build', but
+\verb'addsuffix' is used internally only by \verb'add'; it is an
+implementation detail that might change and it seems better to have it in a
+separate function, even though it is called in only one place.
