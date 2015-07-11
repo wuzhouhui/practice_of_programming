@@ -404,3 +404,160 @@ word to a suffix list. The \verb'add' routine is used by \verb'build', but
 \verb'addsuffix' is used internally only by \verb'add'; it is an
 implementation detail that might change and it seems better to have it in a
 separate function, even though it is called in only one place.
+
+\section{Generating Output}
+\label{sec:generating_output}
+
+With the data structure built, the next step is to generate the output. The
+basic idea is as before: given a prefix, select one of its suffixes at
+random, print it, then advance the prefix. This is the steady (稳定的)
+state of processing; we must still figure out how to start and stop the
+algorithm. Starting is easy if we remember the words of the first prefix
+and begin with them. Stopping is easy, too. We need a marker word to
+terminate the algorithm. After all the regular input, we can add a
+terminator, a "word" that is guaranteed not to appear in any input:
+\begin{wellcode}
+    build(prefix, stdin);
+    add(prefix, NONWORD);
+\end{wellcode}
+\verb'NONWORD' should be some value that will never be encountered in
+regular input. Since the input words are delimited by white space, a "word"
+of white space will serve, such as a newline character:
+\begin{wellcode}
+    char    NONWORD[] = '\n';   /* cannot appear as read word */
+\end{wellcode}
+
+One more worry: what happens if there is insufficient input to start the
+algorithm?  There are two approaches to this sort of problem, either exit
+prematurely if there is insufficient input, or arrange that there is always
+enough and don't bother to check.  In this program, the latter approach
+works well.
+
+We can initialize building and generating with a fabricated (伪造的)
+prefix, which guarantees there is always enough input for the program. To
+prime (启动) the loops, initialize the prefix array to be all
+\verb'NONWORD' words. This has the nice benefit that the first word of the
+input file will be the first suffix of the fake prefix, so the generation
+loop needs to print only the suffixes it produces.
+
+In case the output is unmanageably long, we can terminate the algorithm
+after some number of words are produced or when we hit \verb'NONWORD' as a
+suffix, whichever comes first.
+
+Adding a few \verb'NONWORD's to the ends of the data simplifies the main
+processing loops of the program significantly; it is an example of the
+technique of adding sentinel (哨兵) values to mark boundaries.
+
+As a rule, try to handle irregularities and exceptions and special cases in
+data.
+Code is harder to get right so the control flow should be as simple and
+regular as possible.
+
+The \verb'generate' function uses the algorithm we sketched (描绘的)
+originally. It produces one word per line of output, which can be grouped
+into longer lines with a word processor; Chapter \ref{chap:notation} shows
+a simple formatter called \verb'fmt'for this task.
+
+With the use of the initial and final \verb'NONWORD' strings,
+\verb'generate' starts and stops properly:
+\begin{wellcode}
+    /* generate: produce output, one word per line */
+    void generate(int nwords)
+    {
+        State   *sp;
+        Suffix  *suf;
+        char    *prefix[NPREF], *w;
+        int     i, nmatch;
+
+        for (i = 0; i < NPREF; i++) /* reset initial prefix */
+            prefix[i] = NONWORD;
+
+        for (i = 0; i < nwords; i++) {
+            sp = lookup(prefix, 0);
+            nmatch = 0;
+            for (suf = sp->suf; suf != NULL; suf = suf->next)
+                if (rand() % ++nmatch == 0) /* prob = 1/nmatch */
+                    w = suf->word;
+            if (strcmp(w, NONWORD) == 0)
+                break;
+            printf("%s\n", w);
+            memmove(prefix, prefix+1, (NPREF-1)*sizeof(prefix[0]));
+            prefix[NPREF-1] = w;
+        }
+    }
+\end{wellcode}
+
+Notice the algorithm for selecting one item at random when we don't know
+how many items there are. The variable \verb'nmatch' counts the number of
+matches as the list is scanned. The expression
+\begin{wellcode}
+    rand() % ++nmatch == 0
+\end{wellcode}
+increments \verb'nmatch' and is then true with probability \verb'1/nmatch'.
+Thus the first matching item is selected with probability 1, the second
+will replace it with probability $1/2$, the third will replace the survivor
+with probability $1/3$, and so on. At any time, each one of the $k$
+matching items seen so far has been selected with probability $1/k$.
+
+At the beginning, we set the \verb'prefix' to the starting value, which is
+guaranteed to be installed in the hash table. The first \verb'Suffix'
+values we find will be the first words of the document, since they are the
+unique follow-on to the starting prefix. After that, random suffixes will
+be chosen. The loop calls \verb'lookup' to find the hash table entry for
+the current prefix, then chooses a random suffix, prints it, and advances
+the \verb'prefix'.
+
+If the suffix we choose is \verb'NONWORD', we're done, because we have
+chosen the state that corresponds to the end of the input. If the suffix is
+not \verb'NONWORD', we print it, then drop the first word of the prefix
+with a call to \verb'memmove', promote the suffix to be the last word of
+the prefix, and loop.
+
+Now we can put all this together into a \verb'main' routine that reads the
+standard input and generates at most a specified number of words:
+\begin{wellcode}
+    /* markov main: markov-chain random text generation */
+    int main(void)
+    {
+        int i, nwords = MAXGEN;
+        char    *prefix[NPREF];     /* current input prefix */
+        for (i = 0; i < NPREF; i++) /* set up initial prefix */
+            prefix[i] = NONWORD;
+        build(prefix, stdin);
+        add(prefix, NONWORD);
+        generate(nwords);
+        return 0;
+    }
+\end{wellcode}
+
+This completes our C implementation. We will return at the end of the
+chapter to a comparison of programs in different languages. The great
+strengths of C are that it gives the programmer complete control over
+implementation, and programs written in it tend to be fast. The cost,
+however, is that the C programmer must do more of the work, allocating and
+reclaiming memory, creating hash tables and linked lists, and the like. C
+is a razor-sharp tool, with which one can create an elegant and efficient
+program or a bloody mess.
+
+\begin{exercise}
+    The algorithm for selecting a random item from a list of unknown length
+    depends on having a good random number generator. Design and carry out
+    experiments to determine how well the method works in practice.
+\end{exercise}
+
+\begin{exercise}
+    If each input word is stored in a second hash table, the text is only
+    stored once, which should save space. Measure some documents to
+    estimate how much. This organization would allow us to compare pointers
+    rather than strings in the hash chains for prefixes, which should run
+    faster. Implement this version and measure the change in speed and
+    memory consumption.
+\end{exercise}
+
+\begin{exercise}
+    Remove the statements that place sentinel \verb'NONWORD's at the
+    beginning and end of the data, and modify \verb'generate' so it starts
+    and stops properly without them. Make sure it produces correct output
+    for input with 0, 1, 2, 3, and 4 words.  Compare this implementation to
+    the version using sentinels.
+\end{exercise}
