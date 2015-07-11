@@ -1116,6 +1116,7 @@ with about 25 fields per line. As we saw when comparing versions of
 \end{exercise}
 
 \begin{exercise}
+    \label{exer:csvnew}
     The C++ version permits multiple independent \verb'Csv' instances to
     operate concurrently without interfering, a benefit of encapsulating
     all the state in an object that can be instantiated multiple times.
@@ -1123,3 +1124,164 @@ with about 25 fields per line. As we saw when comparing versions of
     data structures with structures that are allocated and initialized by
     an explicit \verb'csvnew' function.
 \end{exercise}
+
+\section{Interface Principles}
+\label{sec:interface_principles}
+
+In the previous sections we were working out the details of an interface,
+which is the detailed boundary between code that provides a service and
+code that uses it. An interface defines what some body of code does for its
+users, how the functions and perhaps data members can be used by the rest
+of the program. Our CSV interface provides three functions -- read a line,
+get a field, and return the number of fields -- which are the only
+operations that can be performed.
+
+To prosper (成功), an interface must be well suited (使适应) for its task
+-- simple, general.  regular, predictable, robust -- and it must adapt
+gracefully as its users and its implementation change. Good interfaces
+follow a set of principles. These are not independent or even consistent,
+but they help us describe what happens across the boundary between two
+pieces of software.
+
+\emph{Hide implementation details.} The implementation behind the interface
+should be hidden from the rest of the program so it can be changed without
+affecting or breaking anything. There are several terms for this kind of
+organizing principle; information hiding, encapsulation, abstraction,
+modularization, and the like all refer to related ideas. An interface
+should hide details of the implementation that are irrelevant to the client
+(user) of the interface. Details that are invisible can be changed without
+affecting the client, perhaps to extend the interface, make it more
+efficient, or even replace its implementation altogether.
+
+The basic libraries of most programming languages provide familiar
+examples, though not always especially well-designed ones. The C standard
+I/O library is among the best known: a couple of dozen functions that open,
+close, read, write, and otherwise manipulate files. The implementation of
+file I/O is hidden behind a data type \verb'FILE *', whose properties one
+might be able to see (because they are often spelled out in
+\verb'<stdio.h>') but should not exploit (利用).
+
+If the header file does not include the actual structure declaration, just
+the name of the structure, this is sometimes called an \term{opaque type},
+since its properties are not visible and all operations take place through
+a pointer to whatever real object lurks (隐藏) behind.
+
+Avoid global variables; wherever possible it is better to pass references
+to all data through function arguments.
+
+We strongly recommend against publicly visible data in all forms; it is too
+hard to maintain consistency of values if users can change variables at
+will.  Function interfaces make it easier to enforce access rules, but this
+principle is often violated. The predefined I/O streams like \verb'stdin'
+and \verb'stdout' are almost always defined as elements of a global array
+of \verb'FILE' structures:
+\begin{wellcode}
+    extern  FILE    __iob[_NFILE];
+    #define stdin   (&__iob[0])
+    #define stdout  (&__iob[1])
+    #define stderr  (&__iob[2])
+\end{wellcode}
+
+This makes the implementation completely visible; it also means that one
+can't assign to \verb'stdin', \verb'stdout' or \verb'stderr', even though
+they look like variables.  The peculiar (罕见的) name \verb'__iob' uses the
+ANSI C convention of two leading underscores for private names that must be
+visible, which makes the names less likely to conflict with names in a
+program.
+
+Classes in C++ and Java are better mechanisms for hiding information; they
+are central to the proper use of those languages. The container classes of
+the C++ Standard Template Library that we used in Chapter \ref{chap:desipl}
+carry this even further: aside from some performance guarantees there is no
+information about implementation, and library creators can use any
+mechanism they like.
+
+\emph{Choose a small orthogonal (正交的) set of primitives.} An interface
+should provide as much functionality as necessary but no more, and the
+functions should not overlap excessively (过度地) in their capabilities.
+Having lots of functions may make the library easier to use -- whatever one
+needs is there for the taking. But a large interface is harder to write and
+maintain, and sheer (陡峭的) size may make it hard to learn and use as
+well. "Application program interfaces" or APIs are sometimes so huge that
+no mortal (人) can be expected to master them.
+
+In the interest of convenience, some interfaces provide multiple ways of
+doing the same thing, a tendency that should be resisted (反抗). The C
+standard I/O library provides at least four different functions that will
+write a single character to an output stream:
+\begin{wellcode}
+    char    c;
+    putc(c, fp);
+    fputc(c, fp);
+    fprintf(fp, "%c", c);
+    fwrite(&c, sizeof(char), 1, fp);
+\end{wellcode}
+If the stream is \verb'stdout', there are several more possibilities. These
+are convenient, but not all are necessary.
+
+Narrow interfaces are to be preferred to wide ones, at least until one has
+strong evidence that more functions are needed. Do one thing, and do it
+well.  Don't add to an interface just because it's possible to do so, and
+don't fix the interface when it's the implementation that's broken. For
+instance, rather than having \verb'memcpy' for speed and \verb'memmove' for
+safety, it would be better to have one function that was always safe, and
+fast when it could be.
+
+\emph{Don't reach behind the user's back.} A library function should not
+write secret files and variables or change global data, and it should be
+circumspect (慎重的) about modifying data in its caller. The \verb'strtok'
+function fails several of these criteria. It is a bit of a surprise that
+\verb'strtok' writes null bytes into the middle of its input string. Its
+use of the null pointer as a signal to pick up where it left off last time
+implies secret data held between calls, a likely source of bugs, and it
+precludes (排除) concurrent uses of the function. A better design would
+provide a single function that tokenizes an input string.  For similar
+reasons, our second C version can't be used for two input streams; see
+Exercise \ref{exer:csvnew}.
+
+The use of one interface should not demand (要求) another one just for the
+convenience of the interface designer or implementer. Instead, make the
+interface self-contained, or failing that, be explicit about what external
+services are required.  Otherwise, you place a maintenance burden on the
+client. An obvious example is the pain of managing huge lists of header
+files in C and C++ source; header files can be thousands of lines long and
+include dozens of other headers.
+
+\emph{Do the same thing the same way everywhere.} Consistency and
+regularity are important. Related things should be achieved by related
+means. The basic \verb'str...' functions in the C library are easy to use
+without documentation because they all behave about the same: data flows
+from right to left, the same direction as in an assignment statement, and
+they all return the resulting string. On the other hand, in the C Standard
+I/O library it is hard to predict the order of arguments to functions.
+Some have the \verb'FILE *' argument first, some last; others have various
+orders for size and number of elements. The algorithms for STL containers
+present a very uniform interface, so it is easy to predict how to use an
+unfamiliar function.
+
+External consistency, behaving like something else, is also a goal. For
+example, the \verb'mem...' functions were designed after the \verb'str...'
+functions in C, but borrowed their style. The standard I/O functions
+\verb'fread' and \verb'fwrite' would be easier to remember if they looked
+like the \verb'read' and \verb'write' functions they were based on. Unix
+command-line options are introduced by a minus sign, but a given option
+letter may mean completely different things, even between related programs.
+
+If wildcards like the \verb'*' in \verb'*.exe' are all expanded by a
+command interpreter, behavior is uniform. If they are expanded by
+individual programs, non-uniform behavior is likely. Web browsers take a
+single mouse click to follow a link, but other applications take two clicks
+to start a program or follow a link; the result is that many people
+automatically click twice regardless.
+
+These principles are easier to follow in some environments than others, but
+they still stand (停滞). For instance, it's hard to hide implementation
+details in C, but a good programmer will not exploit them, because to do so
+makes the details part of the interface and violates the principle of
+information hiding. Comments in header files, names with special forms
+(such as \verb'__iob'), and so on are ways of encouraging good behavior
+when it can't be enforced (执行).
+
+No matter what, there is a limit to how well we can do in designing an
+interface.  Even the best interfaces of today may eventually become the
+problems of tomorrow, but good design can push tomorrow off a while longer.
