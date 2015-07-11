@@ -561,3 +561,231 @@ program or a bloody mess.
     for input with 0, 1, 2, 3, and 4 words.  Compare this implementation to
     the version using sentinels.
 \end{exercise}
+
+\section{Java}
+\label{sec:java}
+
+Our second implementation of the Markov chain algorithm is in Java.
+Object-oriented languages like Java encourage one to pay particular
+attention to the interfaces between the components of the program, which
+are then encapsulated as independent data items called objects or classes,
+with associated functions called methods.
+
+Java has a richer library than C, including a set of \textit{container}
+classes to group existing objects in various ways. One example is a
+\verb'Vector' that provides a dynamically-growable array that can store any
+Object type. Another example is the \verb'Hashtable' class, with which one
+can store and retrieve values of one type using objects of another type as
+keys.
+
+In our application, \verb'Vectors' of strings are the natural choice to
+hold prefixes and suffixes. We can use a \verb'Hashtable' whose keys are
+prefix vectors and whose values are suffix vectors. The terminology for
+this type of construction is a map from prefixes to suffixes; in Java, we
+need no explicit \verb'State' type because \verb'Hashtable' implicitly
+connects (maps) prefixes to suffixes. This design is different from the C
+version, in which we installed \verb'State' structures that held both
+prefix and suffix list, and hashed on the prefix to recover the full
+\verb'State'.
+
+A \verb'Hashtable' provides a \verb'put' method to store a key-value pair,
+and a \verb'get' method to retrieve the value of a key:
+\begin{wellcode}
+    Hashtable h = new Hashtable();
+    h.put(key, value);
+    Sometype v = (Sometype)h.get(key);
+\end{wellcode}
+
+Our implementation has three classes. The first class \verb'Prefix', holds
+the words of the prefix:
+\begin{wellcode}
+    class Prefix {
+        public Vector pref; // NPREF adjacent words from input
+        ...
+\end{wellcode}
+
+The second class, \verb'Chain', reads the input, builds the hash table, and
+generates the output; here are its class variables:
+\begin{wellcode}
+    class Chain {
+        static final int NPREF  = 2;    // size of prefix
+        static final String NONWORD = "\n";
+                    // "word" that can't appear
+        Hashtable statetab = new Hashtable();
+                    // key = Prefix, value = suffix Vector
+        Prefix prefix = new Prefix(NPREF, NONWORD);
+                    // initial prefix
+        Random rand = new Random();
+        ...
+\end{wellcode}
+
+The third class is the public interface; it holds \verb'main' and
+instantiates a \verb'Chain':
+\begin{wellcode}
+    class Markov {
+        static final int MAXGEN = 10000; // maximum words generated
+        public static void main(String[] args) throws IOException
+        {
+            Chain chain = new Chain();
+            int nwords = MAXGEN;
+
+            chain.build(System.in);
+            chain.generate(nwords);
+        }
+    }
+\end{wellcode}
+
+When an instance of class \verb'Chain' is created, it in turn creates a
+hash table and sets up the initial prefix of \verb'NPREF' \verb'NONWORD's.
+The \verb'build' function uses the library function \verb'StreamTokenizer'
+to parse the input into words separated by white space characters.  The
+three calls before the loop set the tokenizer into the proper state for our
+definition of "word".
+\begin{wellcode}
+    // Chain build: build State table from input stream
+    void build(InputStream in) throws IOException
+    {
+        StreamTokenizer st = new StreamTokenizer(in);
+
+        st.resetSyntax();                     // remove default rules
+        st.wordChars(0, Character.MAX_VALUE); // turn on all chars
+        st.whitespaceChar(0, ' ');            // except up to blank
+        while (st.nextToken() != st.TT_EOF)
+            add(st.sval);
+        add(NONWORD);
+    }
+\end{wellcode}
+
+The \verb'add' function retrieves the vector of suffixes for the current
+prefix from the hash table; if there are none (the vector is null),
+\verb'add' creates a new vector and a new prefix to store in the hash
+table. In either case, it adds the new word to the suffix vector and
+advances the prefix by dropping the first word and adding the new word at
+the end.
+\begin{wellcode}
+    // Chain add: add word to suffix list, update prefix
+    void add(String word)
+    {
+        Vector suf = (Vector)statetab.get(prefix);
+        if (suf == null) {
+            suf = new Vector();
+            statetab.put(new Prefix(prefix), suf);
+        }
+        suf.addElement(word);
+        prefix.pref.removeElementAt(0);
+        prefix.pref.addElement(word);
+    }
+\end{wellcode}
+Notice that if \verb'suf' is null, \verb'add' installs a new \verb'Prefix'
+in the hash table, rather than \verb'prefix' itself. This is because the
+\verb'Hashtable' class stores items by reference, and if we don't make a
+copy, we could overwrite data in the table. This is the same issue that we
+had to deal with in the C program.
+
+The \verb'generation' function is similar to the C version, but slightly
+more compact because it can index a random vector element directly instead
+of looping through a list.
+\begin{wellcode}
+    // Chain generate: generate output words
+    void generate(int nwords)
+    {
+        prefix = new Prefix(NPREF, NONWORD);
+        for (int i = 0; i < nwords; i++) {
+            Vector s = (Vector)statetab.get(prefix);
+            int r = Math.abs(rand.nextInt() % s.size());
+            String suf = (String)s.elementAt(r);
+            if (suf.equals(NONWORD))
+                break;
+            System.out.println(suf);
+            prefix.pref.removeElementAt(0);
+            prefix.pref.addElement(suf);
+        }
+    }
+\end{wellcode}
+
+The two constructors of \verb'Prefix' create new instances from supplied
+data. The first copies an existing \verb'Prefix', and the second creates a
+prefix from \verb'n' copies of a string; we use it to make \verb'NPREF'
+copies of \verb'NONWORD' when initializing:
+\begin{wellcode}
+    // Prefix constructor: duplicate existing prefix
+    Prefix (Prefix p)
+    {
+        pref = (Vector)p.pref.clone();
+    }
+
+    // Prefix constructor: n copies of str
+    Prefix(int n, String str)
+    {
+        pref = new Vector();
+        for (int i = 0; i < n; i++)
+            pref.addElement(str);
+    }
+\end{wellcode}
+
+\verb'Prefix' also has two methods, \verb'hashCode' and \verb'equals', that
+are called implicitly by the implementation of \vebr'Hashtable' to index
+and search the table. It is the need to have an explicit class for these
+two methods for \verb'Hashtable' that forced us to make \verb'Prefix' a
+full-fledged (发育完全的) class, rather than just a \verb'Vector' like the
+suffix.
+
+The \verb'hashCode' method builds a single hash value by combining the set
+of \verb'hashCode's for the elements of the vector:
+\begin{wellcode}
+    static final int MULTIPLIER = 31;   // for hashCode()
+
+    // Prefix hashCode: generate hash from all prefix words
+    public int hashCode()
+    {
+        int h = 0;
+        for (int i = 0; i < pref.size(); i++)
+            h = MULTIPLIER * h + pref.elementAt(i).hashCode();
+        return h;
+    }
+\end{wellcode}
+and \verb'equals' does an elementwise comparison for the words in two
+prefixes:
+\begin{wellcode}
+    // Prefix equals: compare two prefixes for equal words
+    public boolean equals(Object o)
+    {
+        Prefix p = (Prefix)o;
+        for (int i = 0; i < pref.size(); i++)
+            if (!pref.elementAt(i).equals(p.pref.elementAt(i)))
+                return false;
+        return true;
+    }
+\end{wellcode}
+
+The Java program is significantly smaller than the C program and takes care
+of more details; \verb'Vectors' and the \verb'Hashtable' are the obvious
+examples. In general, storage management is easy since vectors grow as
+needed and garbage collection takes care of reclaiming memory that is no
+longer referenced. But to use the \verb'Hashtable' class, we still need to
+write functions \verb'hashcode' and \verb'equals', so Java isn't taking
+care of all the details.
+
+Comparing the way the C and Java programs represent and operate on the same
+basic data structure, we see that the Java version has better separation of
+functionality.  For example, to switch from \verb'Vectors' to arrays would
+be easy. In the C version, everything knows what everything else is doing:
+the hash table operates on arrays that are maintained in various places,
+\verb'lookup' knows the layout of the \verb'State' and \verb'Suffix'
+structures, and everyone knows the size of the \verb'prefix' array.
+\begin{wellcode}
+    % java Markov < jr_chemistry.txt | fmt
+    Wash the blackboard. Watch it dry. The water goes
+    into the air. When water goes into the air it
+    evaporates. Tie a damp cloth to one end of a solid or
+    liquid. Look around. What are the solid things?
+    Chemical changes take place when something burns. If
+    the burning material has liquids, they are stable and
+    burning. Break up the lump of sugar into small pieces
+    and put them together again in the bottom of a liquid.
+\end{wellcode}
+
+\begin{wellcode}
+    Revise the Java version of \verb'markov' to use an array instead of a
+    \verb'Vector' for the prefix in the \verb'State' class.
+\end{wellcode}
