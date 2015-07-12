@@ -1067,3 +1067,70 @@ is not a major issue.
     Modify the Awk and Perl versions to handle prefixes of any length.
     Experiment to determine what effect this change has on performance.
 \end{exercise}
+
+\section{Performance}
+\label{sec:performance}
+
+We have several implementations to compare. We timed the programs on the
+Book of Psalms from the King James Bible, which has 42,685 words (5,238
+distinct words, 22,482 prefixes). This text has enough repeated phrases
+("Blessed is the ...") that one suffix list has more than 400 elements, and
+there are a few hundred chains with dozens of suffixes, so it is a good
+test data set.
+\begin{oldquote}
+    Blessed is the man of the net. Turn thee unto me, and raise me up, that
+    I may tell all my fears. They looked unto him, he heard. My praise
+    shall be blessed. Wealth and riches shall be saved. Thou hast dealt
+    well with thy hid treasure: they are cast into a standing water, the
+    flint into a standing water, and dry ground into watersprings.
+\end{oldquote}
+
+The times in the following table are the number of seconds for generating
+10,000 words of output; one machine is a 250MHz MIPS R10000 running Irix
+6.4 and the other is a 400MHz Pentium II with 128 megabytes of memory
+running Windows NT.  Run-time is almost entirely determined by the input
+size; generation is very fast by comparison. The table also includes the
+approximate program size in lines of source code. \\
+\begin{center}
+\begin{tabular}{l|ccc}
+    & 250 MHz R10000    & 400 MHz Pentium II    & Lines of source code \\
+    \hline
+    C           & 0.36 sec  & 0.30 sec  & 150 \\
+    Java        & 4.9       & 9.2       & 105 \\
+    C++/STL/deque & 2.6     & 11.2      & 70  \\
+    C++/STL/list & 1.7      & 1.5       & 70 \\
+    Awk         & 2.2       & 2.1       & 20 \\
+    Perl        & 1.8       & 1.0       & 18
+\end{tabular}
+\end{center} \\
+The C and C++ versions were compiled with optimizing compilers, while the
+Java runs had just-in-time compilers enabled. The Irix C and C++ times are
+the fastest obtained from three different compilers; similar results were
+observed on Sun SPARC and DEC Alpha machines. The C version of the program
+is fastest by a large factor; Perl comes second. The times in the table are
+a snapshot of our experience with a particular set of compilers and
+libraries, however, so you may see very different results in your
+environment.
+
+Something is clearly wrong with the STL \verb'deque' version on Windows.
+Experiments showed that the \verb'deque' that represents the prefix
+accounts for most of the runtime, although it never holds more than two
+elements; we would expect the central data structure, the \verb'map', to
+dominate. Switching from a \verb'deque' to a \verb'list' (which is a
+doubly-linked list in the STL) improves the time dramatically (显著地). On
+the other hand, switching from a \verb'map' to a (non-standard) \verb'hash'
+container made no difference on Irix; hashes were not available on our
+Windows machine. It is a testament (确实地证明) to the fundamental
+soundness (稳固) of the STL design that these changes required only
+substituting the word \verb'list' for the word \verb'deque' or \verb'hash'
+for \verb'map' in two places and recompiling. We conclude that the STL,
+which is a new component of C++, still suffers from immature (不成熟)
+implementations. The performance is unpredictable between implementations
+of the STL and between individual data structures. The same is true of
+Java, where implementations are also changing rapidly.
+
+There are some interesting challenges in testing a program that is meant to
+produce voluminous random output. How do we know it works at all? How do we
+know it works all the time? Chapter \ref{chap:testing}, which discusses
+testing, contains some suggestions and describes how we tested the Markov
+programs.
