@@ -1285,3 +1285,142 @@ when it can't be enforced (执行).
 No matter what, there is a limit to how well we can do in designing an
 interface.  Even the best interfaces of today may eventually become the
 problems of tomorrow, but good design can push tomorrow off a while longer.
+
+\section{Resource Management}
+\label{sec:resource_management}
+
+One of the most difficult problems in designing the interface for a library
+(or a class or a package) is to manage resources that are owned by the
+library or that are shared by the library and those who call it. The most
+obvious such resource is memory -- who is responsible for allocating and
+freeing storage? -- but other shared resources include open files and the
+state of variables whose values are of common interest (共同关心的).
+Roughly, the issues fall into the categories of initialization, maintaining
+state, sharing and copying, and cleaning up.
+
+The prototype of our CSV package used static initialization to set the
+initial values for pointers, counts, and the like. But this choice is
+limiting since it prevents restarting the routines in their initial state
+once one of the functions has been called. An alternative is to provide an
+initialization function that sets all internal values to the correct
+initial values. This permits restarting, but relies on the user to call it
+explicitly. The \verb'reset' function in the second version could be made
+public for this purpose.
+
+In C++ and Java, constructors are used to initialize data members of
+classes.  Properly defined constructors ensure that all data members are
+initialized and that there is no way to create an uninitialized class
+object. A group of constructors can support various kinds of initializers;
+we might provide \verb'Csv' with one constructor that takes a file name and
+another that takes an input stream.
+
+What about copies of information managed by a library, such as the input
+lines
+and fields? Our C \verb'csvgetline' program provides direct access to the input
+strings
+(line and fields) by returning pointers to them. This unrestricted access
+has several
+drawbacks. It's possible for the user to overwrite memory so as to render
+other information invalid; for example, an expression like
+\begin{wellcode}
+    strcpy(csvfield(1), csvfield(2));
+\end{wellcode}
+could fail in a variety of ways, most likely by overwriting the beginning
+of field 2 if field 2 is longer than field 1. The user of the library must
+make a copy of any information to be preserved beyond the next call to
+\verb'csvgetline'; in the following sequence, the pointer might well be
+invalid at the end if the second \verb'csvgetline' causes a reallocation of
+its line buffer.
+\begin{wellcode}
+    char    *p;
+
+    csvgetline(fin);
+    p = csvfield(1);
+    csvgetline(fin);
+    /* p could be invalid here */
+\end{wellcode}
+The C++ version is safer because the strings are copies that can be changed
+at will.
+
+Java uses references to refer to objects, that is, any entity other than
+one of the basic types like \verb'int'. This is more efficient than making
+a copy, but one can be fooled into thinking that a reference is a copy; we
+had a bug like that in an early version of our Java \verb'markov' program
+and this issue is a perennial (常见的) source of bugs involving strings in
+C. Clone methods provide a way to make a copy when necessary.
+
+The other side of initialization or construction is finalization or
+destruction -- cleaning up and recovering resources when some entity is no
+longer needed.  This is particularly important for memory, since a program
+that fails to recover unused memory will eventually run out. Much modern
+software is embarrassingly prone (倾向于) to this fault. Related problems
+occur when open files are to be closed: if data is being buffered, the
+buffer may have to be flushed (and its memory reclaimed). For standard C
+library functions, flushing happens automatically when the program
+terminates normally, but it must otherwise be programmed
+(必须再提供一种方式). The C and C++ standard function \verb'atexit'
+provides a way to get control just before a program terminates normally;
+interface implementers can use this facility to schedule cleanup.
+
+\emph{Free a resource in the same layer that allocated it.} One way to
+control resource allocation and reclamation is to have the same library,
+package, or interface that allocates a resource be responsible for freeing
+it. Another way of saying this is that the allocation state of a resource
+should not change across the interface. Our CSV libraries read data from
+files that have already been opened, so they leave them open when they are
+done. The caller of the library needs to close the files.
+
+C++ constructors and destructors help enforce this rule. When a class
+instance goes out of scope or is explicitly destroyed, the destructor is
+called; it can flush buffers, recover memory, reset values, and do whatever
+else is necessary.  Java does not provide an equivalent mechanism. Although
+it is possible to define a finalization method for a class, there is no
+assurance that it will run at all, let alone at a particular time, so
+cleanup actions cannot be guaranteed to occur, although it is often
+reasonable to assume they will.
+
+Java does provide considerable help with memory management because it has
+built-in \term{garbage collection}. As a program runs, it allocates new
+objects.  There is no way to deallocate them explicitly, but the run-time
+system keeps track of which objects are still in use and which are not, and
+periodically returns unused ones to the available memory pool.
+
+There are a variety of techniques for garbage collection. Some schemes keep
+track of the number of uses of each object, its \term{reference count}, and
+free an object when its reference count goes to zero. This technique can be
+used explicitly in C and C++ to manage shared objects. Other algorithms
+periodically follow a trail (踪迹) from the allocation pool to all
+referenced objects. Objects that are found this way are still in use;
+objects that are not referred to by any other object are not in use and can
+be reclaimed.
+
+The existence of automatic garbage collection does not mean that there are
+no memory-management issues in a design. We still have to determine whether
+interfaces return references to shared objects or copies of them, and this
+affects the entire program. Nor is garbage collection free -- there is
+overhead to maintain information and to reclaim unused memory, and
+collection may happen at unpredictable times.
+
+All of these problems become more complicated if a library is to be used in
+an environment where more than one thread of control can be executing its
+routines at the same time, as in a multi-threaded Java program.
+
+To avoid problems, it is necessary to write code that is \term{reentrant},
+which means that it works regardless of the number of simultaneous
+executions.  Reentrant code will avoid global variables, static local
+variables, and any other variable that could be modified while another
+thread is using it. The key to good multi-thread design is to separate the
+components so they share nothing except through well-defined interfaces.
+Libraries that inadvertently (不慎地) expose variables to sharing destroy
+the model.  (In a multi-thread program, \verb'strtok' is a disaster, as are
+other functions in the C library that store values in internal static
+memory.) If variables might be shared, they must be protected by some kind
+of locking mechanism to ensure that only one thread at a time accesses
+them. Classes are a big help here because they provide a focus for
+discussing sharing and locking models. Synchronized methods in Java provide
+a way for one thread to lock an entire class or instance of a class against
+simultaneous modification by some other thread; synchronized blocks permit
+only one thread at a time to execute a section of code.
+
+Multi-threading adds significant complexity to programming issues, and is
+too big a topic for us to discuss in detail here.
