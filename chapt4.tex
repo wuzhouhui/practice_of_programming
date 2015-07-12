@@ -1424,3 +1424,263 @@ only one thread at a time to execute a section of code.
 
 Multi-threading adds significant complexity to programming issues, and is
 too big a topic for us to discuss in detail here.
+
+\section{Abort, Retry, Fail?}
+\label{sec:abort_retry_fail}
+
+In the previous chapters we used functions like \verb'eprintf' and
+\verb'estrdup' to handle errors by displaying a message before terminating
+execution. For example, \verb'eprintf' behaves like
+\verb'fprintf(stderr, ...)', but exits the program with an error status
+after reporting the
+error. It uses the \verb'<stdarg. h>' header and the \verb'vfprintf'
+library routine to print the arguments represented by the \verb'...' in the
+prototype. The \verb'stdarg' library must be initialized by a call to
+\verb'va_start' and terminated by \verb'va_end'.  We will use more of this
+interface in Chapter \ref{chap:notation}.
+\begin{wellcode}
+    #include <stdarg.h>
+    #include <string.h>
+    #include <errno.h>
+
+    /* eprintf: print error message and exit */
+    void eprintf(char *fmt, ...)
+    {
+        va_list args;
+
+        fflush(stdout);
+        if (progname() != NULL)
+            fprintf(stderr, "%s: ", progname());
+
+        va_start(args, fmt);
+        vfprintf(stderr, fmt,args);
+        va_end(args);
+
+        if (fmt[0] != '\0' && fmt[strlen(fmt)-1] == ':')
+            fprintf(stderr, " %s", strerror(errno));
+        fprintf(stderr, "\n");
+        exit(2);    /* conventional value for failed execution */
+    }
+\end{wellcode}
+If the format argument ends with a colon, \verb'eprintf' calls the standard
+C function \verb'strerror', which returns a string containing any
+additional system error information that might be available. We also wrote
+\verb'weprintf', similar to \verb'eprintf', that displays a warning but
+does not exit. The \verb'printf'-like interface is convenient for building
+up strings that might be printed or displayed in a dialog box.
+
+Similarly, \verb'estrdup' tries to make a copy of a string, and exits with
+a message (via \verb'eprintf') if it runs out of memory:
+\begin{wellcode}
+    /* estrdup: duplicate a string, report if error */
+    char *estrdup(char *s)
+    {
+        char    *t;
+
+        t = (char *)malloc(strlen(s)+1);
+        if (t == NULL)
+            eprintf("estrdup(\"%.20s\") failed: ", s);
+        strcpy(t, s);
+        return t;
+    }
+\end{wellcode}
+and \verb'emalloc' provides a similar service for calls to \verb'malloc':
+\begin{wellcode}
+    /* emalloc: malloc and report if error */
+    void *emalloc(size_t n)
+    {
+        void *p;
+
+        p = malloc(n);
+        if (p == NULL)
+            eprintf("malloc of %u bytes failed: ", n);
+        return p;
+    }
+\end{wellcode}
+
+A matching header file called \verb'eprintf.h' declares these functions:
+\begin{wellcode}
+    /* eprintf.h: error wrapper functions */
+    extern void eprintf(char *, ...);
+    extern void weprintf(char *, ...);
+    extern char *estrdup(char *);
+    extern void *emalloc(size_t);
+    extern void *nerealloc(void *, size_t);
+    extern char *progname(void);
+    extern void setprogname(char *);
+\end{wellcode}
+This header is included in any file that calls one of the error functions.
+Each error message also includes the name of the program if it has been set
+by the caller: this is set and retrieved by the trivial (琐碎的) functions
+\verb'setprogname' and \verb'progname', declared in the header file and
+defined in the source file with \verb'eprintf':
+\begin{wellcode}
+    static char *name = NULL; /* program name for message */
+
+    /* setprogname: set stored name of program */
+    void setprogname(char *str)
+    {
+        name = estrdup(str);
+    }
+
+    /* progname: return stored name of program */
+    char *progname(void)
+    {
+        return name;
+    }
+\end{wellcode}
+Typical usage looks like this:
+\begin{wellcode}
+    int main(int argc, char *argv[])
+    {
+        setprogname("markov");
+        ...
+        f = fopen(argv[i], "r");
+        if (f == NULL)
+            eprintf("can't open %s:", argv[i]);
+        ...
+    }
+\end{wellcode}
+which prints output like this:
+\begin{wellcode}
+    markov: can't open psalm.txt: No such file or directory.
+\end{wellcode}
+
+We find these wrapper functions convenient for our own programming, since
+they unify error handling and their very existence encourages us to catch
+errors instead of ignoring them. There is nothing special about our design,
+however, and you might prefer some variant for your own programs.
+
+Suppose that rather than writing functions for our own use, we are creating
+a library for others to use in their programs. What should a function in
+that library do if an unrecoverable error occurs? The functions we wrote
+earlier in this chapter display a message and die. This is acceptable
+behavior for many programs, especially small stand-alone tools and
+applications. For other programs, however, quitting is wrong since it
+prevents the rest of the program from attempting any recovery; for
+instance, a word processor must recover from errors so it does not lose the
+document that you are typing. In some situations a library routine should
+not even display a message, since the program may be running in an
+environment where a message will interfere with displayed data or disappear
+without a trace. A useful alternative is to record diagnostic output in an
+explicit "log file", where it can be monitored independently.
+
+\emph{Detect errors at a low level, handle them at a high level.} As a
+general principle, errors should be detected at as low a level as possible,
+but handled at a high level. In most cases, the caller should determine how
+to handle an error, not the callee. Library routines can help in this by
+failing gracefully; that reasoning led us to return \verb'NULL' for a
+non-existent field rather than aborting. Similarly, \verb'csvgetline'
+returns \verb'NULL' no matter how many times it is called after the first
+end of file.
+
+Appropriate return values are not always obvious, as we saw in the earlier
+discussion about what \verb'csvgetline' should return. We want to return as
+much useful information as possible, but in a form that is easy for the
+rest of the program to use. In C, C++ and Java, that means returning
+something as the function value, and perhaps other values through reference
+(pointer) arguments. Many library functions rely on the ability to
+distinguish normal values from error values. Input functions like
+\verb'getchar' return a \verb'char' for valid data, and some
+non-\verb'char' value like \verb'EOF' for end of file or error.
+
+This mechanism doesn't work if the function's legal return values take up
+all possible values. For example a mathematical function like \verb'log'
+can return any floating-point number. In IEEE floating point, a special
+value called \verb'NaN' ("not a number") indicates an error and can be
+returned as an error signal.
+
+Some languages, such as Perl and Tcl, provide a low-cost way to group two
+or more values into a \term{tuple}. In such languages, a function value and
+any error state can be easily returned together. The C++ STL provides a
+pair data type that can also be used in this way.
+
+It is desirable to distinguish various exceptional values like end of file
+and error states if possible, rather than lumping them together
+(把...放在一起) into a single value.  If the values can't readily (轻易地)
+be separated, another option is to return a single "exception" value and
+provide another function that returns more detail about the last error.
+
+This is the approach used in Unix and in the C standard library, where many
+system calls and library functions return \verb'-1' but also set a global
+variable called \verb'errno' that encodes the specific error;
+\verb'strerror' returns a string associated with the error number. On our
+system, this program:
+\begin{wellcode}
+    #include <stdio.h>
+    #include <string.h>
+    #include <errno.h>
+    #include <math.h>
+
+    /* errno main: test errno */
+    int main(void)
+    {
+        double  f;
+
+        errno = 0;  /* clear error state */
+        f = log(-1.23);
+        printf("%f %d %s\n", f, errno, strerror(errno));
+        return 0;
+    }
+\end{wellcode}
+prints
+\begin{wellcode}
+    nan0x10000000 33 Domain error
+\end{wellcode}
+As shown, \verb'errno' must be cleared first; then if an error occurs,
+\verb'errno' will be set to a non-zero value.
+
+\emph{Use exceptions only for exceptional situations.} Some languages
+provide exceptions to catch unusual situations and recover from them; they
+provide an alternate flow of control when something bad happens. Exceptions
+should not be used for handling expected return values. Reading from a file
+will eventually produce an end of file; this should be handled with a
+return value, not by an exception.
+
+In Java, one writes
+\begin{wellcode}
+    String fname = "someFileName";
+    try {
+        FileInputStream in = new FileInputStream(fname);
+        int c;
+        while ((c = in.read()) != -1)
+            System.out.print((char)c);
+        in.close();
+    } catch (FileNotFoundException e) {
+        System.err.println(fname, " not found");
+    } catch (IOException e) {
+        System.err.println("IOException: " + e);
+        e.printStackTrace();
+    }
+\end{wellcode}
+
+The loop reads characters until end of file, an expected event that is
+signaled by a return value of \verb'-1' from read. If the file can't be
+opened, that raises an exception, however, rather than setting the input
+stream to \verb'null' as would be done in C or C++.  Finally, if some other
+I/O error happens in the \verb'try' block, it is also exceptional, and it
+is caught by the \verb'IOException' clause (子句).
+
+Exceptions are often overused. Because they distort (扭曲) the flow of
+control, they can lead to convoluted (复杂的) constructions that are prone
+to bugs. It is hardly exceptional to fail to open a file; generating an
+exception in this case strikes us as over-engineering.  Exceptions are best
+reserved for truly unexpected events, such as file systems filling up or
+floating-point errors.
+
+For C programs, the pair of functions \verb'setjmp' and \verb'longjmp'
+provide a much lower-level service upon which an exception mechanism can be
+built, but they are sufficiently arcane (神秘的) that we won't go into them
+here.
+
+What about recovery of resources when an error occurs? Should a library
+attempt a recovery when something goes wrong? Not usually, but it might do
+a service by making sure that it leaves information in as clean and
+harmless a state as possible.  Certainly unused storage should be
+reclaimed. If variables might be still accessible, they should be set to
+sensible values. A common source of bugs is trying to use a pointer that
+points to freed storage. If error-handling code sets pointers to zero after
+freeing what they point to, this won't go undetected. The \verb'reset'
+function in the second version of the CSV library was an attempt to address
+these issues. In general, aim to keep the library usable after an error has
+occurred.
