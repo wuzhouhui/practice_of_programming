@@ -948,3 +948,122 @@ to performance measurements shortly.
     type but no other advanced library facilities. Compare it in style and
     speed to the STL versions.
 \end{exercise}
+
+\section{Awk and Perl}
+\label{sec:awk_and_perl}
+
+To round out the exercise, we also wrote the program in two popular
+scripting languages, Awk and Perl. These provide the necessary features for
+this application, associative arrays and string handling.
+
+An \term{associative array} is a convenient packaging of a hash table; it
+looks like an array but its subscripts are arbitrary strings or numbers, or
+comma-separated lists of them. It is a form of map from one data type to
+another. In Awk, all arrays are associative; Perl has both conventional
+indexed arrays with integer subscripts and associative arrays, which are
+called "hashes," a name that suggests how they are implemented.
+
+The Awk and Perl implementations are specialized to prefixes of length 2.
+\begin{wellcode}
+    # markov.awk: markov chain Algorithm for 2-word prefixes
+    BEGIN { MAXGEN = 10000; NONWORD = "\n"; w1 = w2 = NONWORD }
+    { 
+        for (i = 1; i <= NF; i++) {   # read all words
+            statetab[w1, w2, ++nsuffix[w1, w2]] = $i
+            w1 = w2
+            w2 = $i
+        }
+    }
+    END {
+        statetab[w1, w2, ++nsuffix[w1, w2]] = NONWORD # add tail
+        w1 = w2 = NONWORD
+        for (i = 0; i < MAXGEN; i++) { # generate
+            r = int(rand()*nsuffix[w1, w2]) + 1 # nsuffix >= 1
+            p = statetab[w1, w2, r]
+            if (p == NONWORD)
+                exit
+            print p
+            w1 = w2 # advance chain
+            w2 = p
+        }
+    }
+\end{wellcode}
+
+Awk is a pattern-action language: the input is read a line at a time, each
+line is matched against the patterns, and for each match the corresponding
+action is executed.  There are two special patterns, \verb'BEGIN' and
+\verb'END', that match before the first line of input and after the last.
+
+An action is a block of statements enclosed in braces. In the Awk version
+of Markov, the \verb'BEGIN' block initializes the prefix and a couple of
+other variables.
+
+The next block has no pattern, so by default it is executed once for each
+input line.  Awk automatically splits each input line into fields
+(white-space delimited words) called \verb'$1' through \verb'$NF'; the
+variable \verb'NF' is the number of fields. The statement
+\begin{wellcode}
+    statetab[w1, w2, ++nsuffix[w1, w2]] = $i
+\end{wellcode}
+builds the map from prefix to suffixes. The array \verb'nsuffix' counts
+suffixes and the element \verb'nsuffix[w1,w2]' counts the number of
+suffixes associated with that prefix.  The suffixes themselves are stored
+in array elements \verb'statetab[w1,w2,1]',\verb'statetab[w1,w2,2]', and so
+on.
+
+When the \verb'END' block is executed, all the input has been read. At that
+point, for each prefix there is an element of \verb'nsuffix' containing the
+suffix count, and there are that many elements of \verb'statetab'
+containing the suffixes.
+
+The Perl version is similar, but uses an anonymous array instead of a third
+subscript to keep track of suffixes; it also uses multiple assignment to
+update the prefix.  Perl uses special characters to indicate the types of
+variables: \verb'$' marks a scalar and \verb'@' an indexed array, while
+brackets \verb'[]' are used to index arrays and braces \verb'{}' to index
+hashes.
+\begin{wellcode}
+    # markov.pl: markov chain algorithm for 2-word prefixes
+
+    $MAXGE = 10000;
+    $NONWORD = "\n";
+    $w1 = $w2 = $NONWORD;   # initial state
+    while (<>) {            # read each line of input
+        foreach (split) {
+            push(@{$statetab{$w1}{$w2}}, $_);
+            ($w1, $w2) = ($w2, $_); # multiple assignment
+        }
+    }
+    push(@{$statetab{$w1}{$w2}}, $NONWORD); # add tail
+    $w1 = $w2 = $NONWORD;
+    for ($i = 0; $i < $MAXGE; $i++) {
+        $suf = $statetab{$w1}{{$w2};    # array reference
+        $r = int(rand @suf);            # @$suf is number of elems
+        exit if (($t = $suf->[$r]) eq $NONWORD);
+        print "$t\n"
+        ($w2, $w2) = ($w2, $t);         # advance chain
+    }
+\end{wellcode}
+As in the previous programs, the map is stored using the variable
+\verb'statetab'.  The heart of the program is the line
+\begin{wellcode}
+    push(@{$statetab{$w1}{$w2}}, $NONWORD); # add tail
+\end{wellcode}
+
+which pushes a new suffix onto the end of the (anonymous) array stored at
+\verb'statetab{$w1}{$w2}'. In the generation phase,
+\verb'$statetab{$w1}{$w2}' is a reference to an array of suffixes, and
+\verb'$suf->[$r]' points to the \verb'r'-th suffix.
+
+Both the Perl and Awk programs are short compared to the three earlier
+versions, but they are harder to adapt to handle prefixes that are not
+exactly two words. The core of the C++ STL implementation (the \verb'add'
+and \verb'generate' functions) is of comparable length and seems clearer.
+Nevertheless, scripting languages are often a good choice for experimental
+programming, for making prototypes, and even for production use if run-time
+is not a major issue.
+
+\begin{exercise}
+    Modify the Awk and Perl versions to handle prefixes of any length.
+    Experiment to determine what effect this change has on performance.
+\end{exercise}
