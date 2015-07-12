@@ -1102,7 +1102,8 @@ approximate program size in lines of source code. \\
     Awk         & 2.2       & 2.1       & 20 \\
     Perl        & 1.8       & 1.0       & 18
 \end{tabular}
-\end{center} \\
+\end{center}
+
 The C and C++ versions were compiled with optimizing compilers, while the
 Java runs had just-in-time compilers enabled. The Irix C and C++ times are
 the fastest obtained from three different compilers; similar results were
@@ -1134,3 +1135,95 @@ produce voluminous random output. How do we know it works at all? How do we
 know it works all the time? Chapter \ref{chap:testing}, which discusses
 testing, contains some suggestions and describes how we tested the Markov
 programs.
+
+\section{Lessons (教训)}
+\label{sec:lessons}
+
+The Markov program has a long history. The first version was written by Don
+P.  Mitchell, adapted by Bruce Ellis, and applied to humorous (滑稽的)
+deconstructionist (解构主义) activities throughout the 1980s. It lay
+dormant (休眠的) until we thought to use it in a university course as an
+illustration of program design. Rather than dusting off (除尘) the
+original, we rewrote it from scratch in C to refresh our memories of the
+various issues that arise, and then wrote it again in several other
+languages, using each language's unique idioms to express the same basic
+idea. After the course, we reworked the programs many times to improve
+clarity and presentation.
+
+Over all that time, however, the basic design has remained the same. The
+earliest version used the same approach as the ones we have presented here,
+although it did employ a second hash table to represent individual words.
+If we were to rewrite it again, we would probably not change much. The
+design of a program is rooted in the layout of its data. The data
+structures don't define every detail, but they do shape the overall
+solution.
+
+Some data structure choices make little difference, such as lists versus
+growable arrays. Some implementations generalize better than others -- the
+Perl and Awk code could be readily modified to one- or three-word prefixes
+but parameterizing the choice would be awkward (笨拙的). As befits
+(为了适应) object-oriented languages, tiny changes to the C++ and Java
+implementations would make the data structures suitable for objects other
+than English text, for instance programs (where white space would be
+significant), or notes of music, or even mouse clicks and menu selections
+for generating test sequences.
+
+Of course, while the data structures are much the same, there is a wide
+variation in the general appearance of the programs, in the size of the
+source code, and in performance. Very roughly, higher-level languages give
+slower programs than lower level ones, although it's unwise (轻率的) to
+generalize other than qualitatively (定性). Big building-blocks like the
+C++ STL or the associative arrays and string handling of scripting
+languages can lead to more compact code and shorter development time. These
+are not without price, although the performance penalty may not matter
+(重要) much for programs, like Markov, that run for only a few seconds.
+
+Less clear, however, is how to assess the loss of control and insight when
+the pile (堆) of system-supplied code gets so big that one no longer knows
+what's going on underneath. This is the case with the STL version; its
+performance is unpredictable and there is no easy way to address that. One
+immature implementation we used needed to be repaired before it would run
+our program. Few of us have the resources or the energy to track down such
+problems and fix them.
+
+This is a pervasive (普遍的) and growing concern in software: as libraries,
+interfaces, and tools become more complicated, they become less understood
+and less controllable.  When everything works, rich programming
+environments can be very productive, but when they fail, there is little
+recourse. Indeed, we may not even realize that something is wrong if the
+problems involve performance or subtle (微妙的) logic errors.
+
+The design and implementation of this program illustrate a number of
+lessons for larger programs. First is the importance of choosing simple
+algorithms and data structures, the simplest that will do the job in
+reasonable time for the expected problem size. If someone else has already
+written them and put them in a library for you, that's even better; our C++
+implementation profited from that.
+
+Following Brooks's advice, we find it best to start detailed design with
+data structures, guided by knowledge of what algorithms might be used; with
+the data structures settled, the code goes together easily.
+
+It's hard to design a program completely and then build it; constructing
+real programs involves iteration and experimentation. The act of building
+forces one to clarify (使明晰) decisions that had previously been glossed
+over (轻轻带过). That was certainly the case with our programs here, which
+have gone through many changes of detail. As much as possible, start with
+something simple and evolve it as experience dictates (指挥).  If our goal
+had been just to write a personal version of the Markov chain algorithm for
+fun, we would almost surely have written it in Awk or Perl -- though not
+with as much polishing (打磨) as the ones we showed here -- and let it go
+at that.
+
+Production code takes much more effort than prototypes do, however. If we
+think of the programs presented here as production code (since they have
+been polished and thoroughly tested), production quality requires one or
+two orders of magnitude (一到两个数量级) more effort than a program
+intended for personal use.
+
+\begin{exercise}
+We have seen versions of the Markov program in a wide variety of languages,
+including Scheme, Tcl, Prolog, Python, Generic Java, ML, and Haskell; each
+presents its own challenges and advantages. Implement the program in your
+favorite language and compare its general flavor (滋味) and performance.
+\end{exercise}
