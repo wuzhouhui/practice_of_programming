@@ -1684,3 +1684,94 @@ freeing what they point to, this won't go undetected. The \verb'reset'
 function in the second version of the CSV library was an attempt to address
 these issues. In general, aim to keep the library usable after an error has
 occurred.
+
+\section{User Interfaces}
+\label{sec:user_interfaces}
+
+Thus far we have talked mainly about interfaces among the components of a
+program or between programs. But there is another important kind of
+interface, between a program and its human users.
+
+Most of the example programs in this book are text-based, so their user
+interfaces tend to be straightforward. As we discussed in the previous
+section, errors should be detected and reported, and recovery attempted
+where it makes sense. Error output should include all available information
+and should be as meaningful as possible out of context; a diagnostic should
+not say
+\begin{wellcode}
+    estrdup failed
+\end{wellcode}
+when it could say
+\begin{wellcode}
+    markov: estrdup("Derrida") failed: Memory limit reached
+\end{wellcode}
+It costs nothing to add the extra information as we did in \verb'estrdup',
+and it may help a user to identify a problem or provide valid input.
+
+Programs should display information about proper usage when an error is
+made, as shown in functions like
+\begin{wellcode}
+    /* usage: print usage message and exit */
+    void usage(void)
+    {
+        fprintf(stderr, "usage: %s [-d] [-n nwords]",
+            " [-s seed] [files ...]\n", progname());
+        exit(2);
+    }
+\end{wellcode}
+
+The program name identifies the source of the message, which is especially
+important if this is part of a larger process. If a program presents a
+message that just says syntax error or \verb'estrdup' failed , the user
+might have no idea who said it.
+
+The text of error messages, prompts, and dialog boxes should state the form
+of valid input. Don't say that a parameter is too large; report the valid
+range of values.  When possible, the text should be valid input itself,
+such as the full command line with the parameter set properly. In addition
+to steering (指示) users toward proper use, such output can be captured in
+a file or by a mouse sweep and then used to run some further process. This
+points out a weakness of dialog boxes: their contents are hard to grab for
+later use.
+
+One effective way to create a good user interface for input is by designing
+a specialized language for setting parameters, controlling actions, and so
+on; a good notation can make a program easy to use while it helps organize
+an implementation.  Language-based interfaces are the subject of Chapter
+\ref{chap:notation}.
+
+Defensive programming, that is, making sure that a program is invulnerable
+to bad input, is important both for protecting users against themselves and
+also as a security mechanism. This is discussed more in Chapter
+\ref{chap:testing}, which talks about program testing.
+
+For most people, graphical interfaces are the user interface for their
+computers.  Graphical user interfaces are a huge topic, so we will say only
+a few things that are germane (有关的) to this book. First, graphical
+interfaces are hard to create and make "right" since their suitability and
+success depend strongly on human behavior and expectations. Second, as a
+practical matter, if a system has a user interface, there is usually more
+code to handle user interaction than there is in whatever algorithms do the
+work.
+
+Nevertheless, familiar principles apply to both the external design and the
+internal implementation of user interface software. From the user's
+standpoint (观点), style issues like simplicity, clarity, regularity,
+uniformity, familiarity, and restraint (约束) all contribute to an
+interface that is easy to use; the absence of such properties usually goes
+along with unpleasant or awkward interfaces.
+
+Uniformity and regularity are desirable (令人渴望的), including consistent
+use of terms, units, formats, layouts, fonts, colors, sizes, and all the
+other options that a graphical system makes available. How many different
+English words are used to exit from a program or close a window? The
+choices range from Abandon to \verb'control-Z', with at least a dozen
+between. This inconsistency is confusing to a native speaker and baffling
+(困惑的) for others.
+
+Within graphics code, interfaces are particularly important, since these
+systems are large, complicated, and driven by a very different input model
+than scanning sequential text. Object-oriented programming excels (擅长) at
+graphical user interfaces, since it provides a way to encapsulate all the
+state and behaviors of windows, using inheritance to combine similarities
+in base classes while separating differences in derived classes.
