@@ -275,7 +275,129 @@ table will be represented as a \verb'State' data type, associating the
     State   *statetab[NHASH];   /* hash table of states */
 \end{wellcode}
 Pictorially (形象地), the data structures look like this:
-%TODO: lack of a image
+
+\begin{center}
+    \begin{tikzpicture}
+        \pgfmathsetmacro\width{1.0};
+        \pgfmathsetmacro\height{0.5};
+
+        \draw (0, 0) -- (0, 13 * \height);
+        \draw (0 + \width, 0) -- (0 + \width, 13 * \height);
+        \foreach \i in {0,...,13}
+            \draw (0, \i * \height) -- (0 + \width, \i * \height);
+        \node at (0, 14 * \height) {\verb'statetab:'};
+
+        % a State
+        \draw[thick, ->] (\width / 2, \height * 10.5) --
+            (\width / 2 + 1.0, \height * 10.5);
+        \draw (\width / 2 + 1.0, 7.0 * \height) -- (\width / 2 + 1.0,
+            11.0 * \height);
+        \draw (\width / 2 + 2.5, 7.0 * \height) -- (\width / 2 + 2.5,
+            11.0 * \height);
+        \foreach \i in {0,...,4}
+            \draw (\width / 2 + 1.0, 7.0 * \height + \i * \height) --
+                (\width / 2 + 2.5, 7.0 * \height + \i * \height);
+        \node at (\width / 2 + 1.75, 7.5 * \height)
+            {\verb'next'};
+        \node at (\width / 2 + 1.75, 7.5 * \height + \height)
+            {\verb'suf'};
+        \node at (\width / 2 + 1.75, 7.5 * \height + 2 * \height)
+            {\verb'pref[1]'};
+        \node at (\width / 2 + 1.75, 7.5 * \height + 3 * \height)
+            {\verb'pref[0]'};
+        \node at (\width / 2 + 1.75, 7.5 * \height + 4.2 * \height)
+            {a \verb'State':};
+
+        % another State
+        \draw[thick, ->] (\width / 2 + 1.75, 7 * \height) --
+            (\width / 2 + 2.75, 7.0 * \height - 1.7);
+        \draw (\width / 2 + 2.0, 3.0 * \height - 1.7) --
+            (\width / 2 + 2.0, 7.0 * \height - 1.7);
+        \draw (\width / 2 + 3.5, 3.0 * \height - 1.7) --
+            (\width / 2 + 3.5, 7.0 * \height - 1.7);
+        \foreach \i in {0,...,4}
+            \draw (\width / 2 + 2.0, 3.0 * \height - 1.7 + \i * \height) --
+                (\width / 2 + 3.5, 3.0 * \height - 1.7 + \i * \height);
+        \node at (\width / 2 + 2.75, 3.5 * \height - 1.7)
+            {\verb'next'};
+        \node at (\width / 2 + 2.75, 3.5 * \height + \height - 1.7)
+            {\verb'suf'};
+        \node at (\width / 2 + 2.75, 3.5 * \height + 2 * \height - 1.7)
+            {\verb'pref[1]'};
+        \node at (\width / 2 + 2.75, 3.5 * \height + 3 * \height - 1.7)
+            {\verb'pref[0]'};
+        \node at (\width / 2 + 1.55, 3.5 * \height + 4.2 * \height - 1.7)
+            {another \verb'State':};
+
+        % "Show" and "your"
+        \draw[thick, ->] (\width / 2 + 2.5, 9.5 * \height) --
+            (\width / 2 + 4.0, 9.5 * \height);
+        \draw[thick, ->] (\width / 2 + 2.5, 10.5 * \height) --
+            (\width / 2 + 4.0, 11 * \height);
+        \draw (\width / 2 + 4.0, 9.0 * \height) -- (\width / 2 + 4.0,
+            10.0 * \height) -- (\width / 2 + 5.5, 10.0 * \height) --
+            (\width / 2 + 5.5, 9.0 * \height) --
+            (\width / 2 + 4.0, 9.0 * \height);
+        \draw (\width / 2 + 4.0, 9.0 * \height + 0.75) --
+            (\width / 2 + 4.0, 10.0 * \height + 0.75) --
+            (\width / 2 + 5.5, 10.0 * \height + 0.75) --
+            (\width / 2 + 5.5, 9.0 * \height + 0.75) --
+            (\width / 2 + 4.0, 9.0 * \height + 0.75);
+        \node at (\width / 2 + 4.75, 9.5 * \height) {\verb'"your"'};
+        \node at (\width / 2 + 4.75, 11.0 * \height) {\verb'"Show"'};
+
+        % a Suffix
+        \draw[thick, ->] (\width / 2 + 2.5, 8.5 * \height)
+            .. controls (\width / 2 + 4.0, 8.5 * \height) and
+            (\width / 2 + 2.5, 8.5 * \height - 1.5) ..
+            (\width / 2 + 4.0, 8.5 * \height - 1.5);
+        \draw (\width / 2 + 4.0, 6 * \height) --
+            (\width / 2 + 4.0, 4 * \height);
+        \draw (\width / 2 + 5.5, 6 * \height) --
+            (\width / 2 + 5.5, 4 * \height);
+        \foreach \i in {0,...,2}
+            \draw (\width / 2 + 4.0, 4.0 * \height + \i * \height) --
+                (\width / 2 + 5.5, 4.0 * \height + \i * \height);
+        \node at (\width / 2 + 4.75, 4.5 * \height) {\verb'next'};
+        \node at (\width / 2 + 4.75, 5.5 * \height) {\verb'word'};
+        \node at (\width / 2 + 4.75, 6.7 * \height) {a \verb'Suffix:'};
+
+        % "flowcharts"
+        \draw[thick, ->] (\width / 2 + 5.5, 5.5 * \height) --
+            (\width / 2 + 7.0, 5.5 * \height);
+        \draw (\width / 2 + 7.0, 5.0 * \height) --
+            (\width / 2 + 7.0, 6.0 * \height) --
+            (\width / 2 + 10, 6.0 * \height) --
+            (\width / 2 + 10, 5.0 * \height) --
+            (\width / 2 + 7.0, 5.0 * \height);
+        \node at (\width / 2 + 8.5, 5.5 * \height) {\verb'"flowcharts"'};
+
+        % another Suffix
+        \draw[thick, ->] (\width / 2 + 5.5, 4.5 * \height) ..
+            controls (\width / 2 + 7.0, 4.5 * \height) and
+            (\width / 2 + 5.5, 1.5 * \height) ..
+            (\width / 2 + 7.0, 1.5 * \height);
+        \draw (\width / 2 + 7.0, 2.0 * \height) --
+            (\width / 2 + 7.0, 0);
+        \draw (\width / 2 + 8.5, 2.0 * \height) --
+            (\width / 2 + 8.5, 0);
+        \foreach \i in {0,...,2}
+            \draw (\width / 2 + 7.0, \i * \height) --
+                (\width / 2 + 8.5, \i * \height);
+        \node at (\width / 2 + 7.75, 0.5 * \height) {\verb'next'};
+        \node at (\width / 2 + 7.75, 1.5 * \height) {\verb'word'};
+        \node at (\width / 2 + 7.75, 2.7 * \height)
+            {another \verb'Suffix:'};
+
+        % "tables"
+        \draw[thick, ->] (\width / 2 + 8.5, 1.5 * \height) --
+            (\width / 2 + 10, 1.5 * \height);
+        \draw (\width / 2 + 10, \height) -- (\width / 2 + 10, 2 * \height)
+        -- (\width / 2 + 11.8, 2 * \height) --
+        (\width / 2 + 11.8, \height) -- (\width / 2 + 10, \height);
+        \node at (\width / 2 + 10.9, 1.5 * \height) {\verb'"tables"'};
+    \end{tikzpicture}
+\end{center}
 
 We need a hash function for prefixes, which are arrays of strings. It is
 simple to modify the string hash function \verb'fmm' Chapter
