@@ -1,0 +1,133 @@
+% vim: ts=4 sts=4 sw=4 et tw=75
+\chapter{Appendix: Collected Rules}
+\label{chap:appendix_collected_rules}
+
+\begin{quote}
+Each truth that I discovered became a rule that served me afterwards in the
+discovery of others.
+\end{quote}
+
+% TODO: the 'e' in "Methode" should be accented
+\begin{quotesrc}
+    Rent Descartes, \bookname{Le Discours de la Methode}
+\end{quotesrc}
+
+Several chapters contain rules or guidelines that summarize a discussion.
+The rules are collected here for easy reference. Bear in mind (记住) that
+each was presented in a context that explains its purpose and
+applicability.
+
+{\Large\textbf{Style}}
+\begin{myitemize}
+\item Use descriptive names for globals, short names for locals.
+\item Be consistent.
+\item Use active names for functions.
+\item Be accurate.
+\item Indent to show structure.
+\item Use the natural form for expressions.
+\item Parenthesize to resolve ambiguity.
+\item Break up complex expressions.
+\item Be clear.
+\item Be careful with side effects.
+\item Use a consistent indentation and brace style.
+\item Use idioms for consistency.
+\item Use \verb'else-if's for multi-way decisions.
+\item Avoid function macros.
+\item Parenthesize the macro body and arguments.
+\item Give names to magic numbers.
+\item Define numbers as constants, not macros.
+\item Use character constants, not integers.
+\item Use the language to calculate the size of an object.
+\item Don't belabor (痛打) the obvious.
+\end{myitemize}
+
+{\Large\textbf{Intefaces}}
+\begin{myitemize}
+\item Hide implementation details.
+\item Choose a small orthogonal (正交的) set of primitives.
+\item Don't reach behind the user's back.
+\item Do the same thing the same way everywhere.
+\item Free a resource in the same layer that allocated it.
+\item Detect errors at a low level, handle them at a high level.
+\item Use exceptions only for exceptional situations.
+\end{myitemize}
+
+{\Large\textbf{Debugging}}
+\begin{myitemize}
+\item Look for familiar patterns.
+\item Examine the most recent change.
+\item Don't make the same mistake twice.
+\item Debug it now, not later.
+\item Get a stack trace.
+\item Read before typing.
+\item Explain your code to someone else.
+\item Make the bug reproducible.
+\item Divide and conquer.
+\item Study the numerology (命理) of failures.
+\item Display output to localize your search.
+\item Write self-checking code.
+\item Write a log file.
+\item Draw a picture.
+\item Use tools.
+\item Keep records.
+\end{myitemize}
+
+{\Large\textbf{Testing}}
+\begin{myitemize}
+\item Test code at its boundaries.
+\item Test pre- and post-conditions.
+\item Use assertions.
+\item Program defensively.
+\item Check error returns.
+\item Test incrementally.
+\item Test simple parts first.
+\item Know what output to expect.
+\item Verify conservation properties.
+\item Compare independent implementations.
+\item Measure test coverage.
+\item Automate regression testing.
+\item Create self-contained tests.
+\end{myitemize}
+
+{\Large\textbf{Performance}}
+\begin{myitemize}
+\item Automate timing measurements.
+\item Use a profiler.
+\item Concentrate on the hot spots.
+\item Draw a picture.
+\item Use a better algorithm or data structure.
+\item Enable compiler optimizations.
+\item Tune the code.
+\item Don't optimize what doesn't matter.
+\item Collect common subexpressions.
+\item Replace expensive operations by cheap ones.
+\item Unroll or eliminate loops.
+\item Cache frequently-used values.
+\item Write a special-purpose allocator.
+\item Buffer input and output.
+\item Handle special cases separately.
+\item Precompute results.
+\item Use approximate values.
+\item Rewrite in a lower-level language.
+\item Save space by using the smallest possible data type.
+\item Don't store what you can easily recompute.
+\end{myitemize}
+
+{\Large\textbf{Portability}}
+\begin{myitemize}
+\item Stick to the standard.
+\item Program in the mainstream.
+\item Beware of language trouble spots.
+\item Try several compilers.
+\item Use standard libraries.
+\item Use only features available everywhere.
+\item Avoid conditional compilation.
+\item Localize system dependencies in separate files.
+\item Hide system dependencies behind interfaces.
+\item Use text for data exchange.
+\item Use a fixed byte order for data exchange.
+\item Change the name if you change the specification.
+\item Maintain compatibility with existing programs and data.
+\item Don't assume ASCII.
+\item Don't assume English.
+\end{myitemize}
