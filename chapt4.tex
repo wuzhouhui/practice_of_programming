@@ -89,7 +89,7 @@ Retrieving numbers by interacting with a web browser is effective but
 time-consuming. It's a nuisance (讨厌的) to invoke a browser, wait, watch a
 barrage (弹幕) of advertisements, type a list of stocks, wait, wait, wait,
 then watch another barrage, all to get a few numbers. To process the
-%numbers further requires even more interaction; selecting the "Download
+numbers further requires even more interaction; selecting the "Download
 Spreadsheet Format" link retrieves a file that contains much the same
 (几乎相同) information in lines of CSV data like these (edited to fit):
 \begin{wellcode}
@@ -253,7 +253,8 @@ We can now run this on the output produced by \verb'getquotes.tcl':
 \end{wellcode}
 (We have edited out the HTTP header lines.)
 
-Now we have a prototype that seems to work on data of the sort we showed
+Now we have a prototype that seems to work on data of the sort (种类) we
+showed
 above.  But it might be prudent (谨慎的) to try it on something else as
 well, especially if we plan to let others use it. We found another web site
 that downloads stock quotes and obtained a file of similar information but
@@ -381,7 +382,8 @@ Fields are numbered from zero. What if the user asks for a non-existent
 field by calling \verb'csvfield(-1)' or \verb'csvfield(100000)'? We could
 return \verb'""' (the empty string) because this can be printed and
 compared; programs that process variable numbers of fields would not have
-to take special precautions to deal with non-existent ones. But that choice
+to take special precautions (预防) to deal with non-existent ones. But that
+choice
 provides no way to distinguish empty from non-existent. A second choice
 would be to print an error message or even abort; we will discuss shortly
 why this is not desirable. We decided to return \verb'NULL', the
@@ -411,6 +413,7 @@ Nor does the interface reveal when memory is freed.
 
 If the user calls only \verb'csvgetline', there's no need to split into
 fields; lines can be split on demand. Whether field-splitting is eager
+(热切的)
 (done right away when the line is read) or lazy (done only when a field or
 count is needed) or very lazy (only the requested field is split) is
 another implementation detail hidden from the user.
@@ -498,7 +501,7 @@ detailed prescription (命令) of behavior, responsibilities and assumptions:
         \item fields are separated by commas.
         \item fields may be surrounded by \verb'"..."'; such quotes are
             removed; within \verb'"..."', \verb'""' is replaced by \verb'"'
-            and comma is not a separated.
+            and comma is not a separator.
         \item in unquoted fields, quotes are regular characters.
         \item there can be an arbitrary number of fields of any length;
             returns \verb'NULL' if memory limit exceeded.
@@ -519,10 +522,11 @@ detailed prescription (命令) of behavior, responsibilities and assumptions:
 This specification still leaves open questions. For example, what values
 should be returned by \verb'csvfield' and \verb'csvnfield' if they are
 called after \verb'csvgetline' has encountered \verb'EOF'? How should
-ill-formed fields be handled? Nailing down all such puzzles is difficult
+ill-formed fields be handled? Nailing down (明确)
+all such puzzles is difficult
 even for a tiny system, and very challenging for a large one, though it is
 important to try. One often doesn't discover oversights (失察) and
-omissions (遗漏) until implementation is underway.
+omissions (遗漏) until implementation is underway (进行中).
 
 The rest of this section contains a new implementation of \verb'csvgetline'
 that matches the specification. The library is broken into two files, a
@@ -946,7 +950,7 @@ separator; either can be replaced with explicit values.
 
 To manage strings, the class uses the standard C++ \verb'string' and
 \verb'vector' classes rather than C-style strings. There is no non-existent
-state for a \verb'string: "empty"' means only that the length is zero, and
+state for a \verb'string': "empty" means only that the length is zero, and
 there is no equivalent of \verb'NULL', so we can't use that as an end of
 file signal. Thus \verb'Csv::getline' returns the input line through an
 argument by reference, reserving the function value itself for end of file
@@ -1045,7 +1049,7 @@ to the field being accumulated in \verb'fld'.
     }
 \end{wellcode}
 
-The function \verb'find_first_of' is also used i n a new function
+The function \verb'find_first_of' is also used in a new function
 \verb'advplain', which advances over a plain unquoted field. Again, this
 change is required because C string functions like \verb'strcspn' cannot be
 applied to C++ strings, which are an entirely different data type.
@@ -1137,7 +1141,7 @@ get a field, and return the number of fields -- which are the only
 operations that can be performed.
 
 To prosper (成功), an interface must be well suited (使适应) for its task
--- simple, general.  regular, predictable, robust -- and it must adapt
+-- simple, general,  regular, predictable, robust -- and it must adapt
 gracefully as its users and its implementation change. Good interfaces
 follow a set of principles. These are not independent or even consistent,
 but they help us describe what happens across the boundary between two
@@ -1433,7 +1437,7 @@ In the previous chapters we used functions like \verb'eprintf' and
 execution. For example, \verb'eprintf' behaves like
 \verb'fprintf(stderr, ...)', but exits the program with an error status
 after reporting the
-error. It uses the \verb'<stdarg. h>' header and the \verb'vfprintf'
+error. It uses the \verb'<stdarg.h>' header and the \verb'vfprintf'
 library routine to print the arguments represented by the \verb'...' in the
 prototype. The \verb'stdarg' library must be initialized by a call to
 \verb'va_start' and terminated by \verb'va_end'.  We will use more of this
@@ -1547,7 +1551,8 @@ which prints output like this:
 \end{wellcode}
 
 We find these wrapper functions convenient for our own programming, since
-they unify error handling and their very existence encourages us to catch
+they unify error handling and their very (特有的)
+existence encourages us to catch
 errors instead of ignoring them. There is nothing special about our design,
 however, and you might prefer some variant for your own programs.
 
@@ -1569,7 +1574,8 @@ explicit "log file", where it can be monitored independently.
 general principle, errors should be detected at as low a level as possible,
 but handled at a high level. In most cases, the caller should determine how
 to handle an error, not the callee. Library routines can help in this by
-failing gracefully; that reasoning led us to return \verb'NULL' for a
+failing gracefully; that reasoning (论证)
+led us to return \verb'NULL' for a
 non-existent field rather than aborting. Similarly, \verb'csvgetline'
 returns \verb'NULL' no matter how many times it is called after the first
 end of file.
@@ -1655,7 +1661,8 @@ In Java, one writes
 \end{wellcode}
 
 The loop reads characters until end of file, an expected event that is
-signaled by a return value of \verb'-1' from read. If the file can't be
+signaled by a return value of \verb'-1' from \verb'read'.
+If the file can't be
 opened, that raises an exception, however, rather than setting the input
 stream to \verb'null' as would be done in C or C++.  Finally, if some other
 I/O error happens in the \verb'try' block, it is also exceptional, and it
@@ -1725,7 +1732,8 @@ important if this is part of a larger process. If a program presents a
 message that just says syntax error or \verb'estrdup' failed , the user
 might have no idea who said it.
 
-The text of error messages, prompts, and dialog boxes should state the form
+The text of error messages, prompts, and dialog boxes should state (陈述)
+the form
 of valid input. Don't say that a parameter is too large; report the valid
 range of values.  When possible, the text should be valid input itself,
 such as the full command line with the parameter set properly. In addition
@@ -1765,7 +1773,7 @@ Uniformity and regularity are desirable (令人渴望的), including consistent
 use of terms, units, formats, layouts, fonts, colors, sizes, and all the
 other options that a graphical system makes available. How many different
 English words are used to exit from a program or close a window? The
-choices range from Abandon to \verb'control-Z', with at least a dozen
+choices range from Abandon to \verb'Control-Z', with at least a dozen
 between. This inconsistency is confusing to a native speaker and baffling
 (困惑的) for others.
 
@@ -1779,13 +1787,14 @@ in base classes while separating differences in derived classes.
 \section*{Supplementary Reading}
 
 Although a few of its technical details are now dated. \bookname{The
-Mythical Marl Month}, by Frederick P. Brooks, Jr. (Addison-Wesley, 1975;
+Mythical Man-Month}, by Frederick P. Brooks, Jr. (Addison-Wesley, 1975;
 Anniversary Edition 1995), is delightful reading and contains insights
 about software development that are as valuable today as when it was
 originally published.
 
 Almost every book on programming has something useful to say about
-interface design. One practical book based on hard-won experience is
+interface design. One practical book based on hard-won (难得的)
+experience is
 \bookname{Large-Scale C++ Software Design} by John Lakos (Addison-Wesley,
 1996), which discusses how to build and manage truly large C++ programs.
 David Hanson's \bookname{C Interfaces and Implementation}

@@ -11,3 +11,6 @@
 image.tex
 *.gz
 *.gz*
+*.c
+*.h
+*.o
