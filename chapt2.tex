@@ -21,10 +21,10 @@ could otherwise take years.
 
 In specialized areas like graphics, databases, parsing, numerical analysis,
 and simulation, the ability to solve problems depends critically on
-state-of-the-artalgorithms and data structures. If you are developing your
-programs in a field that's new to you, you must find out what is
-already known, lest (免得) you waste your time doing poorly what others
-have already done well.
+state-of-the-art (最先进的) algorithms and data structures. If you are
+developing your programs in a field that's new to you, you must find out
+what is already known, lest (免得) you waste your time doing poorly what
+others have already done well.
 
 Every program depends on algorithms and data structures, but few programs
 depend on the invention of brand new ones. Even within an intricate
@@ -41,8 +41,8 @@ sorting -- and even those are often included in libraries. Similarly,
 almost every data structure is derived (起源) from a few fundamental ones.
 Thus the material covered in this chapter will be familiar to almost all
 programmers. We have written working versions to make the discussion
-concrete, and you can lift code verbatim (逐字的) if necessary, but do so
-only after you have investigated what the programming language and its
+concrete, and you can lift (抄) code verbatim (逐字的) if necessary, but do
+so only after you have investigated what the programming language and its
 libraries have to offer.
 
 \section{Searching}
@@ -365,7 +365,7 @@ adapt to their interface, which may be somewhat more complicated than what
 we showed above. In C, the library function is named \verb'qsort', and we
 need to provide a comparison function to be called by \verb'qsort' whenever
 it needs to compare two values. Since the values might be of any type, the
-comparison function is handed two \textbf{void *} pointers to the data
+comparison function is handed two \verb'void *' pointers to the data
 items to be compared. The function casts the pointers to the proper type,
 extracts the data values, compares them, and returns the result (negative,
 zero, or positive according to whether the first value is less than, equal
@@ -466,9 +466,10 @@ ANSI C also defines a binary search routine, \verb'bsearch'. Like
 \verb'qsort', \verb'bsearch' requires a pointer to a comparison function
 (often the same one used for \verb'qsort'); it returns a pointer to the
 matching element or \verb'NULL' if not found. Here is our HTML
-\verb'lookup' routine, rewritten to use \verb'bsearch':
+\verb'lookup' routine, rewritten to use \verb'bsearch'
+% "return np - tab" should be "return (np - tab)/sizeof(*tab)"?
 \begin{wellcode}
-    /* lookup: use bsearch to find name in tab, return index*/
+    /* lookup: use bsearch to find name in tab, return index */
     int lookup(char *name, Nameval tab[], int ntab)
     {
         Nameval key, *np;
@@ -558,7 +559,7 @@ member, a comparison function \verb'cmp' that compares two \verb'Objects':
     }
 \end{wellcode}
 Then we can write comparison functions that implement this interface; for
-example, this class defines a function that compares \verb'Integers':
+example, this class defines a function that compares \verb'Integer's:
 \begin{wellcode}
     // Icmp: Integer comparison
     class Icmp implements Cmp {
@@ -603,7 +604,7 @@ arrays.
         int i, last;
         if (left >= right)  //nothing to do
             return;
-        swap(v, left, ran(left, right));    // move pivot elem
+        swap(v, left, rand(left, right));    // move pivot elem
         last = left;                        //      to v[left]
         for (i = left + 1; i <= right; i++) // partition
             if (cmp.cmp(v[i], v[left]) < 0)
@@ -621,7 +622,7 @@ calls \verb'swap' as before to interchange them.
     {
         Object temp;
         temp = v[i];
-        temp = v[j];
+        v[i] = v[j];
         v[j] = temp;
     }
 \end{wellcode}
@@ -657,7 +658,7 @@ Our Java quicksort does a fair amount of type conversion as items are cast
 from their original type (like \verb'Integer') to \verb'Object' and back
 again.  Experiment with a version of \verb'Quicksort.sort' that uses the
 specific type being sorted, to estimate what performance penalty is
-incurred by type conversions.
+incurred (蒙受) by type conversions.
 \end{exercise}
 
 \section{O-Notation}
@@ -900,9 +901,9 @@ can be expensive, so if the number of elements is unpredictable and
 potentially large, it may be better to use another data structure.
 
 \begin{exercise}
-In the code above, \verb'delname' doesn't call \verb'realloc' to return the
-memory freed by the deletion. Is this worthwhile? How would you decide
-whether to do so?
+    In the code above, \verb'delname' doesn't call \verb'realloc' to return
+    (归还) the memory freed by the deletion. Is this worthwhile? How would
+    you decide whether to do so?
 \end{exercise}
 
 \begin{exercise}
@@ -950,7 +951,7 @@ a list with four elements:
 There are several important differences between arrays and lists. First,
 arrays have fixed size but a list is always exactly the size it needs to be
 to hold its contents, plus some per-item storage overhead to hold the
-pointers. Second, lists can be rearranged by exchanging a few pointers.
+pointers. Second, lists can be rearranged by exchanging a few pointers,
 which is cheaper than the block move necessary in an array. Finally, when
 items are inserted or deleted the other items aren't moved; if we store
 pointers to the elements in some other data structure, they won't be
@@ -1202,10 +1203,10 @@ fluctuating (波动的) size, especially when access tends to be
 last-in-first-out (LIFO), as in a stack. They make more effective use of
 memory than arrays do when there are multiple stacks that grow and shrink
 independently. They also behave well when the information is ordered
-intrinsically (本质地) as a chain of unknown a \term{priori} size, such as
-the successive words of a document. If you must combine frequent update
-with random access, however, it would be wiser to use a less insistently
-linear data structure, such as a tree or hash table.
+intrinsically (本质地) as a chain of a unknown \term{priori} (先验) size,
+such as the successive words of a document. If you must combine frequent
+update with random access, however, it would be wiser to use a less
+insistently (执着地) linear data structure, such as a tree or hash table.
 
 \begin{exercise}
 Implement some of the other list operators: copy, merge, split, insert
@@ -1228,9 +1229,9 @@ for this job?
 \end{exercise}
 
 \begin{exercise}
-Devise and implement a set of tests for verifying that the list routines
-you write are correct. Chapter \ref{chap:testing} discusses strategies for
-testing.
+    Devise (设计) and implement a set of tests for verifying that the list
+    routines you write are correct. Chapter \ref{chap:testing} discusses
+    strategies for testing.
 \end{exercise}
 
 \section{Trees}
@@ -1402,9 +1403,9 @@ iterative version of \verb'lookup' can be constructed by applying an
 elegant transformation to the recursive version. Unless we have found the
 item, \verb'lookup''s last action is to return the result of a call to
 itself, a situation called \term{tail recursion}. This can be converted to
-iteration by patching up the arguments and restarting the routine. The most
-direct method is to use a \verb'goto' statement, but a \verb'while' loop is
-cleaner:
+iteration by patching up (修补) the arguments and restarting the routine.
+The most direct method is to use a \verb'goto' statement, but a
+\verb'while' loop is cleaner:
 \begin{wellcode}
     /* nrlookup: non-recursively lookup name in tree treep */
     Nameval *nrlookup(Nameval *treep, char *name)
@@ -1482,9 +1483,9 @@ A third choice, \term{pre-order}, is rarely used so we'll omit (省略) it.
 
 Realistically, binary search trees are infrequently used, though B-trees,
 which have very high branching, are used to maintain information on
-secondary storage. In day-to-day programming, one common use of a tree is
-to represent the structure of a statement or expression. For example, the
-statement
+secondary storage. In day-to-day (日常) programming, one common use of a
+tree is to represent the structure of a statement or expression. For
+example, the statement
 \begin{wellcode}
     mid = (low + high) / 2;
 \end{wellcode}
@@ -1518,7 +1519,7 @@ is recursion compared to iteration?
 \begin{exercise}
 Use in-order traversal to create a sort routine. What time complexity does
 it have? Under what conditions might it behave poorly? How does its
-performance compare to our quicksort and a library version?
+performance compare to our \verb'quicksort' and a library version?
 \end{exercise}
 
 \begin{exercise}
@@ -1580,8 +1581,8 @@ items that share that hash, as this figure illustrates:
     \draw (4, -3) -- (6, -3);
     \draw (4, -3.5) -- (6, -3.5);
     \node at (5, -2.75) {\verb'NULL'};
-    \node at (5, -3.25) {\verb'name 2'};
-    \node at (5, -3.75) {\verb'value 2'};
+    \node at (5, -3.25) {\verb'name 3'};
+    \node at (5, -3.75) {\verb'value 3'};
 \end{tikzpicture}
 \end{center}
 In practice, the hash function is pre-defined and an appropriate size of
@@ -1607,10 +1608,10 @@ The list techniques we discussed in Section \ref{sec:lists} can be used to
 maintain the individual hash chains. Once you've got a good hash function,
 it's smooth sailing: just pick the hash bucket and walk along the list
 looking for a perfect match. Here is the code for a hash table
-\verb'lookup'/\verb'insert' routine. If the item is found, it is returned.
-If the item is not found and the \verb'create' flag is set, \verb'lookup'
-adds the item to the table.  Again, this does not create a copy of the
-name, assuming that the caller has made a safe copy instead.
+\verb'lookup' / \verb'insert' routine. If the item is found, it is
+returned.  If the item is not found and the \verb'create' flag is set,
+\verb'lookup' adds the item to the table.  Again, this does not create a
+copy of the name, assuming that the caller has made a safe copy instead.
 \begin{wellcode}
     /* lookup: find name in symtab, with optional create */
     Nameval *lookup(char *name, int create, int value)
@@ -1637,7 +1638,7 @@ there is duplication of effort; one must write
     if (lookup("name") == NULL)
         additem(newitem("name", value));
 \end{wellcode}
-and the hash is computed twice.
+and the \verb'hash' is computed twice.
 
 How big should the array be? The general idea is to make it big enough that
 each hash chain will have at most a few elements, so that \verb'lookup' will be
@@ -1671,13 +1672,13 @@ The calculation uses unsigned characters because whether \verb'char' is
 signed is not specified by C and C++, and we want the hash value to remain
 positive.
 
-The hash function returns the result modulo the size of the array. If the
-hash function distributes key values uniformly, the precise array size
-doesn't matter. It's hard to be certain that a hash function is dependable,
-though, and even the best function may have trouble with some input sets,
-so it's wise to make the array size a prime number to give a bit of extra
-insurance by guaranteeing that the array size, the hash multiplier, and
-likely data values have no common factor.
+The \verb'hash' function returns the result modulo the size of the array.
+If the hash function distributes key values uniformly, the precise array
+size doesn't matter. It's hard to be certain that a hash function is
+dependable, though, and even the best function may have trouble with some
+input sets, so it's wise to make the array size a prime number to give a
+bit of extra insurance by guaranteeing that the array size, the hash
+multiplier, and likely data values have no common factor.
 
 Experiments show that for a wide variety of strings it's hard to construct
 a hash function that does appreciably better than the one above, but it's
@@ -1705,7 +1706,7 @@ Long strings? Equal length strings with minor variations?
 
 Strings aren't the only things we can hash. We could hash the three
 coordinates of a particle (粒子) in a physical simulation, reducing the
-storage to a linear table ($O(number of particles)$) instead of a
+storage to a linear table ($O(number\ of\ particles)$) instead of a
 three-dimensional array ($O(xsize \times ysize \times zsize)$).
 
 One remarkable use of hashing is Gerard Holzmann's Supertrace program for
@@ -1753,7 +1754,8 @@ is rebuilt.
 Design a hash function for storing the coordinates of points in 2
 dimensions. How easily does your function adapt to changes in the type of
 the coordinates, for example from integer to floating point or from
-Cartesian to polar coordinates, or to changes from 2 to higher dimensions?
+Cartesian (笛卡尔) to polar coordinates (极坐标), or to changes from 2 to
+higher dimensions?
 \end{exercise}
 
 \section{Summary}
