@@ -31,13 +31,13 @@ This fragment of code comes from a large program written many years ago:
 It's carefully written, formatted, and commented, and the program it comes
 from works extremely well; the programmers who create these system are
 rightly proud of what they built. But this except is puzzling to the casual
-reader. What relationship links Singapore, Brunei, Poland and Italy? Why
-isn't Italy mentioned in the comment? Since the comment and the code
-differ, one of them must be wrong. Maybe both are. The code is what gets
-executed and tested, so it's more likely to be right; probably the comment
-didn't get updated when the code did. The comment doesn't say enough about
-the relationship among the three countries it does mention; if you had to
-maintain this code, you would need to know more.
+(偶然的) reader. What relationship links Singapore, Brunei, Poland and
+Italy? Why isn't Italy mentioned in the comment? Since the comment and the
+code differ, one of them must be wrong. Maybe both are. The code is what
+gets executed and tested, so it's more likely to be right; probably the
+comment didn't get updated when the code did. The comment doesn't say
+enough about the relationship among the three countries it does mention; if
+you had to maintain this code, you would need to know more.
 
 The few lines above are typical of much real code: mostly well done, but
 with some things could be improved.
@@ -63,13 +63,13 @@ this discipline is not hard.
 
 The principles of programming style are based on common sense guided
 experience, not on arbitrary rules and prescriptions (命令). Code should be
-clear and simple -- straightforward login, natural expression, conventional
+clear and simple -- straightforward logic, natural expression, conventional
 language use, meaningful names, neat formatting, helpful comments -- and it
 should be avoid clever tricks and unusual constructions. Consistency is
 important because others will find it easier to read your code, and you
 theirs, if you all stick to the same style. Detail many be imposed by local
-conventions, management edict (法令), or a program, but even if not, but if
-even not, it is best to obey a set of widely shared conventions. We follow
+conventions, management edict (法令), or a program, but even if not,
+it is best to obey a set of widely shared conventions. We follow
 the style used in the book \bookname{The C Programming Language}, with
 minor adjustments for C++ and Java.
 
@@ -278,13 +278,14 @@ Read this code aloud:
 
 \section{Expression and Statements}
 \label{sec:exprstat}
+
 By analogy (类比) with choosing names to aid the reader's understanding,
 write expressions and statements in a way that makes their meaning as
-transport as possible. Write the clearest code that does the job. Use
-spaces around operators to suggest grouping; more generally, format to help
-readability. This is trivial (琐细的) but valuable, like keeping a neat desk
-so you can find things. Unlike your desk, your programs are likely to be
-examined by others.
+transport (明显) as possible. Write the clearest code that does the job.
+Use spaces around operators to suggest grouping; more generally, format to
+help readability. This is trivial (琐细的) but valuable, like keeping a
+neat desk so you can find things. Unlike your desk, your programs are
+likely to be examined by others.
 
 \emph{Indent to show structure.} A consistent indentation style is the
 lowest-energy way to make a program's structure self-evident (不言自明的).
@@ -325,16 +326,17 @@ Turing the relations around lets us state the tests positively:
 Now the code reads naturally.
 
 \emph{Parenthesize to resolves ambiguity.} Parentheses specify grouping and
-can be used to make the intent clear event when they are not required. The
+can be used to make the intent clear even when they are not required. The
 inner parentheses in the previous example are not necessary, but they don't
-hurt, either. Seasoned (经验丰富的) programmers might omit them, because the
-relational operators(\verb"< <= == != >= >") have higher precedence than
-the logical operators(\verb"&&" and \verb"||").
+hurt, either. Seasoned (经验丰富的) programmers might omit them, because
+the relational operators(\verb"< <= == != >= >") have higher precedence
+than the logical operators(\verb"&&" and \verb"||").
 
-When mixing unrelated operators, though, it's a good idea to parenthesize. C
-and it's friends present pernicious (恶劣的) precedence problems, and it's
-easy to make a mistake. Because the logical operators bind tighter than
-assignment, parentheses are mandatory for most expressions that combine them:
+When mixing unrelated operators, though, it's a good idea to parenthesize.
+C and it's friends present pernicious (恶劣的) precedence problems, and
+it's easy to make a mistake. Because the logical operators bind tighter
+than assignment, parentheses are mandatory for most expressions that
+combine them:
 \begin{wellcode}
     while ((c = getchar()) != EOF)
         ...
@@ -521,12 +523,13 @@ Try it on as many compilers as you can, to see what happens in practice.
 
 \section{Consistency and Idioms (习惯用法)}
 \label{sec:consist_idom}
-Consistency leads to better programs. If formatting varies unpredictably, or
-loop over an array runs until this time and downhill the next, or strings
-are copied with \verb'strcpy' and a \verb'for' loop there, the variations
-make it harder to see what's really going on. But if the same computation
-is done the same way every time it appears, any variation suggests a
-genuine (真正的) difference, one worth nothing.
+
+Consistency leads to better programs. If formatting varies unpredictably,
+or loop over an array runs uphill this time and downhill the next, or
+strings are copied with \verb'strcpy' here and a \verb'for' loop there, the
+variations make it harder to see what's really going on. But if the same
+computation is done the same way every time it appears, any variation
+suggests a genuine (真正的) difference, one worth nothing.
 
 \emph{Use a consistent indentation and brace style.} Indentation show
 structure, but which indentation style is best? Should the opening brace go
@@ -755,7 +758,9 @@ the main point, but in a real program the return value from \verb'malloc',
 always be checked.
 
 \emph{Use else-ifs for multi-way decisions.} Multi-way decisions are
-idiomatically expressed as a chain of \verb'if .. else if .. else', like this:
+idiomatically expressed as a chain of \verb'if .. else if .. else', like
+this:
+% the "condition." and "statement." should be italic.
 \begin{wellcode}
     if (condition1)
         statement1
@@ -765,7 +770,7 @@ idiomatically expressed as a chain of \verb'if .. else if .. else', like this:
     else if (condition_i)
         statement_i
     else 
-        default-statement
+        default_statement
 \end{wellcode}
 The \textit{conditions} read from top to bottom; at the first
 \textit{condition} that is satisfied, the \textit{statement} that follows
@@ -930,12 +935,12 @@ when C was first defined, a time of slow machines and expensive function
 calls; today it is irrelevant. With modern machines and compilers, the
 drawbacks of function macros outweigh (超过) their benefits.
 
-\emph{Avoid function macros.} In C++, \verb'inline' functions render (补偿)
+\emph{Avoid function macros.} In C++, \verb'inline' functions render (使得)
 function macros unnecessary; in Java, there are no macros. In C, they cause
 more problems than they solve.
 
 One of the most serious problem with function macros is that a
-\textit{parameter} that appears more than once in the definition might be
+parameter that appears more than once in the definition might be
 evaluated more than once; if the argument in the call includes an
 expression with side effect, the result is a subtle (微妙的) bug. This code
 attempts to implement one of the character tests from \verb'<ctype.h>':
@@ -964,7 +969,7 @@ clearer and also gives an opportunity to catch end-of-file explicitly:
 \end{wellcode}
 
 Sometimes multiple evaluation causes a performance problem rather than an
-outright error. Consider this example:
+outright (明显的) error. Consider this example:
 \begin{badcode}
     #define ROUND_TO_INT(x) ((int) ((x)+(((x)>0)?0.5:-0.5)))
         ...
@@ -1179,7 +1184,7 @@ Java arrays have \verb'length' that gives the numbers of elements:
         ...
 \end{wellcode}
 
-There is no equivalent of \verb'.length' in C and c++, but for an array
+There is no equivalent of \verb'.length' in C and C++, but for an array
 (not a pointer) whose declaration is visible, this macro computes the
 number of elements in the array:
 \begin{wellcode}
@@ -1410,7 +1415,7 @@ standard and familiar interface:
 When it takes more than a few words to explain what's happening,it's often
 and indication that the code should be rewriting. Here, the code could
 perhaps be improved but the real problem is the comment, which is nearly as
-long as the implementation and confusing. too (which way is "above"?).
+long as the implementation and confusing, too (which way is "above"?).
 We're stretching (伸展) the point to say this routine is hard to
 understand, but since it implements a standard function, its comment can
 help by summarizing the behavior and telling us where the definition
@@ -1474,9 +1479,9 @@ arbitrary anyway?
 
 The answer is that well-written code is easier to read and to understand,
 almost surely has fewer errors, and is likely to be smaller than code that
-has been carelessly tossed (摇摆) and never polished. In the rush to get
-programs out the door to met some deadline, it's easy to push style aside,
-to worry about it later. This can be a costly decision. Some of the
+has been carelessly tossed (折腾) and never polished. In the rush (匆忙) to
+get programs out the door to met some deadline, it's easy to push style
+aside, to worry about it later. This can be a costly decision. Some of the
 examples in this chapter show what can go wrong if there isn't enough
 attention to good style. Sloppy (粗心的) code is bad code -- not just
 awkward and hard to read, but often broken.
