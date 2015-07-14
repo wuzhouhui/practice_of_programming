@@ -1,5 +1,5 @@
 Typed from The Practice of Programming, by Brian W. Kernighan and Rob
 Pike. Because of source pdf's unclarity, errors are inevitable.
 
-To get pdf file, just type and run "make"
-
+This directory already has pdf file that LaTeX generated, if you want to
+recompile it, just type and run "make".
