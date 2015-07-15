@@ -101,10 +101,10 @@ statements and your own experience and ability to reason about code.
 
 As a personal choice, we tend not to use debuggers beyond getting a stack
 trace or the value of a variable or two. One reason is that it is easy to
-et lost in details of complicated data structures and control flow; we find
-stepping through a program less productive than thinking harder and adding
-out statements and self-checking code at critical places. Clicking over
-statements takes longer than scanning the output of judiciously-placed
+get lost in details of complicated data structures and control flow; we
+find stepping through a program less productive than thinking harder and
+adding out statements and self-checking code at critical places. Clicking
+over statements takes longer than scanning the output of judiciously-placed
 (精心放置的) displays. It takes less time to decide where to put print
 statements than to single-step to the critical section of code, even
 assuming we know where that is. More important, debugging statements stay
@@ -282,7 +282,7 @@ but suppose it is inadvertently (粗心地) passed the name of the string
 comparison function \verb'scmp' instead:
 \begin{badcode}
     int arr[N];
-    qsort(arr, n, sizeof(arr[0]), scmp);
+    qsort(arr, N, sizeof(arr[0]), scmp);
 \end{badcode}
 A compiler can't detect the mismatch of types here, so disasters awaits.
 When we run the program, it crashes by attempting to access an illegal
@@ -291,7 +291,7 @@ like this, edited to fit\footnote{The source pdf is blurry (模糊的), so the
     stack trace may contain some typing errors}:
 \begin{wellcode}
     0 strcmp(0x1a2, 0x1c2) ["strcmp.s":31]
-    1 scmp(p1 = 0x10001048, p2 = 0x1000105c) ["badqs.c":31]
+    1 scmp(p1 = 0x10001048, p2 = 0x1000105c) ["badqs.c":13]
     2 qst(0x10001048, 0x10001074, 0x400b20, 0x4) ["qsort.c":147]
     3 qsort(0x10001048, 0x1c2,0x4, 0x400b20) ["qsort.c",63]
     4 main() ["badqs.c":45]
@@ -314,7 +314,7 @@ technique is to read the code very carefully and think about it for a while
 without making changes. There's a powerful urge to get to the keyboard and
 start modifying the program to see if the bug goes away. But chances are
 that you don't know what's really broken and will change the wrong thing,
-perhaps breaking something something else. A listing of the critical part
+perhaps breaking something else. A listing of the critical part
 of program on paper can give a different perspective than what you see on
 the screen, and encourages you to take more time for reflection. Don't make
 listings as a matter of routine, though. Printing a complete program wastes
@@ -334,7 +334,7 @@ explain your code to someone else. This will often cause you to explain the
 bug to yourself. Sometimes it takes no more than a few sentences, followed
 by an embarrassed "Never mind, I see what's wrong. Sorry to bother you."
 This works remarkably well; you can even use non-programmer as listeners.
-One university computer center kept a teddy bear near the help desk.
+One university computer center kept a Teddy bear near the help desk.
 Students with mysterious bugs were required to explain to the bear before
 they could speak to a human counselor (顾问).
 
@@ -461,7 +461,7 @@ For harder problems, \verb'check' might evolve to do verification and
 display of data structures. This approach can be generalized to routine
 that perform ongoing (进行中) consistency checks of data structures and
 other information. In a program with intricate (复杂的) data structures,
-it's good idea to write these checks \emph{before} problems happen, as
+it's good idea to write these checks before problems happen, as
 components of the program proper (适当的), so they can be turned on when
 trouble starts. Don't use then only when debugging; leave them installed
 during all stages of program development. If they're not expensive, it
@@ -621,7 +621,7 @@ was correct. The first few tests worked but then one failed spectacularly
     while (scanf(%s %d", name, &value) != EOF) {
         p = newitem(name, value);
         list1 = addfront(list1, p);
-        list2 - addend(list2, p);
+        list2 = addend(list2, p);
     }
     for (p = list1; p != NULL; p = p->next)
         printf("%s %d\n", p->name, p->value);
@@ -713,7 +713,7 @@ bits were disconnected from the backplane (基架).
 
 Bugs that won't stand still are the most difficult to deal with, and
 usually the problem isn't as obvious as failing hardware. The very fact
-that the behavior is non- deterministic is itself information, however; it
+that the behavior is non-deterministic is itself information, however; it
 means that the error is not likely to be a flaw (缺陷) in your algorithm
 but that in some way your code is using information that changes each time
 the program runs.
@@ -917,7 +917,8 @@ derailed (转移) by misunderstanding the source of a message.
 
 But there should be more output. Where is it? Late one night, the light
 finally dawned. ("I've seen that before!") This is a portability problem
-that is described in more detail in Chapter 8. We had originally written
+that is described in more detail in Chapter \ref{chap:portability}.
+We had originally written
 the program to read only from its standard input using \verb'getchar'. On
 Windows. however, \verb'getchar' returns \verb'EOF' when it encounters a
 particular byte ( \verb'Ox1A' or \verb'Ctrl-Z') in text mode input and this
@@ -967,7 +968,7 @@ way everywhere.
 
 Realistically, most programmers do not have the fun of developing a brand
 new system from the ground up. Instead, they spend much of their time
-using, maintaining. modifying and thus, inevitably, debugging code written
+using, maintaining, modifying and thus, inevitably, debugging code written
 by other people.
 
 When debugging others' code, everything that we have said about how to
@@ -986,12 +987,12 @@ function call at a time with a debugger can reveal the sequence of events.
 A revision history of the program may give some clues by showing what has
 been done to the program over time. Frequent changes are often a sign of
 code that is poorly understood or subject (屈服于) to changing
-requirements.  and thus potentially buggy.
+requirements, and thus potentially buggy.
 
 Sometimes you need to track down errors in software you are not responsible
-for and d o not have the source code for. In that case, the task is to
+for and do not have the source code for. In that case, the task is to
 identify and characterize the bug sufficiently well that you can report it
-accurately. and at the same time perhaps find a "work-around" (迂回路线)
+accurately, and at the same time perhaps find a "work-around" (迂回路线)
 that avoids the problem.
 
 If you think that you have found a bug in someone else's program, the first
@@ -1016,14 +1017,15 @@ Make sure the bug is new. Do you have the latest version of the program? Is
 there a list of bug fixes? Most software goes through multiple releases;
 if you find a bug in version 4.0b1, it might well be fixed or replaced by a
 new one in version 4.04b2. In any case, few programmers have much
-enthusiasm for fixing bugs in any- thing but the current version of a
+enthusiasm for fixing bugs in anything but the current version of a
 program.
 
 Finally, put yourself in the shoes of the person who receives your report.
 You want to provide the owner with as good a test case as you can manage.
 It's not very helpful if the bug can be demonstrated (示范) only with large
 inputs, or an elaborate (复杂的) environment, or multiple supporting files.
-Strip the test down to a minimal and self-contained case. Include other
+Strip (剥离)
+the test down to a minimal and self-contained case. Include other
 information that could possibly be relevant, like the version of the
 program itself, and of the compiler, operating system, and hardware.  For
 the buggy version of \verb'isprint' mentioned in Section
@@ -1073,7 +1075,7 @@ localize the problem. All of these are instances of a general strategy,
 divide and conquer, which is as effective in debugging as it is in politics
 and war. 
 
-Use other aids as well. Explaining your code to someone else (even a teddy
+Use other aids as well. Explaining your code to someone else (even a Teddy
 bear) is wonderfully effective. Use a debugger to get a stack trace. Use
 some of the commercial tools that check for memory leaks, array bounds
 violations, suspect (可疑的) code, and the like. Step through your program
