@@ -22,7 +22,8 @@ the wrong answer doesn't save any time.
 Thus the first principle of optimization is don't. Is the program good
 enough already? Knowing how a program will be used and the environment it
 runs in, is there any benefit to making it faster? Programs written for
-assignments in a college class are never used again; speed rarely matters.
+assignments (任务)
+in a college class are never used again; speed rarely matters.
 Nor will speed matter for most personal programs, occasional tools, test
 frameworks, experiments, and prototypes. The run-time of a commercial
 product or a central component such as a graphics library can be critically
@@ -45,7 +46,7 @@ re-assess; and keep the simple versions for testing revisions against.
 
 Measurement is a crucial component of performance improvement since
 reasoning and intuition are fallible (易错的) guides and must be
-supplemented with tools like timing commands and profilers (探查).
+supplemented with tools like timing commands and profilers (刻画器).
 Performance improvement has much in common with testing, including such
 techniques as automation, keeping careful records, and using regression
 (回归) tests to make sure that changes preserve correctness and do not undo
@@ -69,9 +70,10 @@ internal network; this separation isolates our private network from the
 public Internet and allows us to publish a single machine name (that of the
 gateway) for everyone in the community.
 
-One of the services of the gateway is to filter out "spam (罐头猪肉)."
+One of the services of the gateway is to filter out "spam (罐头猪肉),"
 unsolicited (未经同意的) mail that advertises services of dubious (可疑的)
-merit (值得). After successful early trials of the spam filter, the service
+merit (值得, 价值).
+After successful early trials of the spam filter, the service
 was installed as a permanent feature for all users of the mail gateway, and
 a problem immediately became apparent. The gateway machine, antiquated
 (老旧的) and already very busy, was overwhelmed (倾覆) because the
@@ -114,7 +116,7 @@ How could this be made faster? The string must be searched, and the
 \verb'strstr' function from the C library is the best way to search: it's
 standard and efficient.
 
-\emph{Using profiling (靠模切削),} a technique we'll talk about in the next
+\emph{Using profiling (定制)}, a technique we'll talk about in the next
 section, it became clear that the implementation of \verb'strstr' had
 unfortunate properties when used in a spam filter. By changing the way
 \verb'strstr' worked, it could be made more efficient \emph{for this
@@ -142,12 +144,13 @@ It had been written with efficiency in mind, and in fact for typical use it
 was fast because it used highly-optimized library routines to do the work.
 It called \verb'strchr' to find the next occurrence of the first character
 of the pattern, and then called \verb'strncmp' to see if the rest of the
-string matched the rest of the pattern. Thus it skipped quickly over most
+string matched the rest of the pattern, Thus it skipped quickly over most
 of the message looking for the first character of the pattern.  and then
 did a fast scan to check the rest. Why would this perform badly?
 
-There are several reasons. First, strncmp takes as an argument the length
-of the pattern. which must be computed with \verb'strlen'. But the patterns
+There are several reasons. First, \verb'strncmp'
+takes as an argument the length
+of the pattern, which must be computed with \verb'strlen'. But the patterns
 are fixed, so it shouldn't be necessary to recompute their lengths for each
 message.
 
@@ -155,7 +158,8 @@ Second, \verb'strncmp' has a complex inner loop. It must not only compare
 the bytes of the two strings, it must look for the terminating \verb'\0'
 byte on both strings while also counting down the length parameter. Since
 the lengths of all the strings are known in advance (though not to
-strncmp), this complexity is unnecessary; we know the counts are right so
+\verb'strncmp'),
+this complexity is unnecessary; we know the counts are right so
 checking for the \verb'\n' wastes time.
 
 Third, \verb'strchr' is also complex, since it must look for the character
@@ -184,10 +188,10 @@ important, is never terrible. To verify the new implementation's
 correctness and performance, a performance test suite was built.  This
 suite included not only simple examples like searching for a word in a
 sentence, but also pathological (病态的) cases such as looking for a
-pattern of a single x in a string of a thousand e's and a pattern of a
-thousand x's in a string of a single e, both of which can be handled badly
-by naive implementations. Such extreme cases are a key part of performance
-evaluation.
+pattern of a single \verb'x' in a string of a thousand \verb'e''s and a
+pattern of a thousand \verb'x''s in a string of a single \verb'e', both of
+which can be handled badly by naive implementations. Such extreme cases are
+a key part of performance evaluation.
 
 The library was updated with the new \verb'strstr' and the spam filter ran
 about $30\%$ faster, a good payoff for rewriting a single routine.
@@ -260,7 +264,7 @@ The two-dimensional array \verb'starting[c][]' stores, for each character
 \verb'c', the indices of those patterns that begin with that character. Its
 companion \verb'nstarting[c]' records how many patterns begin with
 \verb'c'. Without these tables, the inner loop would run from 0 to
-\verb'npat', about a thousand; instead it runs from 0 something like 20.
+\verb'npat', about a thousand; instead it runs from 0 to something like 20.
 Finally, the array element \verb'patlen[k]' stores the precomputed result
 of \verb'strlen(pat[k])'.
 
@@ -383,7 +387,7 @@ are still many failing string comparisons to execute, but the spam filter
 is no longer the bottleneck for mail delivery. Performance problem solved.
 
 The rest of this chapter will explore the techniques used to discover
-performance problems, isolate the slow code. and speed it up. Before moving
+performance problems, isolate the slow code, and speed it up. Before moving
 on, though, it's worth looking back at the spam filter to see what lessons
 it teaches. Most important, make sure performance matters. It wouldn't have
 been worth all the effort if spam filtering wasn't a bottleneck. Once we
@@ -399,8 +403,8 @@ really was faster. Once it was fast enough, we stopped; why over-engineer?
     with that character gives an order of magnitude (巨大的) improvement.
     Implement a version of \verb'isspam' that uses two characters as the
     index. How much improvement does that lead to? These are simple special
-    cases of a data structure called a trie. Most such data structures are
-    based on trading (交易) space for time.
+    cases of a data structure called a \term{trie}. Most such data
+    structures are based on trading (交易) space for time.
 \end{exercise}
 
 \section{Timing and Profiling}
@@ -430,8 +434,8 @@ sure your modifications don't break the program.
 If your system doesn't have a \verb'time' command, or if you're timing a
 function in isolation, it's easy to construct a timing scaffold (脚手架)
 analogous to a testing scaffold. C and C++ provide a standard routine,
-clock, that reports how much CPU time the program has consumed so far. It
-can be called before and after a function to measure CPU usage:
+\verb'clock', that reports how much CPU time the program has consumed so
+far. It can be called before and after a function to measure CPU usage:
 \begin{wellcode}
     #include <time.h>
     #include <stdio.h>
@@ -489,7 +493,7 @@ the degree possible, and then measure again to see if a new hot spot has
 surfaced. Eventually, often after only one or two iterations, there is no
 obvious hot spot left.
 
-Profiling is usually enabled with a special compiler flat or option. The
+Profiling is usually enabled with a special compiler flag or option. The
 program is run, and then an analysis tool shows the results. On Unix, the
 flag is usually \verb'-p' and the tool is called
 \verb"prof"\footnote{\texttt{gprof} in Linux}:
@@ -550,7 +554,7 @@ function.
     \verb'getline'  \\
     0.000   & 0.0\%     & 100.0\%   & 5500      & 5720      & 220   &
     \verb'_malloc'  \\
-\end{tabular}
+\end{tabular} \\
 
 It's obvious that \verb'strchr' and \verb'strncmp', both called by
 \verb'strstr', completely dominate the performance. Knuth's guideline is
@@ -573,9 +577,9 @@ profile for \verb'spamtest' using the final, fast implementation of
 \verb'memcmp' is now the hot spot, and that \verb'isspam' now consumes a
 significant fraction of the computation. It is more complex than the
 version that called \verb'strstr', but its cost is more than compensated
-for by eliminating \verb'strlen' and \verb'strchr' from \verb'isspam' and
-by replacing \verb'strncmp' with \verb'memcmp', which does less work per
-byte.
+(补偿) for by eliminating \verb'strlen' and \verb'strchr' from
+\verb'isspam' and by replacing \verb'strncmp' with \verb'memcmp', which
+does less work per byte.
 \begin{tabular}{rrrrrrr}
     secs    & \%    & cum\% & cycles    & instructions  & calls & function
     \\
@@ -589,14 +593,14 @@ byte.
     & \verb'strlen' \\
     0.000   & 0.0\%     & 100.0\%   & 100025    & 100028        & 1
     & \verb'main'   \\
-\end{tabular}
+\end{tabular} \\
 
 It's instructive (有益的) to spend some time comparing the cycle counts and
 number of calls in the two profiles. Notice that \verb'strlen' went from a
-couple of million calls to 652, and that strncmp and memcmp are called the
-same number of times. Also notice that \verb'isspam'. which now
-incorporates (吸收) the function of \verb'strchr', still manages to use far
-fewer cycles than \verb'strchr' did before because it examines only the
+couple of million calls to 652, and that \verb'strncmp' and \verb'memcmp'
+are called the same number of times. Also notice that \verb'isspam'. which
+now incorporates (吸收) the function of \verb'strchr', still manages to use
+far fewer cycles than \verb'strchr' did before because it examines only the
 relevant patterns at each step. Many more details of the execution can be
 discovered by examining the numbers.
 
@@ -645,8 +649,8 @@ size once the size is above 1000 elements, nor is there a discernible
 \begin{exercise}
     Whether or not your system has a \verb'time' command, use \verb'clock'
     or \verb'getTime' to write a timing facility for your own use. Compare
-    its times t a wall clock. How does other activity on the machine affect
-    the timing?
+    its times to a wall clock. How does other activity on the machine
+    affect the timing?
 \end{exercise}
 \begin{exercise}
     In the first profile, \verb'strchr' was called 48,350,000 times and
@@ -786,7 +790,7 @@ everything you can. It may be worth restarting if you find a way to make a
 ten percent improvement even after the program has been running for a
 month.
 
-Competitive programs -- games, compilers. word processors, spreadsheets,
+Competitive programs -- games, compilers, word processors, spreadsheets,
 database systems -- fall into this category as well, since commercial
 success is often to the swiftest, at least in published benchmark results.
 
@@ -918,18 +922,18 @@ previous character and its code:
 \begin{wellcode}
     if (c != lastc) { /* update the cache */
         lastc = c;
-        lastc = lookup(c);
+        lastcode = lookup(c);
     }
-    show(lastc);
+    show(lastcode);
 \end{wellcode}
 
 \emph{Write a special-purpose allocator.} Often the single hot spot in a
 program is memory allocation, which manifests (表明) itself as lots of
-calls on \verb'malloc' or new. When most requests are for blocks of the
-same size, substantial (实质的) speedups are possible by replacing calls to
-the general-purpose allocator by calls to a special-purpose one.  The
-special-purpose allocator makes one call to \verb'malloc' to fetch a big
-array of items, then hands them out one at a time as needed, a cheaper
+calls on \verb'malloc' or \verb'new'. When most requests are for blocks of
+the same size, substantial (实质的) speedups are possible by replacing
+calls to the general-purpose allocator by calls to a special-purpose one.
+The special-purpose allocator makes one call to \verb'malloc' to fetch a
+big array of items, then hands them out one at a time as needed, a cheaper
 operation. Freed items are placed back in a free list so they can be reused
 quickly.
 
@@ -1270,7 +1274,7 @@ basic operations, or for deciding whether to rewrite an expression or use
 an inline function.
 
 There are many sources of variability. One is compiler optimization level.
-Modern compilers can find optimizations that elude most programmers.
+Modern compilers can find optimizations that elude (难倒) most programmers.
 Furthermore, current CPUs are so complicated that only a good compiler can
 take advantage of their ability to issue multiple instructions
 concurrently, pipeline their execution, fetch instructions and data before
@@ -1341,7 +1345,8 @@ significant changes can be observed.
 
 By the way, it's extremely difficult to do good benchmarking, and it is not
 unknown for companies to tune their products to show up well on benchmarks,
-so it is wise to take all benchmark results with a grain of salt.
+so it is wise to take all benchmark results with a grain of salt
+(有保留的).
 
 \section*{Supplementary Reading}
 Our discussion of the spam filter is based on work by Bob Handrena and Ken
