@@ -14,8 +14,8 @@
 
 Testing and debugging are often spoken as a single phrase but they are not
 the same thing. To over-simplify, debugging is what you do when you know
-that a program is broken. Testing is a determined, systematic attempt to
-break a program that you think is working.
+that a program is broken. Testing is a determined (决定了的),
+systematic attempt to break a program that you think is working.
 
 Edsger Dijkstra made the famous observation that testing can demonstrate
 the presence of bugs, but not their absence. His hope is that programs can
@@ -42,7 +42,7 @@ spreadsheet. In such cases, if the generator or translator is correct and
 if the specification is correct, the resulting program will be correct too.
 We will cover this rich topic in more detail in Chapter
 \ref{chap:notation}; in this chapter we will talk briefly about ways to
-create tests from compact specifications.
+create tests from compact (简洁的) specifications.
 
 \section{Test as You Write the Code}
 \label{sec:test_as_you_write_the_code}
@@ -370,7 +370,7 @@ Suppose we have a function that performs binary search in an array of
 integers.  We would begin with these tests, arranged in order of increasing
 complexity:
 \begin{itemize}
-    \item search an array with noelements
+    \item search an array with no elements
     \item search an array with one element and a trial (试验的) value this
         is
         \begin{itemize}
@@ -415,7 +415,8 @@ for the key.
         return 0;
     }
 \end{wellcode}
-This is simpleminded but it shows that a useful test scaffold need not be
+This is simpleminded (纯朴的)
+but it shows that a useful test scaffold need not be
 big, and it is easily extended to perform more of these tests and require
 less manual intervention (介入).
 
@@ -666,7 +667,7 @@ The first line is a program to be tested (everything after the word
 \texttt{try}).  Each subsequent line is a set of inputs and the expected
 output, separated by tabs.  The first test says that if the first input
 field is \texttt{1} the output should be yes. The first seven tests should
-all print yes and the last two tests should print no.
+all print \verb'yes' and the last two tests should print \verb'no'.
 
 An Awk program (what else?) converts each test into a complete Awk program,
 then runs each input through it, and compares actual output to expected
@@ -681,7 +682,7 @@ about little languages and the use of programs that write programs.)
 Overall, there are about a thousand tests for Awk; the whole set can be run
 with a single command, and if everything goes well, no output is produced.
 Whenever a feature is added or a bug is fixed, new tests are added to
-verify correct operation. When ever the program is changed, even in a
+verify correct operation. Whenever the program is changed, even in a
 trivial (琐碎的) way, the whole test suite is run; it takes only a few
 minutes. It sometimes catches completely unexpected errors, and has saved
 the authors of Awk from public embarrassment many times.
@@ -761,7 +762,7 @@ is mandatory.
 Testing is based on a combination of exhaustive (彻底的) and
 boundary-condition checks at likely points of failure. For \texttt{memset},
 the boundaries include obvious values of \texttt{n} such as zero, one and
-two, but also values that are powers of two or nearby values. including
+two, but also values that are powers of two or nearby values, including
 both small ones and large ones like $2^{16}$, which corresponds to a natural
 boundary in many machines, a 16-bit word. Powers of two deserve attention
 because one way to make \texttt{memset} faster is to set multiple bytes at
@@ -1007,7 +1008,7 @@ security problem.
 Lest (免得) you think that this is an irrelevant textbook example, in July,
 1998 an error of this form was uncovered in several major electronic mail
 programs. As the \textit{New York Times} reported,
-\begin{quotation}
+\begin{oldquote}
     The security hole is caused by what is known as a "buffer overflow
     error." Programmers are supposed to include code in their software to
     check that incoming data are of a safe type and that the units are
@@ -1016,7 +1017,7 @@ programs. As the \textit{New York Times} reported,
     that case, the E-mail program will crash, and a hostile (怀有敌意的)
     programmer can trick the computer into running a malicious program in
     its place.
-\end{quotation}
+\end{oldquote}
 This was also one of the attacks in the famous "Internet Worm" incident of
 1988.
 
@@ -1306,7 +1307,7 @@ negative as well as positive integers; the factor of two occurred because
 the range of values was twice as large as expected, so twice as many values
 would be zero modulo the counter; this favored the first element in the
 list, which happened to be \verb'c'.  The fix was to take the absolute
-value before the modulus\footnote{Unrecognized word.}. Without this test,
+value before the modulus (模数). Without this test,
 we would never have discovered the error; to the eye, the output looked
 fine.
 
