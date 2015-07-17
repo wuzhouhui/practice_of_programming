@@ -4,7 +4,7 @@
 \begin{quote}
     Finally, standardization, like convention, can be another manifestation
     (证明) of the strong older. But unlike convention it has been accepted
-    in Modern architecture as an enriching (丰富) product of our
+    in modern architecture as an enriching (丰富) product of our
     technology, yet dreaded (可怕的) for its potential domination and
     brutality.
 \end{quote}
@@ -347,7 +347,7 @@ memory. Alignment restrictions introduce "holes"; \verb'struct X' will have
 at least one byte of unused space. These holes imply that a structure may
 be bigger than the sum of its member sizes, and will vary from machine to
 machine. If you're allocating memory to hold one, you must ask for
-\texttt{sizeof (struct X)} bytes, not \verb'sizeof(char) + sizeof(int)'.
+\texttt{sizeof(struct X)} bytes, not \verb'sizeof(char) + sizeof(int)'.
 
 \textbf{Bitfields.} Bitfields are so machine-dependent that no one should
 use them.
@@ -405,7 +405,8 @@ still harbor (港湾) non-portabilities.
 the core language: stick to the standard, and within its older,
 well-established components. C defines a standard library of functions for
 input and output, string operations, character class tests, storage
-allocation, and a variety of other tasks. If you confine (禁止) your
+allocation, and a variety of other tasks. If you confine (使不外出, 禁闭)
+your
 operating system interactions to these functions, there is a good chance
 that your code will behave the same way and perform well as it moves from
 system to system. But you must still be careful, because there are many
@@ -467,6 +468,7 @@ by redefining the name when including the header:
 \begin{badcode}
     /* some versions of stdio use wprintf so define it away */
     #define wprintf stdio_wprintf
+    #include <stdio.h>
     #undef wprintf
     /* code using our wprintf() follows ... */
 \end{badcode}
@@ -988,15 +990,15 @@ general data.
 
 Byte-at-a-time processing may seem expensive, but relative to (涉及) the
 I/O that makes the packing and unpacking necessary, the penalty (成本) is
-minute. Consider the X Window system, in which the client writes data in
-its native byte order and the server must unpack whatever the client sends.
-This may save a few instructions on the client end, but the server is made
-larger and more complicated by the necessity of handling multiple byte
-orders at the same time -- it may well have concurrent big-endian and
-little- endian clients -- and the cost in complexity and code is much more
-significant.  Besides, this is a graphics environment where the overhead to
-pack bytes will be swamped (淹没) by the execution of the graphical
-operation it encodes.
+minute (微小的). Consider the X Window system, in which the client writes
+data in its native byte order and the server must unpack whatever the
+client sends.  This may save a few instructions on the client end, but the
+server is made larger and more complicated by the necessity of handling
+multiple byte orders at the same time -- it may well have concurrent
+big-endian and little- endian clients -- and the cost in complexity and
+code is much more significant.  Besides, this is a graphics environment
+where the overhead to pack bytes will be swamped (淹没) by the execution of
+the graphical operation it encodes.
 
 The X Window system negotiates (协商) a byte order for the client and
 requires the server to be capable of both. By contrast, the Plan 9
@@ -1035,7 +1037,7 @@ to handle binary file -- it is necessary to open such files in binary mode:
 \end{wellcode}
 
 If the \verb"'b'" is omitted, it typically makes no difference at all on
-Unix systems, but on Windows systems the first control-Z byte (octal
+Unix systems, but on Windows systems the first Control-Z byte (octal
 \verb'032', hex \verb'1A') of input will terminate reading (we saw this
 happen to the strings program in Chapter \ref{chap:debug}). On the other
 hand, using binary mode to read text files will cause \verb'\r' to be
@@ -1170,7 +1172,7 @@ taken broadly, deals with making programs portable across language and
 cultural boundaries. This is potentially a very big topic, but we have
 space to point out only a few basic concerns.
 
-\textit{Internationalization} is the term for making a program run without
+\term{Internationalization} is the term for making a program run without
 assumptions about its cultural environment. The problems are many, ranging
 from character sets to the interpretation of icons in interfaces.
 
@@ -1187,13 +1189,13 @@ course, even the name \verb'isalpha' speaks to its origins; some languages
 don't have alphabets at all.
 
 Most European countries augment (扩展) the ASCII encoding, which defines
-values only up to \verb'Ox7F' (7 bits), with extra characters to represent
+values only up to \verb'0x7F' (7 bits), with extra characters to represent
 the letters of their language.  The Latin-1 encoding, commonly used
 throughout Western Europe, is an ASCII superset that specifies byte values
 from \verb'0x80' to \verb'0xFF' for symbols and accented (重音) characters;
-\verb'0xE7', for instance, represents the accented letter \verb'c'. The
+\verb'0xE7', for instance, represents the accented letter \c{c}. The
 English word "boy" is represented in ASCII (or Latin-1) by three bytes with
-hexadecimal values \verb'62 6F 79', while the French word "garcon" is
+hexadecimal values \verb'62 6F 79', while the French word "gar\c{c}on" is
 represented in Latin-1 by the bytes \verb'67 61 72 E7 6F 6E'. Other
 languages define other symbols, but they can't all fit in the 128 values
 left unused by ASCII, so there are a variety of conflicting standards for
@@ -1212,7 +1214,7 @@ The Unicode character set is an attempt to ameliorate (改善) this situation
 by providing a single encoding for all languages throughout the world.
 Unicode, which is compatible with the 16-bit subset of the IS0 10646
 standard, uses 16 bits per character, with values \verb'00FF' and below
-corresponding to Latin-1. Thus the word "garcon" is represented by the
+corresponding to Latin-1. Thus the word "gar\c{c}on" is represented by the
 16-bit values \verb'0067 0061 0072 00E7 006F 006E', while the Cyrillic
 (西里尔) alphabet occupies values \verb'0401' through \verb'04FF', and the
 ideographic (表意的) languages occupy a large block starting at
@@ -1229,23 +1231,23 @@ rapidly evolving towards Unicode.
 
 Unicode introduces a problem, though: characters no longer fit in a byte,
 so Unicode text suffers from the byte-order confusion. To avoid this,
-Unicode documents are usually translated into a byte-stream encoding
-called UTF-8 before being sent between programs or over a network. Each
-16-bit character is encoded as a sequence of 1, 2, or 3 bytes for
-transmission. The ASCII character set uses values \verb'00' through
-\verb'7F', all of which fit in a single byte using UTF-8, so UTF-8 is
-backwards compatible with ASCII. Values between \verb'80' and \verb'7FF'
-are represented in two bytes, and values \verb'800' and above are
-represented in three bytes. The word "garcon" appears in UTF-8 as the bytes
-\verb'67 61 72 C3 A7 6F 6E'; Unicode value \verb'E7', the '\c{c}'
-character, is represented as the two bytes \verb'C3 A7' in UTF-8.
+Unicode documents are usually translated into a byte-stream encoding called
+UTF-8 before being sent between programs or over a network. Each 16-bit
+character is encoded as a sequence of 1, 2, or 3 bytes for transmission.
+The ASCII character set uses values \verb'00' through \verb'7F', all of
+which fit in a single byte using UTF-8, so UTF-8 is backwards compatible
+with ASCII. Values between \verb'80' and \verb'7FF' are represented in two
+bytes, and values \verb'800' and above are represented in three bytes. The
+word "gar\c{c}on" appears in UTF-8 as the bytes \verb'67 61 72 C3 A7 6F 6E'
+; Unicode value \verb'E7', the '\c{c}' character, is represented as the
+two bytes \verb'C3 A7' in UTF-8.
 
 The backwards compatibility of UTF-8 and ASCII is a boon (恩惠), since it
 permits programs that treat text as an uninterpreted byte stream to work
 with Unicode text in any language. We tried the \verb'Markov' programs from
 Chapter \ref{chap:desipl} on UTF-8 encoded text in Russian, Greek,
 Japanese, and Chinese, and they ran without problems. For the European
-languages, whose words are separated by ASCII space, tab, or newline.  the
+languages, whose words are separated by ASCII space, tab, or newline, the
 output was reasonable nonsense. For the others, it would be necessary to
 change the word-breaking rules to get output closer in spirit (在精神上) to
 the intent of the program.
