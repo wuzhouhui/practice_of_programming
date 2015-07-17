@@ -10,9 +10,10 @@
 \end{quotesrc}
 
 The right language can make all the difference in how easy it is to write a
-program. This is why a practicing programmer's arsenal holds not only
-general-purpose languages like C and its relatives, but also programmable
-shells, scripting languages, and lots of application-specific languages
+program. This is why a practicing programmer's arsenal (军械库) holds not
+only general-purpose languages like C and its relatives, but also
+programmable shells, scripting languages, and lots of application-specific
+languages
 
 The power of good notation reaches beyond traditional programming into
 specialized problem domains. Regular expressions let us write compact (if
@@ -311,9 +312,10 @@ Because the values are unsigned and because we stayed within the sizes that
 ANSI C defines for the data types, this code transfers data portably even
 between machines with different sizes for \verb'short' and \verb'long'.
 Provided (倘若) the program that uses \verb'pack' does not try to send as a
-long (for example) a value that cannot be represented in 32 bits, the value
-will be received correctly. In effect, we transfer the low 32 bits of the
-value.  If we need to send larger values, we could define another format.
+\verb'long' (for example) a value that cannot be represented in 32 bits,
+the value will be received correctly. In effect, we transfer the low 32
+bits of the value.  If we need to send larger values, we could define
+another format.
 
 The type-specific unpacking routines that call \verb'unpack' are easy:
 \begin{wellcode}
@@ -462,8 +464,8 @@ ending in \verb'".exe"'. As in often the case, details differ from system
 to system, and even from program to program.
 
 Although the vagaries (奇特行为) of different programs may suggest that
-regular expressions are an ad hoc (特别设的) mechanism, in fact they are a
-language with a formal grammar and a precise meaning for each utterance
+regular expressions are an ad hoc (特别设制的) mechanism, in fact they are
+a language with a formal grammar and a precise meaning for each utterance
 (言辞) in the language. Furthermore, the right implementation can run very
 fast; a combination of theory and engineering practice makes a lot of
 difference (造成了很多差异), an example of the benefit of specialized
@@ -536,7 +538,7 @@ Some systems include a regular expression library, usually called
 \verb'grep'. If neither option is available, it's easy to implement a
 modest (适度的) subset of the full regular expression language. Here we
 present an implementation of regular expressions, and \verb'grep' to go
-along with it; for simplicity, the only metacharacters are \verb'^ $'. and
+along with it; for simplicity, the only metacharacters are \verb'^ $ .' and
 \verb'*', with \verb'*' specifying a repetition of the single previous
 period (片段) or literal character. This subset provides a large fraction
 of the power with a tiny fraction of the programming complexity of general
@@ -563,8 +565,8 @@ text, using \verb'matchhere' to see if the text matches at any position. As
 soon as we find a match, we're done. Note the use of a \verb'do-while':
 expressions can match the empty string (for example, \verb'$' matches the
 empty string at the end of a line and \verb'.*' matches any number of
-characters, including zero), so we must call matchhere even if the text is
-empty.
+characters, including zero), so we must call \verb'matchhere' even if the
+text is empty.
 
 The recursive function \verb'matchhere' does most of the work:
 \begin{wellcode}
@@ -590,9 +592,9 @@ character that matches itself in the text. A \verb'^' or \verb'$' that
 appears in the middle of a regular expression is thus taken as a literal
 character, not a metacharacter.
 
-Notice that matchhere calls itself after matching one character of pattern
-and string, so the depth of recursion can be as much as the length of the
-pattern.
+Notice that \verb'matchhere' calls itself after matching one character of
+pattern and string, so the depth of recursion can be as much as the length
+of the pattern.
 
 The one tricky case occurs when the expression begins with a starred
 character, for example \verb'x*'. Then we call \verb'matchstar', with first
@@ -1333,18 +1335,18 @@ for them. That will probably never be more than a dream, but today
 computers routinely (例行性的) write programs for us, often to represent
 things we would not previously have considered programs at all.
 
-The most common program-writing program is a compiler that translates high-
-level language into machine code. It's often useful, though, to translate
-code into a mainstream programming language. In the previous section, we
-mentioned that parser generators convert a definition of a language's
-grammar into a C program that parses the language. C is often used in this
-way, as a kind of "high level assembly language." Modula-3 and C++ are
-among the general-purpose languages whose first compilers created C code,
-which was then compiled by a standard C compiler.  The approach has several
-advantages, including efficiency -- because programs can in principle run
-as fast as C programs -- and portability -- because compilers can be
-carried to any system that has a C compiler. This greatly helped the early
-spread of these languages.
+The most common program-writing program is a compiler that translates
+highlevel language into machine code. It's often useful, though, to
+translate code into a mainstream programming language. In the previous
+section, we mentioned that parser generators convert a definition of a
+language's grammar into a C program that parses the language. C is often
+used in this way, as a kind of "high level assembly language." Modula-3 and
+C++ are among the general-purpose languages whose first compilers created C
+code, which was then compiled by a standard C compiler.  The approach has
+several advantages, including efficiency -- because programs can in
+principle run as fast as C programs -- and portability -- because compilers
+can be carried to any system that has a C compiler. This greatly helped the
+early spread of these languages.
 
 As another example, Visual Basic's graphical interface generates a set of
 Visual Basic assignment statements to initialize objects that the user has
@@ -1567,14 +1569,14 @@ to eliminate the check; every implementation of the divide operation
 compares the divisor to zero.
 
 This is where generating code dynamically can help. If we build the code
-for the expression directly, rather than just by stringing out predefined
-operations, we can avoid the zero-divide check for divisors that are known
-to be non-zero. In fact, we can go even further; if the entire expression
-is constant. such as \verb'max(3*3, 4/2)', we can evaluate it once when we
-generate the code, and replace it by the constant value \verb'9'.  If the
-expression appears in a loop, we save time each trip around the loop, and
-if the loop runs enough times, we will win back the overhead it took to
-study the expression and generate code for it.
+for the expression directly, rather than just by stringing (串成一串) out
+predefined operations, we can avoid the zero-divide check for divisors that
+are known to be non-zero. In fact, we can go even further; if the entire
+expression is constant. such as \verb'max(3*3, 4/2)', we can evaluate it
+once when we generate the code, and replace it by the constant value
+\verb'9'.  If the expression appears in a loop, we save time each trip
+around the loop, and if the loop runs enough times, we will win back the
+overhead it took to study the expression and generate code for it.
 
 The key idea is that the notation gives us a general way to express a
 problem, but the compiler for the notation can customize the code for the
@@ -1639,17 +1641,17 @@ Recall that we left our virtual machine with a structure like this:
 \end{wellcode}
 
 To adapt this code to on-the-fly compilation, we must make some changes.
-First, the code array is no longer an array of function pointers, but an
-array of executable instructions. Whether the instructions will be of type
-\verb'char', \verb'int', or \verb'long' will depend on the processor we're
-compiling for; we'll assume \verb'int'. After the code is generated, we
-call it as a function. There will be no virtual program counter because the
-processor's own execution cycle will walk along the code for us; once the
-calculation is done, it will return, like a regular function. Also, we can
-choose to maintain a separate operand stack for the machine or use the
-processor's own stack. Each approach has advantages, but we've chosen to
-stick with a separate stack and concentrate on the details of the code
-itself. The implementation now looks like this:
+First, the \verb'code' array is no longer an array of function pointers,
+but an array of executable instructions. Whether the instructions will be
+of type \verb'char', \verb'int', or \verb'long' will depend on the
+processor we're compiling for; we'll assume \verb'int'. After the code is
+generated, we call it as a function. There will be no virtual program
+counter because the processor's own execution cycle will walk along the
+code for us; once the calculation is done, it will return, like a regular
+function. Also, we can choose to maintain a separate operand stack for the
+machine or use the processor's own stack. Each approach has advantages, but
+we've chosen to stick with a separate stack and concentrate on the details
+of the code itself. The implementation now looks like this:
 \begin{wellcode}
     typedef int Code;
     Code    code[NCODE];
@@ -1797,6 +1799,6 @@ F. Friedl's \bookname{Mastering Regular Expressions} (O'Reilly, 1997) is an
 extensive treatment of the subject.
 
 An on-the-fly compiler for two-dimensional graphics operations is described
-in "HardwareISoftware Tradeoffs for Bitmap Graphics on the Blit," by Rob
+in "Hardware/Software Tradeoffs for Bitmap Graphics on the Blit," by Rob
 Pike, Bart Locanthi, and John Reiser, \bookname{Software-- Practice and
     Experience}, 15, 2, pp.  131-152, February 1985.
