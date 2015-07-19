@@ -1,6 +1,5 @@
 % vim: ts=4 sts=4 sw=4 et tw=75
 % part of this file was written by zhuojian@github.com
-% XXX: unchecked
 \chapter{Design and Implementation}
 \label{chap:desipl}
 \begin{quote}
@@ -10,7 +9,7 @@
 \end{quote}
 
 \begin{quotesrc}
-    Frederick P.Brooks, Jr.,\bookname{The Mythical Man Month}
+    Frederick P.Brooks, Jr., \bookname{The Mythical Man Month}
 \end{quotesrc}
 
 As the quotation from Brooks's classic book suggests, the design of the
@@ -23,23 +22,24 @@ chapter we examined the basic data structures that are the building blocks
 of most programs. In this chapter we will combine such structures as we
 work through the design and implementation of a modest-sized program. We
 will show how the problem influences the data structures, and how the code
-that follows is straightforward once we have the data structures mapped out.
+that follows is straightforward once we have the data structures mapped
+out.
 
-One aspect of this point of view is that the choice of programming Language
-is relatively unimportant to the overall design. We will design the
-program in the abstract and then write it in C, Java, C++, Awk, and Perl.
-Comparing the implementations demonstrates how languages can help or
-hinder, and ways in which they are unimportant. Program design can
+One aspect of this point of view is that the choice of programming language
+is relatively unimportant to the overall design. We will design the program
+in the abstract and then write it in C, Java, C++, Awk, and Perl.
+Comparing the implementations demonstrates how languages can help or hinder
+(阻碍), and ways in which they are unimportant. Program design can
 certainly be colored by a language but is not usually dominated by it.
 
-The problem we have chosen is unusual, but in basic from it is typical of
+The problem we have chosen is unusual, but in basic form it is typical of
 many programs: some data comes in, some data goes out, and the processing
-depends on a little ingenuity.
+depends on a little ingenuity (技巧).
 
 Specifically, we're going to generate random English text that reads well.
-If we emit random letters or random words, the result will be nonsense. For
-example, a program that randomly selects letters(and blanks. to separate
-words)might produce this:
+If we emit (放出) random letters or random words, the result will be
+nonsense. For example, a program that randomly selects letters (and blanks,
+to separate words) might produce this:
 \begin{wellcode}
     xptmxgn xusaja afqnzgxl lhidwed rjdjuvpydrlwnjy
 \end{wellcode}
@@ -53,15 +53,15 @@ don't make much more sense:
 \begin{wellcode}
     polydactyl equatorial splashily jowl verandah circumscribe
 \end{wellcode}
-For better results, we need a statistical model with more structure.Such as
-the frequency of appearance of whole phrases. But where can we find such
+For better results, we need a statistical model with more structure. Such
+as the frequency of appearance of whole phrases. But where can we find such
 statistics?
 
 We could grab a large body of English and study it in detail, but there is
 an easier and more entertaining approach. The key observation is that we
 can use any existing text to construct a statistical model of the language
-\textit{as used} in \textit{that text}, and from that generate random text
-that has similar statistics to the original.
+as used in that text, and from that generate random text that has similar
+statistics to the original.
 
 \section{The Markov Chain Algorithm}
 \label{sec:the_markov_chain_algorithm}
@@ -92,11 +92,13 @@ prefix is used to select the suffix word:
 \indent\indent repeat loop
 \\
 To illustrate, suppose we want to generate random text base on a few
-sentences paraphrased from the epigraph above, using-word prefixes:
-\\
-\indent Show your flowcharts and conceal your tables and I will be
-mystified. Show your tables and you flowcharts will be obvious.\textit{(end)}
-\\
+sentences paraphrased from the epigraph (题词) above, using two-word
+prefixes:
+\begin{oldquote}
+    Show your flowcharts and conceal your tables and I will be
+    mystified. Show your tables and you flowcharts will be obvious.
+    \textit{end}
+\end{oldquote}
 These are some of the pairs of input words and the words that follow them:
 \\
 \indent \begin{tabular}{ll}
@@ -122,19 +124,19 @@ Our program will read a piece of English text and use a Markov chain
 algorithm to generate new text based on the frequency of appearance of
 phrases of a fixed length. The number of words in the prefix, which is two
 in our example, is a parameter. Making the prefix shorter tends to produce
-less coherent prose; making it longer tends to reproduce the input text
-verbatim. For English text, using two words to select a third is a good
-compromise; it seems to recreate the flavor of the input while adding its
-own whimsical touch.
+less coherent (连贯的) prose (散文); making it longer tends to reproduce
+the input text verbatim. For English text, using two words to select a
+third is a good compromise; it seems to recreate the flavor of the input
+while adding its own whimsical (古怪的) touch (影响).
 
 What is a word? The obvious answer is a sequence of alphabetic characters,
 but it is desirable to leave punctuation attached to the words so
 \textit{"words"} and \textit{"words."} are different. This helps to improve
-the quality of the generated prose by letting punctuation, and
-therefore(indirectly)grammar, influence the word choice, although it also
-permits unbalanced quotes and parentheses to sneak in. We will therefore
+the quality of the generated prose by letting punctuation, and therefore
+(indirectly) grammar, influence the word choice, although it also permits
+unbalanced quotes and parentheses to sneak in (偷偷走进). We will therefore
 define a "word" as anything between white space, a decision that places no
-\textit{restriction} on input language and leaves punctuation attached to
+restriction on input language and leaves punctuation attached to
 the words. Since most programming languages have facilities to split text
 into white-space-separated words, this is also easy to implement.
 
@@ -437,7 +439,7 @@ implementation of the hash table:
             for (i = 0; i < NPREF; i++)
                 if (strcmp(prefix[i], sp->pref[i]) != 0)
                     break;
-            for (i == NPREF)    /* found it */
+            if (i == NPREF)    /* found it */
                 return sp;
         }
         if (create) {
@@ -487,8 +489,8 @@ dynamically with \verb'sprintf', so that's the approach we take.
 
 The two arguments to build are the prefix array holding the previous
 \verb'NPREF' words of input and a \verb'FILE' pointer. It passes the prefix
-and a copy of the input word to add, which adds the new entry to the hash
-table and advances the prefix:
+and a copy of the input word to \verb'add', which adds the new entry to the
+hash table and advances the prefix:
 \begin{wellcode}
     /* add: add word to suffix list, update the prefix */
     void add(char *prefix[NPREF], char *suffix)
@@ -504,9 +506,9 @@ table and advances the prefix:
 \end{wellcode}
 
 The call to \verb'memmove' is the idiom for deleting from an array. It
-shifts elements \verb'1' through \verb'NPREF-1' in the prefix down to
-positions \verb'0' through \verb'NPREF-2', deleting the first prefix word
-and opening a space for a new one at the end.
+shifts elements \verb'1' through \verb'NPREF-1' in the \verb'prefix' down
+to positions \verb'0' through \verb'NPREF-2', deleting the first prefix
+word and opening a space for a new one at the end.
 
 The \verb'addsuffix' routine adds the new suffix:
 \begin{wellcode}
@@ -548,7 +550,7 @@ terminator, a "word" that is guaranteed not to appear in any input:
 regular input. Since the input words are delimited by white space, a "word"
 of white space will serve, such as a newline character:
 \begin{wellcode}
-    char    NONWORD[] = '\n';   /* cannot appear as read word */
+    char    NONWORD[] = "\n";   /* cannot appear as read word */
 \end{wellcode}
 
 One more worry: what happens if there is insufficient input to start the
@@ -660,8 +662,8 @@ strengths of C are that it gives the programmer complete control over
 implementation, and programs written in it tend to be fast. The cost,
 however, is that the C programmer must do more of the work, allocating and
 reclaiming memory, creating hash tables and linked lists, and the like. C
-is a razor-sharp tool, with which one can create an elegant and efficient
-program or a bloody mess.
+is a razor-sharp (剃刀) tool, with which one can create an elegant and
+efficient program or a bloody mess.
 
 \begin{exercise}
     The algorithm for selecting a random item from a list of unknown length
@@ -806,7 +808,7 @@ in the hash table, rather than \verb'prefix' itself. This is because the
 copy, we could overwrite data in the table. This is the same issue that we
 had to deal with in the C program.
 
-The \verb'generation' function is similar to the C version, but slightly
+The \verb'generate' function is similar to the C version, but slightly
 more compact because it can index a random vector element directly instead
 of looping through a list.
 \begin{wellcode}
@@ -909,10 +911,8 @@ structures, and everyone knows the size of the \verb'prefix' array.
     and put them together again in the bottom of a liquid.
 \end{wellcode}
 
-\begin{wellcode}
-    Revise the Java version of \verb'markov' to use an array instead of a
-    \verb'Vector' for the prefix in the \verb'State' class.
-\end{wellcode}
+Revise the Java version of \verb'markov' to use an array instead of a
+\verb'Vector' for the prefix in the \verb'State' class.
 
 \section{C++}
 \label{sec:c++}
@@ -1085,7 +1085,7 @@ looks like an array but its subscripts are arbitrary strings or numbers, or
 comma-separated lists of them. It is a form of map from one data type to
 another. In Awk, all arrays are associative; Perl has both conventional
 indexed arrays with integer subscripts and associative arrays, which are
-called "hashes," a name that suggests how they are implemented.
+called "hashes", a name that suggests how they are implemented.
 
 The Awk and Perl implementations are specialized to prefixes of length 2.
 \begin{wellcode}
